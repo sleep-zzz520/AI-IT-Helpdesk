@@ -18,12 +18,18 @@ client = OpenAI(
     base_url=settings.GLM_BASE_URL,
 )
 
+# 进程级调用计数器（Eval 报告/审计用）
+CALL_COUNT = 0
+
 
 def _create_with_retry(**kwargs):
     """调用 GLM，429 限流自动重试（指数退避）。最多 3 次。"""
+    global CALL_COUNT
     for attempt in range(3):
         try:
-            return client.chat.completions.create(**kwargs)
+            resp = client.chat.completions.create(**kwargs)
+            CALL_COUNT += 1
+            return resp
         except RateLimitError:  # noqa: PERF203
             if attempt == 2:
                 raise

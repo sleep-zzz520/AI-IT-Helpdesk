@@ -1,0 +1,82 @@
+{
+  "metric": "intent_accuracy",
+  "total": 12,
+  "correct": 12,
+  "accuracy": 1.0,
+  "glm_calls": 12,
+  "wrong": [],
+  "results": [
+    {
+      "message": "VPN连不上，报错Error 800",
+      "expected": "vpn",
+      "predicted": "vpn",
+      "ok": true
+    },
+    {
+      "message": "VPN拨号失败，代码720",
+      "expected": "vpn",
+      "predicted": "vpn",
+      "ok": true
+    },
+    {
+      "message": "无法建立VPN连接",
+      "expected": "vpn",
+      "predicted": "vpn",
+      "ok": true
+    },
+    {
+      "message": "证书过期导致连不上VPN",
+      "expected": "vpn",
+      "predicted": "vpn",
+      "ok": true
+    },
+    {
+      "message": "公司VPN登录不上去",
+      "expected": "vpn",
+      "predicted": "vpn",
+      "ok": true
+    },
+    {
+      "message": "我的密码忘了怎么办",
+      "expected": "password",
+      "predicted": "password",
+      "ok": true
+    },
+    {
+      "message": "密码过期了，需要重置",
+      "expected": "password",
+      "predicted": "password",
+      "ok": true
+    },
+    {
+      "message": "打印机没有反应",
+      "expected": "other",
+      "predicted": "other",
+      "ok": true
+    },
+    {
+      "message": "电脑蓝屏了",
+      "expected": "other",
+      "predicted": "other",
+      "ok": true
+    },
+    {
+      "message": "公司网络太慢",
+      "expected": "other",
+      "predicted": "other",
+      "ok": true
+    },
+    {
+      "message": "VPN是什么？怎么用",
+      "expected": "other",
+      "predicted": "other",
+      "ok": true
+    },
+    {
+      "message": "你好",
+      "expected": "other",
+      "predicted": "other",
+      "ok": true
+    }
+  ]
+}
