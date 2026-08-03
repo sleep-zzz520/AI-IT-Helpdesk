@@ -1,9 +1,13 @@
 """FastAPI 入口：后端服务的门面，所有 HTTP 接口从这里挂载。"""
 from fastapi import FastAPI
 
+from app.api.conversations import router as conversations_router
 from app.config import settings
 
-app = FastAPI(title="智能IT运维服务台", version="0.1.0")
+app = FastAPI(title="智能IT运维服务台", version="0.2.0")
+
+# 挂载业务路由
+app.include_router(conversations_router)
 
 
 @app.get("/health")

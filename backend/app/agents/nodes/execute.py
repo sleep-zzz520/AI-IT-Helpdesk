@@ -9,7 +9,8 @@ from app.tools.actions import execute_action
 
 def execute_node(state: HelpdeskState) -> dict:
     action = state.get("kb_match", {}).get("action", "")
-    user_id = state.get("user_id", "")
+    # 和 verify 节点保持一致的兜底：user_id 缺失时用演示账号
+    user_id = state.get("user_id") or "zhangsan"
     result = execute_action(action, user_id)
     return {
         "tool_result": result,

@@ -52,6 +52,9 @@ def load_state(db: Session, conv_id: int) -> dict:
         "messages": [{"role": m.role, "content": m.content} for m in conv.messages],
         "trace": [{"node": t.node, "result": t.result} for t in conv.traces],
     }
+    # 会话级字段必须完整重建，漏一个 = Agent 失忆
+    if conv.user_id:
+        state["user_id"] = conv.user_id
     if conv.intent:
         state["intent"] = conv.intent
     if conv.ticket_id:
