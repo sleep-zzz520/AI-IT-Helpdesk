@@ -9,7 +9,7 @@ import json
 import re
 import time
 
-from openai import OpenAI
+from openai import OpenAI, RateLimitError
 
 from app.config import settings
 
@@ -24,7 +24,7 @@ def _create_with_retry(**kwargs):
     for attempt in range(3):
         try:
             return client.chat.completions.create(**kwargs)
-        except OpenAI.RateLimitError:  # noqa: PERF203
+        except RateLimitError:  # noqa: PERF203
             if attempt == 2:
                 raise
             time.sleep(5 * (attempt + 1))  # 5s → 10s

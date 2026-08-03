@@ -30,6 +30,16 @@ def should_ask_or_proceed(state: HelpdeskState) -> str:
     return "verify"
 
 
+def route_after_intent(state: HelpdeskState) -> str:
+    """条件边①·前置：intent 之后——支持的场景才继续，否则直接收尾。
+
+    修复："你好"这类非业务消息不该误触发 VPN 业务流程（此前会一路执行续期）。
+    """
+    if state.get("intent") == "vpn":
+        return "extract"
+    return "finalize"  # other / password 等：收尾回复（密码流程 P2 再接）
+
+
 def route_after_verify(state: HelpdeskState) -> str:
     """条件边②：verify 之后——按你的树状设计分三路。"""
     cs = state.get("cert_status", {})
@@ -66,7 +76,11 @@ def build_graph():
     g.add_node("finalize", finalize_node)
 
     g.set_entry_point("intent")
-    g.add_edge("intent", "extract")
+    # intent 后路由：vpn 才继续业务流；其他意图直接收尾（防误触流程）
+    g.add_conditional_edges("intent", route_after_intent, {
+        "extract": "extract",
+        "finalize": "finalize",
+    })
     g.add_edge("extract", "check")
     g.add_conditional_edges("check", should_ask_or_proceed, {
         "ask": "ask",

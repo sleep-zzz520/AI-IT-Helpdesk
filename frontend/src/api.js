@@ -2,13 +2,25 @@
 const BASE = 'http://127.0.0.1:8000';
 
 async function request(path, options) {
-  const resp = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
+  let resp;
+  try {
+    resp = await fetch(`${BASE}${path}`, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    });
+  } catch {
+    // 网络层失败（后端没启动/崩溃/端口不对）——翻译成人话 + 解决办法
+    throw new Error(
+      `无法连接后端服务（${BASE}）。请确认后端已启动：cd backend && source ../.venv/bin/activate && uvicorn app.main:app --reload`,
+    );
+  }
   if (!resp.ok) {
-    const detail = await resp.text().catch(() => '');
-    throw new Error(`API ${resp.status}: ${detail}`);
+    let detail = ''
+    try { detail = (await resp.json()).detail || '' } catch { /* 非 JSON 响应 */ }
+    const hint = resp.status >= 500
+      ? '（后端处理出错，可能是模型限流，请稍后重试）'
+      : ''
+    throw new Error(`后端返回错误（${resp.status}）${detail ? `：${detail}` : ''}${hint}`);
   }
   return resp.json();
 }
