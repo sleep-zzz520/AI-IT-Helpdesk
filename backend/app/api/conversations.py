@@ -33,6 +33,15 @@ def create_conversation(body: ConversationCreate, db: Session = Depends(get_db))
     return conv
 
 
+@router.get("/{conv_id}", response_model=ConversationOut)
+def get_conversation(conv_id: int, db: Session = Depends(get_db)):
+    """查会话（工单状态/intent/ticket_id，前端刷新用）。"""
+    conv = db.get(Conversation, conv_id)
+    if conv is None:
+        raise HTTPException(status_code=404, detail="会话不存在")
+    return conv
+
+
 @router.post("/{conv_id}/messages", response_model=MessageReply)
 def send_message(conv_id: int, body: MessageCreate, db: Session = Depends(get_db)):
     """发消息：恢复记忆 → 跑 Agent → 存库 → 返回回复。"""

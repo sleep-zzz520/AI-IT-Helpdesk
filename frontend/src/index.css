@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/* ===== 设计 token（单一暗色主题，Page Theme Lock）===== */
+:root {
+  --bg: #0a0e14;            /* 页面底色：近黑深蓝灰 */
+  --surface: #111722;       /* 面板底色 */
+  --surface-2: #161e2b;     /* 次级面板/输入区 */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text-primary: #e6e9ef;
+  --text-secondary: #8b93a1;
+  --accent: #2dd4a7;        /* 单一强调色：青绿 */
+  --accent-dim: rgba(45, 212, 167, 0.12);
+  --success: #34d399;       /* 语义色：仅状态徽章用 */
+  --warn: #fbbf24;
+  --error: #f87171;
+  --radius: 12px;           /* 统一圆角系统 */
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* mono 字体只给数据/代码用 */
+.mono {
+  font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+}
+
+/* 新消息进入：克制单次过渡 */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise-in { animation: rise-in 0.25s ease-out both; }
+
+/* 发送中的三点脉冲 */
+@keyframes blink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+.typing-dot {
+  width: 5px; height: 5px; border-radius: 9999px;
+  background: var(--text-secondary);
+  animation: blink 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* 按钮按下的物理反馈 */
+.press:active { transform: scale(0.98); }
+
+/* 尊重系统减弱动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .rise-in, .typing-dot { animation: none; }
+  .press:active { transform: none; }
+}
