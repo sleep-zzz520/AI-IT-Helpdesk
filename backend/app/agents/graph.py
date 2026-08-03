@@ -11,6 +11,7 @@ from langgraph.graph import END, StateGraph
 
 from app.agents.nodes.ask import ask_node
 from app.agents.nodes.check import check_node
+from app.agents.nodes.execute import execute_node
 from app.agents.nodes.extract import extract_node
 from app.agents.nodes.finalize import finalize_node
 from app.agents.nodes.handoff import handoff_node
@@ -43,6 +44,11 @@ def route_after_risk(state: HelpdeskState) -> str:
     return "execute" if state.get("risk_level") == "auto" else "handoff"
 
 
+def route_after_execute(state: HelpdeskState) -> str:
+    """条件边④：execute 之后——成功进⑦收尾，失败兜底转人工。"""
+    return "success" if state.get("tool_result", {}).get("status") == "ok" else "handoff"
+
+
 def build_graph():
     g = StateGraph(HelpdeskState)
 
@@ -53,6 +59,7 @@ def build_graph():
     g.add_node("verify", verify_node)
     g.add_node("kb", kb_node)
     g.add_node("risk", risk_node)
+    g.add_node("execute", execute_node)
     g.add_node("handoff", handoff_node)
     g.add_node("finalize", finalize_node)
 
@@ -70,7 +77,11 @@ def build_graph():
     })
     g.add_edge("kb", "risk")
     g.add_conditional_edges("risk", route_after_risk, {
-        "execute": END,   # ⑥执行 Tool（下一轮替换）
+        "execute": "execute",   # ⑥执行 Tool
+        "handoff": "handoff",
+    })
+    g.add_conditional_edges("execute", route_after_execute, {
+        "success": END,   # ⑦收尾（下一轮替换）
         "handoff": "handoff",
     })
     g.add_edge("handoff", END)

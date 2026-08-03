@@ -1,14 +1,19 @@
-"""转人工节点：高风险 / 未命中方案的兜底出口。
+"""转人工节点：三种情况的兜底出口（真实系统里会开人工工单、通知 L1）。
 
-真实系统里这里会：创建人工工单、通知 L1 工程师。
-MVP 先给用户一句明确的转人工回复。
+1. 高风险方案需审批
+2. 知识库未命中
+3. 执行 Tool 失败
 """
 from app.agents.state import HelpdeskState
 
 
 def handoff_node(state: HelpdeskState) -> dict:
     kb = state.get("kb_match", {})
-    if kb.get("matched"):
+    tr = state.get("tool_result", {})
+
+    if tr.get("status") == "error":
+        reason = f"操作执行失败：{tr.get('reason')}"
+    elif kb.get("matched"):
         reason = f"方案「{kb.get('solution')}」风险等级为 {kb.get('risk')}，需人工审批"
     else:
         reason = f"知识库未匹配到合适方案（{kb.get('reason')}）"

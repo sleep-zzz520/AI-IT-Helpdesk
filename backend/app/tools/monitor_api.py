@@ -8,6 +8,7 @@ mock 的价值：接口签名和返回格式与真实 API 完全一致，
 MOCK_USERS = {
     "zhangsan": {"cert_valid_until": "2026-07-30", "expired": True},   # 已过期
     "lisi":     {"cert_valid_until": "2027-01-15", "expired": False},  # 正常
+    "error_user": {"cert_valid_until": "2026-07-30", "expired": True},  # 已过期 + 执行续期必失败
 }
 
 
