@@ -30,7 +30,17 @@ INTENT_PROMPT = """你是 IT 运维服务台的意图分类器。
 ClassificationList = {"vpn","password","密码","other"}
 
 def intent_node(state: HelpdeskState) -> dict:
-    """输入：最新一条用户消息；输出：intent 分类 + Trace 记录。"""
+    """输入：最新一条用户消息；输出：intent 分类 + Trace 记录。
+
+    意图是【会话级】判断：一旦定下，后续轮次直接复用，不再重复调 AI。
+    （就像医院挂号：挂完科别，中途不会因为一句话就重新分诊）
+    """
+    if state.get("intent"):
+        return {"trace": state["trace"] + [{
+            "node": "intent",
+            "result": {"reused": state["intent"]},
+        }]}
+
     user_msg = state["messages"][-1]["content"]
 
     reply = chat_json([

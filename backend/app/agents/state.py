@@ -16,6 +16,7 @@ class HelpdeskState(TypedDict):
     # 已收集的上下文
     device: str        # 设备型号（如 Windows 11）
     error_code: str    # 错误码（如 800）
+    username: str      # 用户名/账号（密码重置场景）
     # 查证结果：证书状态（mock 或真实 API）
     cert_status: dict
     # 知识库匹配结果
