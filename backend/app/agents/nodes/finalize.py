@@ -1,4 +1,4 @@
-"""流程结束节点：不支持意图 / 查询失败 / 证书正常的收尾回复。
+"""流程结束节点：非支持意图 / 查询失败 / 证书正常的收尾回复。
 
 （证书过期会走④知识库匹配继续处理，不经过这里）
 """
@@ -8,11 +8,12 @@ from app.agents.state import HelpdeskState
 def finalize_node(state: HelpdeskState) -> dict:
     intent = state.get("intent")
 
-    # 非支持场景（如寒暄"你好"）：告知范围并转人工，绝不误触业务流程
-    if intent == "other":
+    # 当前 MVP 只实现 VPN 场景：非 vpn 意图（other/password）统一转人工，
+    # 绝不套用证书话术（修复：密码问题曾回复"证书状态正常（有效期至 None）"）
+    if intent != "vpn":
         reply = (
-            "当前服务台支持 VPN 连接故障与密码问题。"
-            "您描述的问题不在支持范围，已记录并转人工处理。"
+            "当前服务台正在试运行 VPN 连接故障的自动处理。"
+            "您的问题已记录并转人工处理，请留意后续通知。"
         )
     else:
         cs = state.get("cert_status", {})
