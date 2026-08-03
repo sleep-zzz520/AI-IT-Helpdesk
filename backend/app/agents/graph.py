@@ -14,6 +14,7 @@ from app.agents.nodes.check import check_node
 from app.agents.nodes.extract import extract_node
 from app.agents.nodes.finalize import finalize_node
 from app.agents.nodes.intent import intent_node
+from app.agents.nodes.kb import kb_node
 from app.agents.nodes.verify import verify_node
 from app.agents.state import HelpdeskState
 
@@ -43,6 +44,7 @@ def build_graph():
     g.add_node("check", check_node)
     g.add_node("ask", ask_node)
     g.add_node("verify", verify_node)
+    g.add_node("kb", kb_node)
     g.add_node("finalize", finalize_node)
 
     g.set_entry_point("intent")
@@ -54,9 +56,10 @@ def build_graph():
     })
     g.add_conditional_edges("verify", route_after_verify, {
         "fail": "finalize",
-        "expired": END,   # ④知识库匹配（下一轮替换）
+        "expired": "kb",   # ④知识库匹配
         "valid": "finalize",
     })
+    g.add_edge("kb", END)  # ⑤风险分级（下一轮替换）
     g.add_edge("finalize", END)
 
     return g.compile()
