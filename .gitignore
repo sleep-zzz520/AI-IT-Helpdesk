@@ -1,5 +1,6 @@
 # ===== 敏感信息 =====
 .env
+AGENTS.md
 
 # ===== 内部文档（不上传 GitHub）=====
 ROADMAP.md
