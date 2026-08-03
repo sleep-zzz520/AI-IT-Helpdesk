@@ -11,6 +11,7 @@ from langgraph.graph import END, StateGraph
 
 from app.agents.nodes.ask import ask_node
 from app.agents.nodes.check import check_node
+from app.agents.nodes.close import close_node
 from app.agents.nodes.execute import execute_node
 from app.agents.nodes.extract import extract_node
 from app.agents.nodes.finalize import finalize_node
@@ -60,6 +61,7 @@ def build_graph():
     g.add_node("kb", kb_node)
     g.add_node("risk", risk_node)
     g.add_node("execute", execute_node)
+    g.add_node("close", close_node)
     g.add_node("handoff", handoff_node)
     g.add_node("finalize", finalize_node)
 
@@ -81,9 +83,10 @@ def build_graph():
         "handoff": "handoff",
     })
     g.add_conditional_edges("execute", route_after_execute, {
-        "success": END,   # ⑦收尾（下一轮替换）
+        "success": "close",   # ⑦收尾
         "handoff": "handoff",
     })
+    g.add_edge("close", END)
     g.add_edge("handoff", END)
     g.add_edge("finalize", END)
 
