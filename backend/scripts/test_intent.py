@@ -20,3 +20,4 @@ def run(user_msg: str) -> None:
 if __name__ == "__main__":
     run("VPN连不上，报错Error 800，急着参加10点晨会")
     run("我的邮箱密码忘了怎么办")
+    run("我的密码过期了，怎么办")
