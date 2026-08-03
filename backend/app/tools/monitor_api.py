@@ -21,3 +21,10 @@ def check_cert_status(username: str) -> dict:
     if info is None:
         return {"status": "error", "reason": f"账号 {username} 不存在或无查询权限"}
     return {"status": "ok", **info}
+
+
+# 查询工具注册表（只读工具）：场景配置 verify_tool 按名字调用
+# 注意：必须放在函数定义之后（引用的是函数对象）
+QUERY_REGISTRY = {
+    "monitor.check_cert": check_cert_status,
+}

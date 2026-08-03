@@ -1,29 +1,28 @@
-"""流程结束节点：非支持意图 / 查询失败 / 证书正常的收尾回复。
+"""流程结束节点：非支持场景 / 查询失败 / 状态正常的收尾回复。
 
-（证书过期会走④知识库匹配继续处理，不经过这里）
+话术全部来自场景注册表（SCENARIOS）：
+- 非 active 场景（other / coming）：用 reply_unsupported（配置里配了就有）
+- active 场景：用 replies 模板（vpn 是证书分支）
 """
+from app.agents.scenarios import SCENARIOS
 from app.agents.state import HelpdeskState
 
 
 def finalize_node(state: HelpdeskState) -> dict:
     intent = state.get("intent")
+    scenario = SCENARIOS.get(intent)
 
-    # 当前 MVP 只实现 VPN 场景：非 vpn 意图（other/password）统一转人工，
-    # 绝不套用证书话术（修复：密码问题曾回复"证书状态正常（有效期至 None）"）
-    if intent != "vpn":
-        reply = (
-            "当前服务台正在试运行 VPN 连接故障的自动处理。"
-            "您的问题已记录并转人工处理，请留意后续通知。"
-        )
+    if scenario is None or scenario.get("status") != "active":
+        # 未实现/不支持的场景：场景专属话术，绝不套用其他场景的业务话术
+        reply = scenario.get("reply_unsupported", "当前服务台正在试运行，您的问题已转人工处理。") \
+            if scenario else "当前服务台正在试运行，您的问题已转人工处理。"
     else:
+        replies = scenario["replies"]
         cs = state.get("cert_status", {})
         if cs.get("status") == "error":
-            reply = f"⚠️ 查询失败：{cs.get('reason')}。请稍后重试，或转人工客服处理。"
+            reply = replies["error"].format(reason=cs.get("reason"))
         else:
-            reply = (
-                f"✅ 您的证书状态正常（有效期至 {cs.get('cert_valid_until')}）。"
-                "VPN 连不上可能另有原因，建议检查网络，或联系人工排查。"
-            )
+            reply = replies["valid"].format(date=cs.get("cert_valid_until"))
 
     return {
         "messages": state["messages"] + [{"role": "assistant", "content": reply}],

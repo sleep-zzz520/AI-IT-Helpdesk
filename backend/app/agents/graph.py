@@ -20,6 +20,7 @@ from app.agents.nodes.intent import intent_node
 from app.agents.nodes.kb import kb_node
 from app.agents.nodes.risk import risk_node
 from app.agents.nodes.verify import verify_node
+from app.agents.scenarios import SCENARIOS, validate_scenarios
 from app.agents.state import HelpdeskState
 
 
@@ -31,13 +32,14 @@ def should_ask_or_proceed(state: HelpdeskState) -> str:
 
 
 def route_after_intent(state: HelpdeskState) -> str:
-    """条件边①·前置：intent 之后——支持的场景才继续，否则直接收尾。
+    """条件边①·前置：intent 之后——active 场景才继续业务流，否则直接收尾。
 
-    修复："你好"这类非业务消息不该误触发 VPN 业务流程（此前会一路执行续期）。
+    数据驱动：场景是否继续，由 SCENARIOS 的 status 决定，不用改代码。
     """
-    if state.get("intent") == "vpn":
+    sc = SCENARIOS.get(state.get("intent"))
+    if sc and sc.get("status") == "active":
         return "extract"
-    return "finalize"  # other / password 等：收尾回复（密码流程 P2 再接）
+    return "finalize"  # other / coming 场景：收尾（转人工话术）
 
 
 def route_after_verify(state: HelpdeskState) -> str:
@@ -61,6 +63,7 @@ def route_after_execute(state: HelpdeskState) -> str:
 
 
 def build_graph():
+    validate_scenarios()  # 启动校验：场景配置完整性（防遗漏）
     g = StateGraph(HelpdeskState)
 
     g.add_node("intent", intent_node)
