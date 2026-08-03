@@ -39,43 +39,144 @@ function Row({ k, v }) {
   )
 }
 
-function TraceTimeline({ traces }) {
-  return (
-    <div className="rounded-[12px] border p-4" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-      <p className="mono mb-3 text-[11px] uppercase tracking-[0.16em] text-[var(--text-secondary)]">Trace 执行链路</p>
-      {traces.length === 0 ? (
-        <p className="text-xs text-[var(--text-secondary)]">等待 Agent 执行…</p>
-      ) : (
-        <ol className="relative space-y-3 border-l pl-4" style={{ borderColor: 'var(--border)' }}>
-          {traces.map((t, i) => (
-            <li key={i} className="rise-in relative">
-              <span
-                className="absolute -left-[21px] top-1.5 h-1.5 w-1.5 rounded-full"
-                style={{ background: i === traces.length - 1 ? 'var(--accent)' : 'var(--border-strong)' }}
-              />
-              <p className="mono text-xs text-[var(--text-primary)]">{t.node}</p>
-              <p className="mono mt-0.5 break-all text-[11px] leading-snug text-[var(--text-secondary)]">
-                {summarize(t.result)}
-              </p>
-            </li>
-          ))}
-        </ol>
-      )}
-    </div>
-  )
+// ===== 节点语义化：把每个节点的原始 JSON 翻译成人话 =====
+// tone: accent(当前/决策) / success / warn / error / neutral
+function describe(node, result) {
+  switch (node) {
+    case 'intent': {
+      const intent = result?.intent ?? result?.reused
+      const label = { vpn: '识别为 VPN 故障', password: '识别为密码问题' }[intent]
+      return {
+        label: '意图识别', type: 'AI',
+        summary: label ?? '非支持场景，直接收尾',
+        tone: intent === 'vpn' ? 'accent' : 'neutral',
+      }
+    }
+    case 'extract': {
+      const parts = []
+      if (result?.device) parts.push(`设备=${result.device}`)
+      if (result?.error_code) parts.push(`错误码=${result.error_code}`)
+      if (result?.username) parts.push(`账号=${result.username}`)
+      return {
+        label: '信息抽取', type: 'AI',
+        summary: parts.length ? parts.join(' · ') : '未抽到新信息',
+        tone: 'neutral',
+      }
+    }
+    case 'check': {
+      const missing = result?.missing
+      return {
+        label: '完整性检查', type: '规则',
+        summary: missing?.length ? `缺少：${missing.join(', ')} → 追问` : '✓ 信息齐全，放行',
+        tone: missing?.length ? 'warn' : 'success',
+      }
+    }
+    case 'verify': {
+      const cs = result?.cert_status ?? result
+      if (cs?.status === 'error') {
+        return { label: '查证账号状态', type: '工具', summary: `查询失败：${cs.reason}`, tone: 'error' }
+      }
+      const state = cs?.expired ? '已过期' : '正常'
+      return {
+        label: '查证账号状态', type: '工具',
+        summary: `证书${state}（有效期至 ${cs?.cert_valid_until}）`,
+        tone: cs?.expired ? 'warn' : 'success',
+      }
+    }
+    case 'kb': {
+      const km = result?.kb_match ?? result
+      if (!km?.matched) return { label: '知识库匹配', type: '规则', summary: `未命中：${km?.reason ?? ''}`, tone: 'error' }
+      return { label: '知识库匹配', type: '规则', summary: `命中方案（风险 ${km.risk}）`, tone: 'neutral' }
+    }
+    case 'risk': {
+      return {
+        label: '风险分级', type: '规则',
+        summary: result?.decision === 'auto' ? '低风险 → 自动执行' : '需人工审批 → 转人工',
+        tone: result?.decision === 'auto' ? 'accent' : 'warn',
+      }
+    }
+    case 'execute': {
+      const tr = result?.tool_result ?? result
+      if (tr?.status === 'error') return { label: '执行 Tool', type: '工具', summary: `❌ ${tr.reason}`, tone: 'error' }
+      return { label: '执行 Tool', type: '工具', summary: `✅ ${tr.message}`, tone: 'success' }
+    }
+    case 'close':
+      return { label: '收尾关单', type: '收尾', summary: `工单已解决 · ${result?.ticket_id ?? ''}`, tone: 'success' }
+    case 'handoff':
+      return { label: '转人工', type: '收尾', summary: '工单已转人工处理', tone: 'warn' }
+    case 'finalize':
+      return { label: '收尾回复', type: '收尾', summary: result?.reply ?? '', tone: 'neutral' }
+    default:
+      return { label: node, type: '节点', summary: JSON.stringify(result), tone: 'neutral' }
+  }
 }
 
-// Trace 结果摘要：JSON 截断（面板保持克制密度）
-function summarize(result) {
-  const s = JSON.stringify(result)
-  return s.length > 90 ? `${s.slice(0, 90)}…` : s
+const TONE_COLOR = {
+  accent: 'var(--accent)',
+  success: 'var(--success)',
+  warn: 'var(--warn)',
+  error: 'var(--error)',
+  neutral: 'var(--text-secondary)',
+}
+
+function FlowTimeline({ traces }) {
+  if (!traces.length) {
+    return <p className="text-xs text-[var(--text-secondary)]">等待 Agent 执行…</p>
+  }
+  return (
+    <ol className="relative">
+      {traces.map((t, i) => {
+        const meta = describe(t.node, t.result)
+        const isLatest = i === traces.length - 1
+        return (
+          <li key={i} className="relative flex gap-3 pb-4 last:pb-0">
+            {/* 节点间连接线 */}
+            {i < traces.length - 1 && (
+              <span className="absolute left-[5px] top-4 bottom-0 w-px" style={{ background: 'var(--border-strong)' }} />
+            )}
+            {/* 节点圆点（状态色） */}
+            <span
+              className="relative z-10 mt-1.5 h-[11px] w-[11px] shrink-0 rounded-full"
+              style={{
+                background: isLatest ? TONE_COLOR[meta.tone] : 'var(--surface)',
+                border: `2px solid ${TONE_COLOR[meta.tone]}`,
+              }}
+            />
+            {/* 节点内容 */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <span
+                  className="mono text-xs"
+                  style={{ color: isLatest ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+                >
+                  {meta.label}
+                </span>
+                <span
+                  className="mono shrink-0 rounded border px-1.5 py-px text-[10px]"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                >
+                  {meta.type}
+                </span>
+              </div>
+              <p className="mt-0.5 text-[11px] leading-snug" style={{ color: TONE_COLOR[meta.tone] }}>
+                {meta.summary}
+              </p>
+            </div>
+          </li>
+        )
+      })}
+    </ol>
+  )
 }
 
 export default function SidePanel({ conv, traces }) {
   return (
     <div className="space-y-4 p-4 lg:p-5">
       <TicketCard conv={conv} />
-      <TraceTimeline traces={traces} />
+      <div className="rounded-[12px] border p-4" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+        <p className="mono mb-4 text-[11px] uppercase tracking-[0.16em] text-[var(--text-secondary)]">Agent 执行链路</p>
+        <FlowTimeline traces={traces} />
+      </div>
     </div>
   )
 }
