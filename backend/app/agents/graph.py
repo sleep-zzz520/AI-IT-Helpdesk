@@ -13,8 +13,10 @@ from app.agents.nodes.ask import ask_node
 from app.agents.nodes.check import check_node
 from app.agents.nodes.extract import extract_node
 from app.agents.nodes.finalize import finalize_node
+from app.agents.nodes.handoff import handoff_node
 from app.agents.nodes.intent import intent_node
 from app.agents.nodes.kb import kb_node
+from app.agents.nodes.risk import risk_node
 from app.agents.nodes.verify import verify_node
 from app.agents.state import HelpdeskState
 
@@ -36,6 +38,11 @@ def route_after_verify(state: HelpdeskState) -> str:
     return "valid"          # 未过期 → 终止
 
 
+def route_after_risk(state: HelpdeskState) -> str:
+    """条件边③：risk 之后——自动执行 or 转人工。"""
+    return "execute" if state.get("risk_level") == "auto" else "handoff"
+
+
 def build_graph():
     g = StateGraph(HelpdeskState)
 
@@ -45,6 +52,8 @@ def build_graph():
     g.add_node("ask", ask_node)
     g.add_node("verify", verify_node)
     g.add_node("kb", kb_node)
+    g.add_node("risk", risk_node)
+    g.add_node("handoff", handoff_node)
     g.add_node("finalize", finalize_node)
 
     g.set_entry_point("intent")
@@ -59,7 +68,12 @@ def build_graph():
         "expired": "kb",   # ④知识库匹配
         "valid": "finalize",
     })
-    g.add_edge("kb", END)  # ⑤风险分级（下一轮替换）
+    g.add_edge("kb", "risk")
+    g.add_conditional_edges("risk", route_after_risk, {
+        "execute": END,   # ⑥执行 Tool（下一轮替换）
+        "handoff": "handoff",
+    })
+    g.add_edge("handoff", END)
     g.add_edge("finalize", END)
 
     return g.compile()
