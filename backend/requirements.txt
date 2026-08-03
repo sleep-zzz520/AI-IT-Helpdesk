@@ -1,0 +1,17 @@
+# ===== Web 框架 =====
+fastapi>=0.115
+uvicorn[standard]>=0.30
+
+# ===== Agent 框架 =====
+langgraph>=0.2
+
+# ===== 模型调用（openai SDK 指向智谱，保持模型无关）=====
+openai>=1.40
+
+# ===== 数据库 =====
+sqlalchemy>=2.0
+pymysql>=1.1
+cryptography>=42.0
+
+# ===== 工具 =====
+python-dotenv>=1.0

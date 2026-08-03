@@ -1,0 +1,23 @@
+# ===== 敏感信息 =====
+.env
+
+# ===== 内部文档（不上传 GitHub）=====
+ROADMAP.md
+docs/optimization-log.md
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# ===== IDE / OS =====
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# ===== Reasonix 工具元数据 =====
+.reasonix/
