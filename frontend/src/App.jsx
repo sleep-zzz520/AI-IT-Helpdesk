@@ -33,11 +33,15 @@ export default function App() {
     if (!conv || sending) return
     setSending(true)
     setError(null)
+    // 乐观更新：用户气泡【立即】显示，不等 Agent 跑完（几秒延迟会显得卡死）
+    setMessages((prev) => [...prev, { role: 'user', content }])
     try {
       const resp = await sendMessage(conv.id, content)
+      // 服务器返回的是权威完整历史（含 assistant 回复），整体替换
       setMessages(resp.messages)
       await refreshConv(conv.id)
     } catch (e) {
+      // 失败：保留用户消息（确实发过），错误条提示 Agent 未响应
       setError(e.message)
     } finally {
       setSending(false)
