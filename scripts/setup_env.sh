@@ -43,8 +43,10 @@ echo "    依赖安装完成"
 
 echo "==> [5/5] 验证"
 python3 - <<'PY'
-import langgraph, fastapi, sqlalchemy, openai, pymysql
-print(f"    langgraph {langgraph.__version__} | fastapi {fastapi.__version__} | sqlalchemy {sqlalchemy.__version__}")
+# 用 importlib.metadata 读版本（新版 langgraph 不再暴露 __version__ 属性）
+import importlib.metadata as md
+for pkg in ("langgraph", "fastapi", "sqlalchemy", "openai", "pymysql"):
+    print(f"    {pkg} {md.version(pkg)}")
 PY
 
 echo ""
