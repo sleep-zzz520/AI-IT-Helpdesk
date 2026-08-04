@@ -1,9 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
 import { Image as ImageIcon, X } from '@phosphor-icons/react'
 
+// 压缩图片：手机截图常 2-5MB，视觉接口有大小限制，必须先压缩（Canvas）
+function compressImage(file, maxSize = 1280, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(img.width * scale)
+      canvas.height = Math.round(img.height * scale)
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+      // 统一转 jpeg（MIME 由 data URL 自带，后端直接用）
+      resolve(canvas.toDataURL('image/jpeg', quality))
+    }
+    img.onerror = reject
+    img.src = URL.createObjectURL(file)
+  })
+}
+
 export default function ChatPanel({ messages, sending, error, onSend }) {
   const [draft, setDraft] = useState('')
-  // 待发送截图：{dataUrl, name}（dataUrl 是完整 data URL，自带 MIME 类型）
+  // 待发送截图：{dataUrl, name}（压缩后的完整 data URL）
   const [image, setImage] = useState(null)
   const bottomRef = useRef(null)
   const fileRef = useRef(null)
@@ -13,13 +31,16 @@ export default function ChatPanel({ messages, sending, error, onSend }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages, sending])
 
-  // 选择文件 → 读成 data URL
-  function handleFile(e) {
+  // 选择文件 → 压缩 → data URL
+  async function handleFile(e) {
     const f = e.target.files?.[0]
     if (!f) return
-    const reader = new FileReader()
-    reader.onload = () => setImage({ dataUrl: reader.result, name: f.name })
-    reader.readAsDataURL(f)
+    try {
+      const dataUrl = await compressImage(f)
+      setImage({ dataUrl, name: f.name })
+    } catch {
+      setImage(null)
+    }
     e.target.value = '' // 允许重复选择同一文件
   }
 
@@ -61,6 +82,14 @@ export default function ChatPanel({ messages, sending, error, onSend }) {
                 className="max-w-[78%] rounded-[12px] border px-4 py-3 text-sm leading-relaxed"
                 style={{ background: 'var(--accent-dim)', borderColor: 'rgba(45,212,167,0.3)' }}
               >
+                {/* 用户上传的截图（本地 data URL，当前会话可见） */}
+                {m.image && (
+                  <img
+                    src={m.image}
+                    alt="用户上传的截图"
+                    className="mb-2 max-h-52 rounded-lg object-contain"
+                  />
+                )}
                 {m.content}
               </div>
             </div>

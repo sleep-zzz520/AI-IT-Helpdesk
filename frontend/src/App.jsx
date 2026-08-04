@@ -33,12 +33,16 @@ export default function App() {
     if (!conv || sending) return
     setSending(true)
     setError(null)
-    // 乐观更新：用户气泡【立即】显示，不等 Agent 跑完（几秒延迟会显得卡死）
-    setMessages((prev) => [...prev, { role: 'user', content }])
+    // 乐观更新：用户气泡【立即】显示（含截图），不等 Agent 跑完
+    setMessages((prev) => [...prev, { role: 'user', content, image }])
     try {
       const resp = await sendMessage(conv.id, content, image)
-      // 服务器返回的是权威完整历史（含 assistant 回复），整体替换
-      setMessages(resp.messages)
+      // 只追加新增的（assistant 回复）——保留本地图片气泡；
+      // 后端不持久化 base64，整体替换会让截图消失
+      setMessages((prev) => {
+        const fresh = resp.messages.slice(prev.length)
+        return fresh.length ? [...prev, ...fresh] : prev
+      })
       await refreshConv(conv.id)
     } catch (e) {
       // 失败：保留用户消息（确实发过），错误条提示 Agent 未响应
