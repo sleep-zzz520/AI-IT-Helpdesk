@@ -11,6 +11,7 @@ export default function App() {
   const [traces, setTraces] = useState([])
   const [sending, setSending] = useState(false)
   const [error, setError] = useState(null)
+  const [lastElapsed, setLastElapsed] = useState(null)  // 本轮 Agent 总耗时（链路区顶部展示）
   const [tab, setTab] = useState('chat')      // 移动端：对话 / 面板切换
   // 会话代际：开新会话 +1，旧会话进行中的 SSE 请求完成后检测到代际过期就丢弃结果，
   // 避免旧回复污染新会话（异步竞态：用户回复期间开新会话）
@@ -23,6 +24,7 @@ export default function App() {
     abortRef.current = null
     setSending(false)             // 旧加载动画立即消失
     setError(null)
+    setLastElapsed(null)
     setMessages([])
     setTraces([])
     const c = await createConversation(USER_ID)
@@ -80,6 +82,7 @@ export default function App() {
         return fresh.length ? [...prev, ...fresh] : prev
       })
       setTraces(payload.traces)
+      if (payload.elapsed_ms) setLastElapsed(payload.elapsed_ms)
       if (payload.conversation) setConv(payload.conversation)
     } catch (e) {
       if (genRef.current !== myGen) return  // 旧代请求（abort/过期）：错误不污染新会话
@@ -168,7 +171,7 @@ export default function App() {
           />
         </section>
         <aside className={`min-h-0 overflow-y-auto border-l ${tab === 'panel' ? 'block' : 'hidden'} lg:block`} style={{ borderColor: 'var(--border)' }}>
-          <SidePanel conv={conv} traces={traces} />
+          <SidePanel conv={conv} traces={traces} elapsedMs={lastElapsed} />
         </aside>
       </main>
     </div>

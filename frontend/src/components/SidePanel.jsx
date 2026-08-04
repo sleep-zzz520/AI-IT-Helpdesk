@@ -116,6 +116,8 @@ function describe(node, result) {
 
 // 执行中占位节点的友好名称（App.jsx 预置 pending trace 用）
 const PENDING_LABEL = { intent: '意图识别', extract: '信息抽取' }
+// 并行节点（intent ∥ extract 同时执行，总耗时 ≠ 各阶段之和）
+const PARALLEL_NODES = new Set(['intent', 'extract'])
 
 const TONE_COLOR = {
   accent: 'var(--accent)',
@@ -161,6 +163,16 @@ function FlowTimeline({ traces }) {
                   {meta.label}
                 </span>
                 <span className="flex shrink-0 items-center gap-1.5">
+                  {/* 并行标记：intent ∥ extract 同时执行，解释"总耗时 ≠ 各阶段之和" */}
+                  {PARALLEL_NODES.has(t.node) && (
+                    <span
+                      className="mono shrink-0 rounded px-1 py-px text-[9px]"
+                      style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}
+                      title="此节点与相邻 LLM 节点并行执行"
+                    >
+                      ∥ 并行
+                    </span>
+                  )}
                   {/* 节点耗时（阶段时间）；执行中不显示 */}
                   {!t.pending && t.elapsed_ms != null && (
                     <span className="mono flex items-center gap-0.5 text-[10px] text-[var(--text-secondary)]">
@@ -193,13 +205,27 @@ function FlowTimeline({ traces }) {
   )
 }
 
-export default function SidePanel({ conv, traces }) {
+export default function SidePanel({ conv, traces, elapsedMs }) {
   return (
     <div className="space-y-4 p-4 lg:p-5">
       <TicketCard conv={conv} />
       <div className="rounded-[12px] border p-4" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-        <p className="mono mb-4 text-[11px] uppercase tracking-[0.16em] text-[var(--text-secondary)]">Agent 执行链路</p>
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <p className="mono text-[11px] uppercase tracking-[0.16em] text-[var(--text-secondary)]">Agent 执行链路</p>
+          {/* 本轮总耗时：与气泡一致；与各节点耗时不同（节点并行执行） */}
+          {elapsedMs != null && (
+            <span className="mono flex items-center gap-1 text-[11px] text-[var(--text-primary)]">
+              <Timer size={13} weight="regular" />
+              本轮总耗时 {fmtDuration(elapsedMs)}
+            </span>
+          )}
+        </div>
         <FlowTimeline traces={traces} />
+        {traces.length > 0 && (
+          <p className="mt-3 text-[10px] leading-relaxed text-[var(--text-secondary)]">
+            ℹ️ intent ∥ extract 并行执行，总耗时 = 最长节点耗时，≠ 各阶段耗时之和
+          </p>
+        )}
       </div>
     </div>
   )

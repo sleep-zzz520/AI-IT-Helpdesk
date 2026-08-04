@@ -96,7 +96,11 @@ export default function ChatPanel({ messages, sending, error, onSend }) {
                 {m.content}
                 {/* Agent 本轮回复的总耗时（毫秒 → 可读格式） */}
                 {m.elapsed_ms != null && (
-                  <div className="mono mt-1.5 flex items-center gap-1 border-t pt-1.5 text-[10px] text-[var(--text-secondary)]" style={{ borderColor: 'var(--border)' }}>
+                  <div
+                    className="mono mt-1.5 flex items-center gap-1 border-t pt-1.5 text-[10px] text-[var(--text-secondary)]"
+                    style={{ borderColor: 'var(--border)' }}
+                    title="节点并行执行（intent ∥ extract），总耗时不等于各阶段耗时之和"
+                  >
                     <Clock size={11} weight="regular" />
                     总耗时 {fmtDuration(m.elapsed_ms)}
                   </div>
