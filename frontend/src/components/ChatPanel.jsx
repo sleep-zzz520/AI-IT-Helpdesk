@@ -44,6 +44,25 @@ export default function ChatPanel({ messages, sending, error, onSend }) {
     e.target.value = '' // 允许重复选择同一文件
   }
 
+  // 粘贴图片（截图后 Cmd+V 直接贴，像微信一样）
+  function handlePaste(e) {
+    const items = e.clipboardData?.items || []
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault() // 有图才拦截，否则文本粘贴会被误拦
+        const file = item.getAsFile()
+        if (file) {
+          compressImage(file).then(
+            (dataUrl) => setImage({ dataUrl, name: '粘贴的截图' }),
+            () => setImage(null),
+          )
+        }
+        return
+      }
+    }
+    // 没有图片：走默认行为（正常粘贴文本）
+  }
+
   function handleSubmit(e) {
     e.preventDefault()
     const content = draft.trim()
@@ -154,7 +173,8 @@ export default function ChatPanel({ messages, sending, error, onSend }) {
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder={image ? '补充说明（可选）' : '描述你的问题，如：VPN 连不上…'}
+            onPaste={handlePaste}
+            placeholder={image ? '补充说明（可选）' : '描述你的问题，如：VPN 连不上…（截图可直接 Cmd+V 粘贴）'}
             disabled={sending}
             className="flex-1 rounded-[12px] border px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-[var(--text-secondary)] disabled:opacity-50"
             style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
