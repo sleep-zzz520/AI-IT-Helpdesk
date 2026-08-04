@@ -67,3 +67,22 @@ def chat_json(messages: list[dict], temperature: float = 0.1) -> dict:
         if m:
             return json.loads(m.group())
         raise ValueError(f"模型未返回合法 JSON: {raw[:200]}")
+
+
+def chat_with_image(image_b64: str, prompt: str, model: str | None = None) -> str:
+    """带图片调用视觉模型（OCR 用）。
+
+    image_b64: 图片的 base64 编码（不含 data: 前缀）。
+    OpenAI 兼容格式：content 是 [文本, 图片] 列表。
+    """
+    resp = _create_with_retry(
+        model=model or settings.GLM_VISION_MODEL,
+        messages=[{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_b64}"}},
+            ],
+        }],
+    )
+    return resp.choices[0].message.content

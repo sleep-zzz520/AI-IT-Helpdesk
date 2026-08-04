@@ -47,8 +47,11 @@ def send_message(conv_id: int, body: MessageCreate, db: Session = Depends(get_db
     """发消息：恢复记忆 → 跑 Agent → 存库 → 返回回复。"""
     # 1. 从数据库恢复会话记忆
     state = session_service.load_state(db, conv_id)
-    # 2. 把新消息追加进历史
-    state["messages"] = state.get("messages", []) + [{"role": "user", "content": body.content}]
+    # 2. 把新消息追加进历史（可选带截图 base64，OCR 用）
+    msg = {"role": "user", "content": body.content}
+    if body.image:
+        msg["image"] = body.image
+    state["messages"] = state.get("messages", []) + [msg]
     # 3. 跑一轮 Agent（完整状态图）
     out = graph.invoke(state)
     # 4. 存回数据库（新增消息 + Trace）

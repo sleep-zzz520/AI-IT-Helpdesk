@@ -13,6 +13,8 @@ class Settings:
     ZHIPU_API_KEY: str = os.getenv("ZHIPU_API_KEY", "")
     GLM_BASE_URL: str = os.getenv("GLM_BASE_URL", "https://open.bigmodel.cn/api/paas/v4")
     GLM_MODEL: str = os.getenv("GLM_MODEL", "glm-4.7-flash")
+    # 视觉模型（OCR 截图识别用，免费）
+    GLM_VISION_MODEL: str = os.getenv("GLM_VISION_MODEL", "glm-4v-flash")
 
     # ===== MySQL =====
     MYSQL_HOST: str = os.getenv("MYSQL_HOST", "127.0.0.1")

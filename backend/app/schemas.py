@@ -12,6 +12,7 @@ class ConversationCreate(BaseModel):
 
 class MessageCreate(BaseModel):
     content: str
+    image: str | None = None  # 可选：报错截图的 base64（OCR 识别错误码用）
 
 
 # ===== 响应 =====

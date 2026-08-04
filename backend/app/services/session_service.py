@@ -26,7 +26,9 @@ def save_turn(db: Session, conv: Conversation, state: dict) -> None:
     """
     new_msgs = state.get("messages", [])[len(conv.messages):]
     for m in new_msgs:
-        conv.messages.append(Message(role=m["role"], content=m["content"]))
+        # 图片消息不落库 base64（占空间）：内容标记 [图片]，OCR 结果已进 error_code
+        content = "[图片] " + m["content"] if m.get("image") else m["content"]
+        conv.messages.append(Message(role=m["role"], content=content))
 
     new_traces = state.get("trace", [])[len(conv.traces):]
     for t in new_traces:
