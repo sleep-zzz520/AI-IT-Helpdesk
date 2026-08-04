@@ -28,8 +28,11 @@ async function request(path, options) {
 export const createConversation = (userId) =>
   request('/api/conversations', { method: 'POST', body: JSON.stringify({ user_id: userId }) });
 
-export const sendMessage = (convId, content) =>
-  request(`/api/conversations/${convId}/messages`, { method: 'POST', body: JSON.stringify({ content }) });
+export const sendMessage = (convId, content, image) =>
+  request(`/api/conversations/${convId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({ content, image: image ?? null }),
+  });
 
 export const fetchConversation = (convId) =>
   request(`/api/conversations/${convId}`);

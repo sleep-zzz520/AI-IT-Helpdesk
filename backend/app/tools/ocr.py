@@ -13,10 +13,10 @@ OCR_PROMPT = """这是一张 VPN 客户端报错截图。请识别其中的错�
 只输出 JSON：{"error_code": "800"}；如果截图中没有错误码，输出 {"error_code": ""}"""
 
 
-def extract_error_code(image_b64: str) -> str:
+def extract_error_code(image_data_url: str) -> str:
     """识别截图中的错误码。失败/没有错误码时返回空字符串（绝不抛异常）。"""
     try:
-        raw = chat_with_image(image_b64, OCR_PROMPT)
+        raw = chat_with_image(image_data_url, OCR_PROMPT)
         m = re.search(r"\{.*\}", raw, re.S)
         if m:
             return json.loads(m.group()).get("error_code", "")

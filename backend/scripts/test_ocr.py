@@ -20,7 +20,8 @@ def make_screenshot() -> str:
     d.text((40, 115), "Certificate is expired", fill=(230, 235, 245))
     buf = io.BytesIO()
     img.save(buf, format="PNG")
-    return base64.b64encode(buf.getvalue()).decode()
+    # 完整 data URL（自带 MIME，与前端协议一致）
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
 if __name__ == "__main__":

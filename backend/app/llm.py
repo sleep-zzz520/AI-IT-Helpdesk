@@ -69,10 +69,11 @@ def chat_json(messages: list[dict], temperature: float = 0.1) -> dict:
         raise ValueError(f"模型未返回合法 JSON: {raw[:200]}")
 
 
-def chat_with_image(image_b64: str, prompt: str, model: str | None = None) -> str:
+def chat_with_image(image_data_url: str, prompt: str, model: str | None = None) -> str:
     """带图片调用视觉模型（OCR 用）。
 
-    image_b64: 图片的 base64 编码（不含 data: 前缀）。
+    image_data_url: 完整 data URL（如 data:image/png;base64,xxx）。
+    注意：MIME 由 data URL 自带（png/jpeg/webp 都支持），不能写死。
     OpenAI 兼容格式：content 是 [文本, 图片] 列表。
     """
     resp = _create_with_retry(
@@ -81,7 +82,7 @@ def chat_with_image(image_b64: str, prompt: str, model: str | None = None) -> st
             "role": "user",
             "content": [
                 {"type": "text", "text": prompt},
-                {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_b64}"}},
+                {"type": "image_url", "image_url": {"url": image_data_url}},
             ],
         }],
     )

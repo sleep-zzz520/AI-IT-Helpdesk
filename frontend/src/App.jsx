@@ -29,14 +29,14 @@ export default function App() {
 
   useEffect(() => { handleNew() }, [])  // 首屏自动开新会话（演示友好）
 
-  async function handleSend(content) {
+  async function handleSend(content, image) {
     if (!conv || sending) return
     setSending(true)
     setError(null)
     // 乐观更新：用户气泡【立即】显示，不等 Agent 跑完（几秒延迟会显得卡死）
     setMessages((prev) => [...prev, { role: 'user', content }])
     try {
-      const resp = await sendMessage(conv.id, content)
+      const resp = await sendMessage(conv.id, content, image)
       // 服务器返回的是权威完整历史（含 assistant 回复），整体替换
       setMessages(resp.messages)
       await refreshConv(conv.id)
