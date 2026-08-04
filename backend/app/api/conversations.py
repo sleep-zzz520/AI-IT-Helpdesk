@@ -1,15 +1,20 @@
-"""会话相关 API 路由：创建会话 / 发消息 / 查 Trace。"""
+"""会话相关 API 路由：创建会话 / 发消息（SSE 流式）/ 查 Trace。"""
+import json
+import time
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.agents.graph import graph
+from app.config import settings
 from app.db import SessionLocal
 from app.models import Conversation
 from app.schemas import (
     ConversationCreate,
     ConversationOut,
     MessageCreate,
-    MessageReply,
+    MessageOut,
     TraceOut,
 )
 from app.services import session_service
@@ -24,6 +29,39 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def _run_agent_stream(state: dict):
+    """跑一轮 Agent 并【边跑边产出】。
+
+    生成器 yield 两种事件：
+    - ("node", new_traces)：每完成一个节点，产出该节点新增的 trace（含耗时）
+    - ("done", final_state, total_ms)：全部跑完，产出最终 state 和本轮总耗时
+
+    为什么用 stream 而不是 invoke：invoke 只返回最终 state，拿不到【每个节点各自的
+    耗时】；stream(updates) 在节点执行完的瞬间 yield，此刻与上一节点的时间差 ≈ 节点耗时。
+    合并逻辑与 invoke 等价：trace 用 reducer 累加，其余字段直接覆盖
+    （所有节点返回的都是完整值，如 messages = 历史 + 新增）。
+    """
+    final = dict(state)
+    final["trace"] = list(state.get("trace", []))  # 先复制历史 trace，再累加新增
+    t_all = time.perf_counter()
+    prev_t = t_all
+    for chunk in graph.stream(state, stream_mode="updates"):
+        for node, update in chunk.items():
+            elapsed_ms = round((time.perf_counter() - prev_t) * 1000)
+            # 给该节点新增的 trace 补耗时；parallel 内部已注入精确耗时，不覆盖
+            for t in update.get("trace", []):
+                t.setdefault("elapsed_ms", elapsed_ms)
+            new_traces = update.get("trace", [])
+            final["trace"] += new_traces
+            for k, v in update.items():
+                if k != "trace":
+                    final[k] = v
+            prev_t = time.perf_counter()
+            yield "node", new_traces
+    total_ms = round((time.perf_counter() - t_all) * 1000)
+    yield "done", final, total_ms
 
 
 @router.post("", response_model=ConversationOut)
@@ -42,9 +80,14 @@ def get_conversation(conv_id: int, db: Session = Depends(get_db)):
     return conv
 
 
-@router.post("/{conv_id}/messages", response_model=MessageReply)
+@router.post("/{conv_id}/messages")
 def send_message(conv_id: int, body: MessageCreate, db: Session = Depends(get_db)):
-    """发消息：恢复记忆 → 跑 Agent → 存库 → 返回回复。"""
+    """发消息（SSE 流式）：边跑 Agent 边推送节点进度，最后推完整结果。
+
+    事件流：
+      event: node  data: {"traces": [...]}   每完成一个节点推一次（执行链路实时跳动）
+      event: done  data: {messages, elapsed_ms, ...}   全部完成（含存库后的最终数据）
+    """
     # 1. 从数据库恢复会话记忆
     state = session_service.load_state(db, conv_id)
     # 2. 把新消息追加进历史（可选带截图 base64，OCR 用）
@@ -52,15 +95,77 @@ def send_message(conv_id: int, body: MessageCreate, db: Session = Depends(get_db
     if body.image:
         msg["image"] = body.image
     state["messages"] = state.get("messages", []) + [msg]
-    # 3. 跑一轮 Agent（完整状态图）
-    out = graph.invoke(state)
-    # 4. 存回数据库（新增消息 + Trace）
-    conv = db.get(Conversation, conv_id)
-    session_service.save_turn(db, conv, out)
-    # 5. 取最新 assistant 回复
-    replies = [m for m in out["messages"] if m["role"] == "assistant"]
-    reply = replies[-1]["content"] if replies else "（无回复）"
-    return MessageReply(conversation_id=conv_id, reply=reply, messages=out["messages"])
+    # 2.5 模型链模式（前端"速度/准确"切换）→ 注入 state，节点据此选链
+    state["model_chain"] = settings.GLM_MODELS_FAST if body.mode == "fast" else settings.GLM_MODELS
+
+    def event_stream():
+        """SSE 生成器：节点事件实时推，done 事件携带最终结果。
+
+        落库策略：**边跑边存**（节点完成即增量落库）——客户端中途断开
+        （刷新/断网）时生成器被 cancel，如果只在 done 落库会静默丢整轮数据；
+        增量落库保证已完成的节点/消息都在库里，断开只丢"还没跑的节点"。
+        save_turn 内部用长度对比只存新增，重复调用幂等。
+        """
+        acc_trace = list(state.get("trace", []))
+        try:
+            for event in _run_agent_stream(state):
+                kind = event[0]
+                if kind == "node":
+                    _, new_traces = event
+                    acc_trace += new_traces
+                    # 增量落库：用户消息 + 已完成的节点 trace 立即持久化
+                    conv = db.get(Conversation, conv_id)
+                    session_service.save_turn(db, conv, {**state, "trace": acc_trace})
+                    yield f"event: node\ndata: {json.dumps({'traces': new_traces}, ensure_ascii=False)}\n\n"
+                else:
+                    _, final, total_ms = event
+                    # 全量落库（补 assistant 消息 + 总耗时 + 业务字段推进）
+                    conv = db.get(Conversation, conv_id)
+                    session_service.save_turn(db, conv, final, total_ms)
+                    # 取最新 assistant 回复；消息带耗时（历史取已存的，本轮新增挂总耗时）
+                    replies = [m for m in final["messages"] if m["role"] == "assistant"]
+                    reply = replies[-1]["content"] if replies else "（无回复）"
+                    n_before = len(state["messages"])
+
+                    def to_out(i, m):
+                        el = m.get("elapsed_ms")
+                        if el is None and m["role"] == "assistant" and i >= n_before:
+                            el = total_ms
+                        return MessageOut(role=m["role"], content=m["content"], elapsed_ms=el)
+
+                    payload = {
+                        "conversation_id": conv_id,
+                        "reply": reply,
+                        "messages": [to_out(i, m).model_dump() for i, m in enumerate(final["messages"])],
+                        "traces": final["trace"],
+                        "elapsed_ms": total_ms,
+                        # 工单最新状态（save_turn 已推进），前端免二次请求
+                        "conversation": {
+                            "id": conv.id,
+                            "user_id": conv.user_id,
+                            "intent": conv.intent,
+                            "status": conv.status,
+                            "ticket_id": conv.ticket_id,
+                        },
+                    }
+                    yield f"event: done\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+        except Exception as e:  # noqa: BLE001 —— Agent 崩溃也不能让用户消息丢
+            # 兜底：至少把用户消息落库（save_turn 幂等，长度对比不会重复），
+            # 并推送明确 error 事件，前端能显示"执行失败"而不是"连接中断"
+            conv = db.get(Conversation, conv_id)
+            session_service.save_turn(db, conv, state)
+            print(f"[api] Agent 执行异常: {type(e).__name__}: {e}")
+            yield f"event: error\ndata: {json.dumps({'message': f'Agent 执行失败（{type(e).__name__}），您的消息已保存'}, ensure_ascii=False)}\n\n"
+            return
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # 强制 nginx 关闭缓冲，否则 SSE 被攒着不推
+        },
+    )
 
 
 @router.get("/{conv_id}/traces", response_model=list[TraceOut])

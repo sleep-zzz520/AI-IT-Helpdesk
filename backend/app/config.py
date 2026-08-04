@@ -18,6 +18,13 @@ class Settings:
             "GLM_MODELS", "glm-4.7-flash,glm-4.6-flash,glm-4.5-flash,glm-4-flash"
         ).split(",") if m.strip()
     ]
+    # 速度优先链（前端可切换）：glm-4-flash 最快但能力最弱，放最前；
+    # 4.7 可用时仍能兜底（游标机制：成功后记住位置，会稳定在最快的模型上）
+    GLM_MODELS_FAST: list[str] = [
+        m.strip() for m in os.getenv(
+            "GLM_MODELS_FAST", "glm-4-flash,glm-4.7-flash,glm-4.5-flash"
+        ).split(",") if m.strip()
+    ]
     # 视觉模型链（OCR 用）
     GLM_VISION_MODELS: list[str] = [
         m.strip() for m in os.getenv("GLM_VISION_MODELS", "glm-4v-flash").split(",") if m.strip()

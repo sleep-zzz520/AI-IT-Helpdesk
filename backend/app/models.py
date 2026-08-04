@@ -43,6 +43,8 @@ class Message(Base):
     conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"))
     role: Mapped[str] = mapped_column(String(16))      # user / assistant / system
     content: Mapped[str] = mapped_column(Text)
+    # 本轮 Agent 回复的总耗时（ms，assistant 消息才有值；可观测性用）
+    elapsed_ms: Mapped[int | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     conversation: Mapped[Conversation] = relationship(back_populates="messages")
@@ -55,6 +57,8 @@ class Trace(Base):
     conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"))
     node: Mapped[str] = mapped_column(String(32))      # 节点名：intent/extract/...
     result: Mapped[dict] = mapped_column(JSON)          # 节点结果（可含 token 消耗等）
+    # 该节点的执行耗时（ms）——执行链路时间线数据源
+    elapsed_ms: Mapped[int | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     conversation: Mapped[Conversation] = relationship(back_populates="traces")

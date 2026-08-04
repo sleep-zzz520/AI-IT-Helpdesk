@@ -22,7 +22,7 @@ def extract_node(state: HelpdeskState) -> dict:
     reply = chat_json([
         {"role": "system", "content": EXTRACT_PROMPT},
         *history,
-    ])
+    ], model_chain=state.get("model_chain"))
 
     # 只更新抽到非空值的字段——避免用空字符串把已收集的信息覆盖掉
     updates = {k: v.strip() for k, v in reply.items() if isinstance(v, str) and v.strip()}

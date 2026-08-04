@@ -1,3 +1,6 @@
+import { Timer } from '@phosphor-icons/react'
+import { fmtDuration } from '../format'
+
 // 工单状态 → 徽章（语义色 + 文字，仅状态处使用）
 const STATUS_META = {
   open:     { label: '处理中', color: 'var(--accent)' },
@@ -111,6 +114,9 @@ function describe(node, result) {
   }
 }
 
+// 执行中占位节点的友好名称（App.jsx 预置 pending trace 用）
+const PENDING_LABEL = { intent: '意图识别', extract: '信息抽取' }
+
 const TONE_COLOR = {
   accent: 'var(--accent)',
   success: 'var(--success)',
@@ -126,7 +132,10 @@ function FlowTimeline({ traces }) {
   return (
     <ol className="relative">
       {traces.map((t, i) => {
-        const meta = describe(t.node, t.result)
+        // pending = 已预置但还没执行完的节点（App.jsx 发送时立即塞入，SSE 完成后替换）
+        const meta = t.pending
+          ? { label: PENDING_LABEL[t.node] || t.node, type: 'AI', summary: null, tone: 'accent' }
+          : describe(t.node, t.result)
         const isLatest = i === traces.length - 1
         return (
           <li key={i} className="relative flex gap-3 pb-4 last:pb-0">
@@ -134,9 +143,9 @@ function FlowTimeline({ traces }) {
             {i < traces.length - 1 && (
               <span className="absolute left-[5px] top-4 bottom-0 w-px" style={{ background: 'var(--border-strong)' }} />
             )}
-            {/* 节点圆点（状态色） */}
+            {/* 节点圆点（状态色；pending 用呼吸动画表示执行中） */}
             <span
-              className="relative z-10 mt-1.5 h-[11px] w-[11px] shrink-0 rounded-full"
+              className={`relative z-10 mt-1.5 h-[11px] w-[11px] shrink-0 rounded-full ${t.pending ? 'animate-pulse' : ''}`}
               style={{
                 background: isLatest ? TONE_COLOR[meta.tone] : 'var(--surface)',
                 border: `2px solid ${TONE_COLOR[meta.tone]}`,
@@ -151,16 +160,31 @@ function FlowTimeline({ traces }) {
                 >
                   {meta.label}
                 </span>
-                <span
-                  className="mono shrink-0 rounded border px-1.5 py-px text-[10px]"
-                  style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
-                >
-                  {meta.type}
+                <span className="flex shrink-0 items-center gap-1.5">
+                  {/* 节点耗时（阶段时间）；执行中不显示 */}
+                  {!t.pending && t.elapsed_ms != null && (
+                    <span className="mono flex items-center gap-0.5 text-[10px] text-[var(--text-secondary)]">
+                      <Timer size={11} weight="regular" />
+                      {fmtDuration(t.elapsed_ms)}
+                    </span>
+                  )}
+                  <span
+                    className="mono shrink-0 rounded border px-1.5 py-px text-[10px]"
+                    style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+                  >
+                    {meta.type}
+                  </span>
                 </span>
               </div>
-              <p className="mt-0.5 text-[11px] leading-snug" style={{ color: TONE_COLOR[meta.tone] }}>
-                {meta.summary}
-              </p>
+              {t.pending ? (
+                <p className="mt-0.5 animate-pulse text-[11px]" style={{ color: 'var(--accent)' }}>
+                  执行中…
+                </p>
+              ) : (
+                <p className="mt-0.5 text-[11px] leading-snug" style={{ color: TONE_COLOR[meta.tone] }}>
+                  {meta.summary}
+                </p>
+              )}
             </div>
           </li>
         )

@@ -18,21 +18,31 @@ def create_conversation(db: Session, user_id: str) -> Conversation:
     return conv
 
 
-def save_turn(db: Session, conv: Conversation, state: dict) -> None:
+def save_turn(db: Session, conv: Conversation, state: dict, elapsed_ms: int | None = None) -> None:
     """把这一轮【新增】的消息和 Trace 追加进库。
 
     用"长度对比"只存新增部分：messages/trace 都是 append-only，
     已存 N 条，state 里第 N 条之后的才是本轮新增。
+    elapsed_ms：本轮 Agent 总耗时，挂在本轮新增的 assistant 消息上。
+
+    约束：**同一会话需串行调用**（前端 sending 状态已挡单页连点）。
+    并发多请求下长度对比基于各自 Session 快照，可能重复追加（罕见场景，
+    演示项目不引入行锁；生产可换 SELECT ... FOR UPDATE 串行化）。
     """
     new_msgs = state.get("messages", [])[len(conv.messages):]
     for m in new_msgs:
         # 图片消息不落库 base64（占空间）：内容标记 [图片]，OCR 结果已进 error_code
         content = "[图片] " + m["content"] if m.get("image") else m["content"]
-        conv.messages.append(Message(role=m["role"], content=content))
+        conv.messages.append(Message(
+            role=m["role"], content=content,
+            elapsed_ms=elapsed_ms if m["role"] == "assistant" else None,
+        ))
 
     new_traces = state.get("trace", [])[len(conv.traces):]
     for t in new_traces:
-        conv.traces.append(Trace(node=t["node"], result=t["result"]))
+        conv.traces.append(Trace(
+            node=t["node"], result=t["result"], elapsed_ms=t.get("elapsed_ms"),
+        ))
 
     # 会话级字段：intent 复用、业务字段落库、工单状态推进
     conv.intent = state.get("intent", conv.intent)
@@ -54,8 +64,14 @@ def load_state(db: Session, conv_id: int) -> dict:
         raise ValueError(f"会话不存在: {conv_id}")
 
     state = {
-        "messages": [{"role": m.role, "content": m.content} for m in conv.messages],
-        "trace": [{"node": t.node, "result": t.result} for t in conv.traces],
+        "messages": [
+            {"role": m.role, "content": m.content, "elapsed_ms": m.elapsed_ms}
+            for m in conv.messages
+        ],
+        "trace": [
+            {"node": t.node, "result": t.result, "elapsed_ms": t.elapsed_ms}
+            for t in conv.traces
+        ],
     }
     # 会话级字段必须完整重建，漏一个 = Agent 失忆
     if conv.user_id:

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Image as ImageIcon, X } from '@phosphor-icons/react'
+import { Clock, Image as ImageIcon, X } from '@phosphor-icons/react'
+import { fmtDuration } from '../format'
 
 // 压缩图片：手机截图常 2-5MB，视觉接口有大小限制，必须先压缩（Canvas）
 function compressImage(file, maxSize = 1280, quality = 0.8) {
@@ -93,6 +94,13 @@ export default function ChatPanel({ messages, sending, error, onSend }) {
                 style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
               >
                 {m.content}
+                {/* Agent 本轮回复的总耗时（毫秒 → 可读格式） */}
+                {m.elapsed_ms != null && (
+                  <div className="mono mt-1.5 flex items-center gap-1 border-t pt-1.5 text-[10px] text-[var(--text-secondary)]" style={{ borderColor: 'var(--border)' }}>
+                    <Clock size={11} weight="regular" />
+                    总耗时 {fmtDuration(m.elapsed_ms)}
+                  </div>
+                )}
               </div>
             </div>
           ) : (
