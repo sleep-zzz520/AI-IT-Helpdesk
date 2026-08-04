@@ -19,6 +19,7 @@ from app.agents.nodes.handoff import handoff_node
 from app.agents.nodes.intent import intent_node
 from app.agents.nodes.kb import kb_node
 from app.agents.nodes.risk import risk_node
+from app.agents.nodes.safe import safe
 from app.agents.nodes.verify import verify_node
 from app.agents.scenarios import SCENARIOS, validate_scenarios
 from app.agents.state import HelpdeskState
@@ -32,10 +33,9 @@ def should_ask_or_proceed(state: HelpdeskState) -> str:
 
 
 def route_after_intent(state: HelpdeskState) -> str:
-    """条件边①·前置：intent 之后——active 场景才继续业务流，否则直接收尾。
-
-    数据驱动：场景是否继续，由 SCENARIOS 的 status 决定，不用改代码。
-    """
+    """条件边①·前置：intent 之后——系统异常/非 active 场景直接收尾转人工。"""
+    if state.get("error"):
+        return "handoff"  # LLM 彻底失败：兜底转人工（不 500）
     sc = SCENARIOS.get(state.get("intent"))
     if sc and sc.get("status") == "active":
         return "extract"
@@ -66,7 +66,7 @@ def build_graph():
     validate_scenarios()  # 启动校验：场景配置完整性（防遗漏）
     g = StateGraph(HelpdeskState)
 
-    g.add_node("intent", intent_node)
+    g.add_node("intent", safe(intent_node))  # 异常兜底：LLM 失败 → error → 转人工
     g.add_node("extract", extract_node)
     g.add_node("check", check_node)
     g.add_node("ask", ask_node)
@@ -79,8 +79,9 @@ def build_graph():
     g.add_node("finalize", finalize_node)
 
     g.set_entry_point("intent")
-    # intent 后路由：vpn 才继续业务流；其他意图直接收尾（防误触流程）
+    # intent 后路由：异常→handoff；active 场景继续；其他收尾
     g.add_conditional_edges("intent", route_after_intent, {
+        "handoff": "handoff",
         "extract": "extract",
         "finalize": "finalize",
     })

@@ -11,7 +11,10 @@ def handoff_node(state: HelpdeskState) -> dict:
     kb = state.get("kb_match", {})
     tr = state.get("tool_result", {})
 
-    if tr.get("status") == "error":
+    if state.get("error"):
+        # 系统异常兜底（LLM 彻底失败等）——最优先，与业务原因区分
+        reason = f"系统处理异常：{state['error']}"
+    elif tr.get("status") == "error":
         reason = f"操作执行失败：{tr.get('reason')}"
     elif kb.get("matched"):
         reason = f"方案「{kb.get('solution')}」风险等级为 {kb.get('risk')}，需人工审批"
