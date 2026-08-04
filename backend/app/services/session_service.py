@@ -34,8 +34,11 @@ def save_turn(db: Session, conv: Conversation, state: dict) -> None:
     for t in new_traces:
         conv.traces.append(Trace(node=t["node"], result=t["result"]))
 
-    # 会话级字段：intent 复用、工单状态推进
+    # 会话级字段：intent 复用、业务字段落库、工单状态推进
     conv.intent = state.get("intent", conv.intent)
+    for field in ("device", "error_code", "username"):
+        if state.get(field):
+            setattr(conv, field, state[field])
     conv.ticket_id = state.get("ticket_id", conv.ticket_id)
     if state.get("risk_level") == "human":
         conv.status = "handoff"
@@ -59,6 +62,9 @@ def load_state(db: Session, conv_id: int) -> dict:
         state["user_id"] = conv.user_id
     if conv.intent:
         state["intent"] = conv.intent
+    for field in ("device", "error_code", "username"):
+        if getattr(conv, field, None):
+            state[field] = getattr(conv, field)
     if conv.ticket_id:
         state["ticket_id"] = conv.ticket_id
     return state

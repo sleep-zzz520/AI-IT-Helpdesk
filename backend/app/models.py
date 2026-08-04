@@ -21,6 +21,10 @@ class Conversation(Base):
     user_id: Mapped[str] = mapped_column(String(64))
     # 会话级状态：intent 判定一次后复用（见优化文档「意图是会话级状态」）
     intent: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # 业务字段必须持久化：图片等不可重抽来源的信息，落库才能跨轮记忆
+    device: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    error_code: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    username: Mapped[str | None] = mapped_column(String(64), nullable=True)
     # 工单状态：open（进行中）/ resolved（已解决）/ handoff（转人工）
     status: Mapped[str] = mapped_column(String(16), default="open")
     ticket_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
