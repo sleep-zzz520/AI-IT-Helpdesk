@@ -1,5 +1,7 @@
-// 后端 API 封装（fetch）。BASE 指向 FastAPI 服务。
-const BASE = 'http://127.0.0.1:8000';
+// 后端 API 封装（fetch）。
+// BASE 用相对路径（同源）——本地开发由 vite proxy 转发，Docker 由 nginx 反代，
+// 代码零差异（生产标准做法：不用写死地址、无 CORS 问题）。
+const BASE = import.meta.env.VITE_API_BASE || '';
 
 async function request(path, options) {
   let resp;

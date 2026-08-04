@@ -1,0 +1,8 @@
+# 不进入镜像的内容（构建上下文精简 + 安全）
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+tests/
+scripts/

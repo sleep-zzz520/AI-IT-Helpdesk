@@ -1,0 +1,53 @@
+# 一键部署：mysql + backend + frontend(nginx)
+# 用法：docker compose up -d --build
+# 访问：http://localhost:8080
+
+services:
+  mysql:
+    # 国内网络用加速源（网络正常可改回 mysql:8.0）
+    image: docker.m.daocloud.io/library/mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      MYSQL_DATABASE: ${MYSQL_DB:-it_helpdesk}
+      MYSQL_USER: ${MYSQL_USER:-helpdesk}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请在 .env 配置 MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root123}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks: [app]
+
+  backend:
+    build: ./backend
+    environment:
+      ZHIPU_API_KEY: ${ZHIPU_API_KEY:?请在 .env 配置 ZHIPU_API_KEY}
+      GLM_BASE_URL: ${GLM_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
+      GLM_MODEL: ${GLM_MODEL:-glm-4.7-flash}
+      GLM_VISION_MODEL: ${GLM_VISION_MODEL:-glm-4v-flash}
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${MYSQL_USER:-helpdesk}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请在 .env 配置 MYSQL_PASSWORD}
+      MYSQL_DB: ${MYSQL_DB:-it_helpdesk}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [app]
+    # 不暴露端口：只经 nginx 反代（内部服务）
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks: [app]
+
+volumes:
+  mysql_data:
+
+networks:
+  app:
