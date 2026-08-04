@@ -17,5 +17,5 @@ def ask_node(state: HelpdeskState) -> dict:
     question = "；".join(ASK_TEMPLATE[f] for f in state["missing_info"])
     return {
         "messages": state["messages"] + [{"role": "assistant", "content": question}],
-        "trace": state["trace"] + [{"node": "ask", "result": {"question": question}}],
+        "trace": [{"node": "ask", "result": {"question": question}}],
     }

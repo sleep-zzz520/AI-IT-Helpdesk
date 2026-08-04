@@ -14,7 +14,7 @@ def execute_node(state: HelpdeskState) -> dict:
     result = execute_action(action, user_id)
     return {
         "tool_result": result,
-        "trace": state["trace"] + [{
+        "trace": [{
             "node": "execute",
             "result": {"action": action, "user_id": user_id, "tool_result": result},
         }],

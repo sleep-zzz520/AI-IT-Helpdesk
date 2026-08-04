@@ -29,7 +29,7 @@ def risk_node(state: HelpdeskState) -> dict:
 
     return {
         "risk_level": decision,  # auto / human
-        "trace": state["trace"] + [{
+        "trace": [{
             "node": "risk",
             "result": {"decision": decision, "reason": reason},
         }],

@@ -14,7 +14,7 @@ def safe(fn: Callable) -> Callable:
         except Exception as e:  # noqa: BLE001 —— 兜底必须捕获一切
             return {
                 "error": f"{type(e).__name__}: {e}",
-                "trace": state.get("trace", []) + [{
+                "trace": [{
                     "node": "error",
                     "result": {"error": str(e)},
                 }],

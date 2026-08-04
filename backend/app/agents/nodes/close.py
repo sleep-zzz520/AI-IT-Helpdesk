@@ -21,7 +21,7 @@ def close_node(state: HelpdeskState) -> dict:
     return {
         "messages": state["messages"] + [{"role": "assistant", "content": reply}],
         "ticket_id": ticket_id,
-        "trace": state["trace"] + [{
+        "trace": [{
             "node": "close",
             "result": {"ticket_id": ticket_id, "status": "resolved"},
         }],

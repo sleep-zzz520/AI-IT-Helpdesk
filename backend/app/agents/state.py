@@ -2,14 +2,19 @@
 
 状态就是一个「流水账本」：每个节点读自己需要的字段，
 返回自己负责更新的字段，LangGraph 负责合并。
+
+注意 trace 用了 reducer（Annotated[list, add]）：
+并行节点（intent∥extract）各自只返回【新增】的 trace 记录，
+由 reducer 自动累积，避免并行写入互相覆盖。
 """
-from typing import TypedDict
+from operator import add
+from typing import Annotated, TypedDict
 
 
 class HelpdeskState(TypedDict):
     # 对话历史（[{role: user/assistant, content: str}]）
     messages: list[dict]
-    # 意图分类结果：vpn / other
+    # 意图分类结果：vpn / password / other（会话级，判定一次后复用）
     intent: str
     # 还缺哪些信息（多轮追问用）
     missing_info: list[str]
@@ -25,11 +30,11 @@ class HelpdeskState(TypedDict):
     cert_status: dict
     # 知识库匹配结果
     kb_match: dict
-    # 风险等级：low / high
+    # 风险决策：auto / human
     risk_level: str
     # Tool 执行结果
     tool_result: dict
-    # 全链路 Trace 记录（每个节点追加一条）
-    trace: list[dict]
+    # 全链路 Trace 记录：reducer 累积，节点只返回新增记录
+    trace: Annotated[list[dict], add]
     # 工单号
     ticket_id: str

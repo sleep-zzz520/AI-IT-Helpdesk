@@ -26,5 +26,5 @@ def finalize_node(state: HelpdeskState) -> dict:
 
     return {
         "messages": state["messages"] + [{"role": "assistant", "content": reply}],
-        "trace": state["trace"] + [{"node": "finalize", "result": {"reply": reply}}],
+        "trace": [{"node": "finalize", "result": {"reply": reply}}],
     }

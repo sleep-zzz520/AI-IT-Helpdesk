@@ -1,10 +1,12 @@
 """LangGraph 状态图编排：把节点串成流程。
 
-流程：intent → extract → check ──缺信息──▶ ask（等用户回答）
-                                └─信息齐──▶ verify（③查证）
+首轮并行：parallel（intent ∥ extract）——两个 LLM 调用并发发出，耗时 sum→max。
+parallel 后路由：异常→handoff；非 active 场景→finalize；active 场景→check。
+check ──缺信息──▶ ask（等用户回答）
+      └─信息齐──▶ verify（③查证）
 verify 之后按你的树状设计三分支：
   ├─ 查询失败 ──▶ finalize（回复失败，转人工）──▶ END
-  ├─ 成功+过期 ──▶ ④知识库匹配（下一轮开发，先 END 占位）
+  ├─ 成功+过期 ──▶ ④知识库匹配 → risk → execute → close
   └─ 成功+未过期 ──▶ finalize（回复证书正常）──▶ END
 """
 from langgraph.graph import END, StateGraph
@@ -13,11 +15,10 @@ from app.agents.nodes.ask import ask_node
 from app.agents.nodes.check import check_node
 from app.agents.nodes.close import close_node
 from app.agents.nodes.execute import execute_node
-from app.agents.nodes.extract import extract_node
 from app.agents.nodes.finalize import finalize_node
 from app.agents.nodes.handoff import handoff_node
-from app.agents.nodes.intent import intent_node
 from app.agents.nodes.kb import kb_node
+from app.agents.nodes.parallel import parallel_round_node
 from app.agents.nodes.risk import risk_node
 from app.agents.nodes.safe import safe
 from app.agents.nodes.verify import verify_node
@@ -32,13 +33,13 @@ def should_ask_or_proceed(state: HelpdeskState) -> str:
     return "verify"
 
 
-def route_after_intent(state: HelpdeskState) -> str:
-    """条件边①·前置：intent 之后——系统异常/非 active 场景直接收尾转人工。"""
+def route_after_parallel(state: HelpdeskState) -> str:
+    """条件边①·前置：并行节点之后——系统异常/非 active 场景直接收尾转人工。"""
     if state.get("error"):
         return "handoff"  # LLM 彻底失败：兜底转人工（不 500）
     sc = SCENARIOS.get(state.get("intent"))
     if sc and sc.get("status") == "active":
-        return "extract"
+        return "check"
     return "finalize"  # other / coming 场景：收尾（转人工话术）
 
 
@@ -48,7 +49,7 @@ def route_after_verify(state: HelpdeskState) -> str:
     if cs.get("status") == "error":
         return "fail"       # 查询失败 → 终止
     if cs.get("expired"):
-        return "expired"    # 已过期 → 进④（下一轮接知识库匹配）
+        return "expired"    # 已过期 → 进④
     return "valid"          # 未过期 → 终止
 
 
@@ -66,8 +67,7 @@ def build_graph():
     validate_scenarios()  # 启动校验：场景配置完整性（防遗漏）
     g = StateGraph(HelpdeskState)
 
-    g.add_node("intent", safe(intent_node))  # 异常兜底：LLM 失败 → error → 转人工
-    g.add_node("extract", extract_node)
+    g.add_node("parallel", safe(parallel_round_node))  # 并行调度 + 异常兜底
     g.add_node("check", check_node)
     g.add_node("ask", ask_node)
     g.add_node("verify", verify_node)
@@ -78,14 +78,13 @@ def build_graph():
     g.add_node("handoff", handoff_node)
     g.add_node("finalize", finalize_node)
 
-    g.set_entry_point("intent")
-    # intent 后路由：异常→handoff；active 场景继续；其他收尾
-    g.add_conditional_edges("intent", route_after_intent, {
+    g.set_entry_point("parallel")
+    # parallel 后路由：异常→handoff；active 场景→check；其他→收尾
+    g.add_conditional_edges("parallel", route_after_parallel, {
         "handoff": "handoff",
-        "extract": "extract",
+        "check": "check",
         "finalize": "finalize",
     })
-    g.add_edge("extract", "check")
     g.add_conditional_edges("check", should_ask_or_proceed, {
         "ask": "ask",
         "verify": "verify",

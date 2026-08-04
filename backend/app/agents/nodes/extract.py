@@ -34,5 +34,5 @@ def extract_node(state: HelpdeskState) -> dict:
         if code:
             updates["error_code"] = code
 
-    updates["trace"] = state["trace"] + [{"node": "extract", "result": reply}]
+    updates["trace"] = [{"node": "extract", "result": reply}]
     return updates

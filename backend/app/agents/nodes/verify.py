@@ -22,7 +22,7 @@ def verify_node(state: HelpdeskState) -> dict:
 
     return {
         "cert_status": result,
-        "trace": state["trace"] + [{
+        "trace": [{
             "node": "verify",
             "result": {"verify_tool": tool_name, "user_id": user_id, "cert_status": result},
         }],

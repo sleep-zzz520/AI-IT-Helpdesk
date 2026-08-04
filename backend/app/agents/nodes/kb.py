@@ -14,7 +14,7 @@ def kb_node(state: HelpdeskState) -> dict:
     result = match_solution(scenario, error_code, cert_expired)
     return {
         "kb_match": result,
-        "trace": state["trace"] + [{
+        "trace": [{
             "node": "kb",
             "result": {"scenario": scenario, "error_code": error_code, "cert_expired": cert_expired, "kb_match": result},
         }],

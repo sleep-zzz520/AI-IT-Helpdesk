@@ -29,7 +29,7 @@ def intent_node(state: HelpdeskState) -> dict:
     意图是【会话级】判断：一旦定下，后续轮次直接复用，不再重复调 AI。
     """
     if state.get("intent"):
-        return {"trace": state["trace"] + [{
+        return {"trace": [{
             "node": "intent",
             "result": {"reused": state["intent"]},
         }]}
@@ -46,7 +46,7 @@ def intent_node(state: HelpdeskState) -> dict:
         intent = "other"
     return {
         "intent": intent,
-        "trace": state["trace"] + [{
+        "trace": [{
             "node": "intent",
             "result": reply,
         }],

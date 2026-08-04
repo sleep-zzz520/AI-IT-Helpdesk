@@ -24,5 +24,5 @@ def handoff_node(state: HelpdeskState) -> dict:
     reply = f"⚠️ {reason}。您的工单已转人工处理，请留意后续通知。"
     return {
         "messages": state["messages"] + [{"role": "assistant", "content": reply}],
-        "trace": state["trace"] + [{"node": "handoff", "result": {"reply": reply}}],
+        "trace": [{"node": "handoff", "result": {"reply": reply}}],
     }

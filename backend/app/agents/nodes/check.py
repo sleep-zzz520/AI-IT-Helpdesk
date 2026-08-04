@@ -12,5 +12,5 @@ def check_node(state: HelpdeskState) -> dict:
     missing = [field for field in required if not state.get(field)]
     return {
         "missing_info": missing,
-        "trace": state["trace"] + [{"node": "check", "result": {"missing": missing}}],
+        "trace": [{"node": "check", "result": {"missing": missing}}],
     }
