@@ -35,6 +35,6 @@ def health():
     """健康检查：确认服务、模型配置、数据库配置都就位。"""
     return {
         "status": "ok",
-        "model": settings.GLM_MODEL,
+        "model": settings.GLM_MODELS[0],  # 主模型（链首）
         "db": settings.MYSQL_DB,
     }

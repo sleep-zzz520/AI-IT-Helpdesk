@@ -25,8 +25,8 @@ services:
     environment:
       ZHIPU_API_KEY: ${ZHIPU_API_KEY:?请在 .env 配置 ZHIPU_API_KEY}
       GLM_BASE_URL: ${GLM_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
-      GLM_MODEL: ${GLM_MODEL:-glm-4.7-flash}
-      GLM_VISION_MODEL: ${GLM_VISION_MODEL:-glm-4v-flash}
+      GLM_MODELS: ${GLM_MODELS:-glm-4.7-flash,glm-4.6-flash,glm-4.5-flash,glm-4-flash}
+      GLM_VISION_MODELS: ${GLM_VISION_MODELS:-glm-4v-flash}
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
       MYSQL_USER: ${MYSQL_USER:-helpdesk}
