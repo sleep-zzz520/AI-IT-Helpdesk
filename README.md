@@ -1,5 +1,7 @@
 # 智能IT运维服务台（AI IT Helpdesk）
 
+[![CI](https://github.com/sleep-zzz520/AI-IT-Helpdesk/actions/workflows/ci.yml/badge.svg)](https://github.com/sleep-zzz520/AI-IT-Helpdesk/actions/workflows/ci.yml)
+
 > 企业级 IT 运维服务台：用 **LangGraph 状态机** 编排 Agent，将 L1 重复工单（如 VPN 证书续期）从「45 分钟人工介入」压缩到「**2 分钟全自动闭环**」。
 
 ## 痛点与解法
@@ -178,6 +180,19 @@ faithfulness=0.905 / answer_relevancy=0.777
 ```
 
 用例设计：正例变体（测泛化）+ 密码/邮箱/软件场景 + 干扰项（测不误判）+ 边界（询问≠故障）；全部报告落盘 `tests/*.json`（含影子测试 `shadow_report.json`）。
+
+## CI/CD（GitHub Actions）
+
+**分层设计**：把「工程可信度」和「真实 Eval」分开，主流程不因外部依赖而红。
+
+| 工作流 | 触发 | 依赖 | 跑什么 |
+|---|---|---|---|
+| [CI](.github/workflows/ci.yml) | push / PR | 零密钥、零数据库 | 后端全模块语法检查 + import 冒烟；前端 `npm ci` → lint → build |
+| [Eval](.github/workflows/eval.yml) | 手动触发 | `ZHIPU_API_KEY` + MySQL | 四份 Eval（intent / rag / qa / transcribe）+ 报告上传 |
+
+- **CI**：任何 commit 都自动验证「工程可信度」（改坏一个 import / 前端 build 挂了立刻红），不依赖真实模型，免费稳定。
+- **Eval**：四份真实 Eval 依赖 GLM（免费但限流）+ MySQL，故走 `workflow_dispatch` 手动触发；需在仓库 `Settings → Secrets` 配置 `ZHIPU_API_KEY`。跑完上传四份 `*_report.json`，可用于复盘和 README 贴分。
+- 为什么分开：真实 Eval 每次跑都要花钱/等限流，混进主流程会让 CI 频繁红，违背"每次提交都安心"的初衷。
 
 ## 设计决策
 

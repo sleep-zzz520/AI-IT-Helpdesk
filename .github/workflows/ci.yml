@@ -1,0 +1,91 @@
+# =====================================================================
+# 主 CI：任何 push / PR 都自动验证「工程可信度」
+#
+# 原则（对应 ROADMAP P3.1「工程可信度优先」）：
+#   - 零密钥、零数据库：不依赖 ZHIPU_API_KEY，不启动 MySQL
+#   - 每个 commit 都有自动验证，加功能更安心
+#   - 真实 Eval（intent/qa/rag/transcribe）依赖 GLM + MySQL，
+#     放 eval.yml 手动触发，不污染日常主流程
+#
+# 后端检查策略：
+#   1. ast 语法检查：全模块 parse（不 import，避免触发 GLM client 校验）
+#   2. import 冒烟：用占位 key 加载核心模块 + graph，验证装配正确
+#      （无真实调用，placeholder key 只让 OpenAI client 通过空 key 校验）
+# =====================================================================
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (syntax + import smoke)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Syntax check (ast parse all modules)
+        run: |
+          python - <<'EOF'
+          import ast, glob
+          files = glob.glob("app/**/*.py", recursive=True)
+          assert files, "no python files found"
+          for f in files:
+              ast.parse(open(f, encoding="utf-8").read())
+          print(f"OK: {len(files)} python files syntax valid")
+          EOF
+
+      - name: Import smoke (placeholder key, no real GLM call)
+        run: |
+          ZHIPU_API_KEY="ci-placeholder" python - <<'EOF'
+          import app.agents.graph
+          from app import config
+          assert app.agents.graph.graph is not None, "graph assembly failed"
+          assert config.settings.ZHIPU_API_KEY == "ci-placeholder"
+          print("core modules + langgraph graph import OK")
+          EOF
+
+  frontend:
+    name: Frontend (build + lint)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          if-no-files-found: error

@@ -1,0 +1,114 @@
+# =====================================================================
+# Eval 工作流：真实 GLM + MySQL 环境下跑四份评估报告
+#
+# 为什么独立于主 CI（ci.yml）：
+#   - 四份 Eval（intent/qa/rag/transcribe）依赖真实 GLM 调用 + MySQL
+#   - 需要 ZHIPU_API_KEY secrets；免费模型有频率限制，跑起来不稳定
+#   - 主 CI 坚持"零密钥零数据库"（任何 commit 都能快速通过），
+#     真实 Eval 走【手动触发】，需要时手动跑，产出报告数据
+#
+# 用法：
+#   GitHub → Actions → Eval → Run workflow
+#   前提：仓库 Settings → Secrets → 配置 ZHIPU_API_KEY
+#   产出：四份 report json 作为 artifacts，可下载贴进 README
+#
+# 注意：qa/rag eval 会真实调用 embedding（0.5 元/百万 tokens，9 篇文档成本可忽略）；
+#       intent/qa 用 GLM 裁判，免费但限流，脚本内已 sleep 防 429。
+# =====================================================================
+name: Eval
+
+on:
+  workflow_dispatch:
+
+jobs:
+  eval:
+    name: Run 4 evals (intent / rag / qa / transcribe)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: it_helpdesk
+          MYSQL_USER: helpdesk
+          MYSQL_PASSWORD: helpdesk
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: "3306"
+      MYSQL_USER: helpdesk
+      MYSQL_PASSWORD: helpdesk
+      MYSQL_DB: it_helpdesk
+      ZHIPU_API_KEY: ${{ secrets.ZHIPU_API_KEY }}
+      # 蓝绿同库：sync 写候选 = 检索读 active（同一 collection），
+      # 避免 CI 里"sync 写了候选但 eval 读在岗空库"的指针切换问题
+      KB_COLLECTION_BLUE: kb_docs_ci
+      KB_COLLECTION_GREEN: kb_docs_ci
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Verify API key configured
+        run: |
+          if [ -z "$ZHIPU_API_KEY" ]; then
+            echo "::error::ZHIPU_API_KEY secret 未配置。请在 Settings → Secrets → Actions 添加。"
+            exit 1
+          fi
+          echo "API key configured (hidden)"
+
+      - name: Init DB (create tables + migrate + seed)
+        run: python -c "from app.db import init_db; init_db(); print('DB init OK')"
+
+      - name: Sync knowledge base (build vector index + ledger)
+        run: python -m app.rag.sync
+
+      - name: Eval 1/4 — Intent recognition
+        run: python -m tests.eval
+
+      - name: Eval 2/4 — RAG retrieval (Recall@k / MRR)
+        run: python -m tests.rag_eval
+
+      - name: Eval 3/4 — Answer quality (faithfulness / relevancy)
+        run: python -m tests.qa_eval
+
+      - name: Eval 4/4 — Image transcription
+        run: python -m tests.transcribe_eval
+
+      - name: Show reports summary
+        run: |
+          echo "=== intent (report.json) ==="
+          python -c "import json;d=json.load(open('tests/report.json'));print('accuracy=',d.get('accuracy'),'total=',d.get('total'))" || true
+          echo "=== rag (rag_report.json) ==="
+          python -c "import json;d=json.load(open('tests/rag_report.json'));print({k:d.get(k) for k in ('recall@1','recall@3','recall@5','mrr')})" || true
+          echo "=== qa (qa_report.json) ==="
+          python -c "import json;d=json.load(open('tests/qa_report.json'));print({k:d.get(k) for k in ('faithfulness_avg','answer_relevancy_avg','multihop_cases')})" || true
+          echo "=== transcribe (transcribe_report.json) ==="
+          python -c "import json;d=json.load(open('tests/transcribe_report.json'));print({k:d.get(k) for k in ('error_code_acc','scene_acc','key_texts_coverage','summary_nonempty_rate')})" || true
+
+      - name: Upload eval reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-reports
+          path: backend/tests/*_report.json
+          if-no-files-found: error
