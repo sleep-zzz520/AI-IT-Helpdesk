@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { Database } from '@phosphor-icons/react'
 import { createConversation, sendMessageStream } from './api'
 import ChatPanel from './components/ChatPanel'
+import KbManager from './components/KbManager'
 import SidePanel from './components/SidePanel'
 
 const USER_ID = 'zhangsan'
@@ -13,6 +15,7 @@ export default function App() {
   const [error, setError] = useState(null)
   const [lastElapsed, setLastElapsed] = useState(null)  // 本轮 Agent 总耗时（链路区顶部展示）
   const [tab, setTab] = useState('chat')      // 移动端：对话 / 面板切换
+  const [view, setView] = useState('chat')    // 视图：chat 工作台 / kb 知识库管理
   // 会话代际：开新会话 +1，旧会话进行中的 SSE 请求完成后检测到代际过期就丢弃结果，
   // 避免旧回复污染新会话（异步竞态：用户回复期间开新会话）
   const genRef = useRef(0)
@@ -134,6 +137,21 @@ export default function App() {
             ))}
           </div>
           <button
+            onClick={() => setView(view === 'kb' ? 'chat' : 'kb')}
+            className={`press flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors ${
+              view === 'kb' ? 'font-medium' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+            style={{
+              borderColor: 'var(--border-strong)',
+              background: view === 'kb' ? 'var(--accent-dim)' : 'transparent',
+              color: view === 'kb' ? 'var(--accent)' : undefined,
+            }}
+            title="知识库台账 / 蓝绿切换 / 检索调试 / 反馈分析"
+          >
+            <Database size={13} />
+            {view === 'kb' ? '返回工作台' : '知识库管理'}
+          </button>
+          <button
             onClick={handleNew}
             className="press rounded-lg border px-3 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
             style={{ borderColor: 'var(--border-strong)' }}
@@ -143,7 +161,15 @@ export default function App() {
         </div>
       </header>
 
-      {/* 移动端 tab 切换 */}
+      {/* 知识库管理视图（全屏独立页） */}
+      {view === 'kb' ? (
+        <main className="min-h-0 flex-1">
+          <KbManager />
+        </main>
+      ) : (
+      // 移动端 tab 切换 + 主工作台（包 div：三元分支内只能有一个根元素；
+      // 注意：括号内不能用 {/* */} 注释——会被解析成空对象字面量，踩过的坑）
+      <div className="flex min-h-0 flex-1 flex-col">
       <nav className="flex border-b lg:hidden" style={{ borderColor: 'var(--border)' }}>
         {[['chat', '对话'], ['panel', '工单 / Trace']].map(([key, label]) => (
           <button
@@ -174,6 +200,8 @@ export default function App() {
           <SidePanel conv={conv} traces={traces} elapsedMs={lastElapsed} />
         </aside>
       </main>
+      </div>
+      )}
     </div>
   )
 }

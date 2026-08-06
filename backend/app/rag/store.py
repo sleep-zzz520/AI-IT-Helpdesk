@@ -41,6 +41,10 @@ class VectorStore(ABC):
         """删除一篇文档的全部 chunk（定点修正/删除用）。返回删除条数。"""
 
     @abstractmethod
+    def get_doc_ids(self, doc_id: str) -> list[str]:
+        """按 doc_id 取全部 chunk id（目标库存在性判断/幂等补写用）。"""
+
+    @abstractmethod
     def query(self, vector: list[float], top_k: int,
               where: dict | None = None) -> list[Hit]:
         """按向量检索 top_k 条；where 是 metadata 过滤（AND 语义）。"""
@@ -87,12 +91,15 @@ class ChromaStore(VectorStore):
         )
 
     def delete_by_doc_id(self, doc_id: str) -> int:
-        # where 只支持等于匹配：先查出该 doc_id 的全部 id，再按 id 删
-        got = self._col.get(where={"doc_id": doc_id})
-        ids = got.get("ids") or []
+        ids = self.get_doc_ids(doc_id)
         if ids:
             self._col.delete(ids=ids)
         return len(ids)
+
+    def get_doc_ids(self, doc_id: str) -> list[str]:
+        # where 只支持等于匹配：按 doc_id 查（幂等补写/删除共用）
+        got = self._col.get(where={"doc_id": doc_id})
+        return got.get("ids") or []
 
     def query(self, vector: list[float], top_k: int,
               where: dict | None = None) -> list[Hit]:
@@ -151,10 +158,14 @@ class ChromaStore(VectorStore):
             name=self._col.name, metadata={"hnsw:space": "cosine"})
 
 
-def create_store() -> VectorStore:
+def create_store(collection_name: str | None = None) -> VectorStore:
     """工厂：按配置返回实现（未来 MILVUS_ENABLED=true 时换 MilvusStore）。
 
     sync / retriever 只 import 这个工厂，不直接依赖 ChromaStore。
+
+    collection_name：
+    - 不传 → 当前 active collection（检索/查询默认打"在岗"库）
+    - 传候选 collection（蓝绿切换）→ sync 写入目标，线上零感知
     """
     return ChromaStore(persist_dir=settings.KB_VECTOR_DIR,
-                       collection_name=settings.KB_COLLECTION)
+                       collection_name=collection_name or settings.active_collection)

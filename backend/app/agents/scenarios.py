@@ -28,7 +28,9 @@ SCENARIOS = {
         "name": "密码问题",
         "status": "coming",
         "required_fields": ["username"],
-        "keywords": ["密码", "忘记", "重置", "过期"],
+        # 注意：不要加"过期"——"证书过期"会同时命中 vpn(证书)+password(过期)
+        # 导致拼写纠错/多问题检测被判歧义（踩过："证书过期导致连不上VPN" 判 other）
+        "keywords": ["密码", "忘记", "重置"],
         "reply_unsupported": "密码自助服务正在开发中，您的问题已记录并转人工处理，请留意后续通知。",
     },
     "email": {

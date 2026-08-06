@@ -5,18 +5,18 @@
     {
       "name": "vector_only",
       "cases": 10,
-      "recall@1": 1.0,
-      "recall@3": 1.0,
+      "recall@1": 0.6,
+      "recall@3": 0.9,
       "recall@5": 1.0,
-      "mrr": 1.0
+      "mrr": 0.758
     },
     {
       "name": "hybrid",
       "cases": 10,
-      "recall@1": 1.0,
-      "recall@3": 1.0,
+      "recall@1": 0.6,
+      "recall@3": 0.9,
       "recall@5": 1.0,
-      "mrr": 1.0
+      "mrr": 0.758
     }
   ]
 }

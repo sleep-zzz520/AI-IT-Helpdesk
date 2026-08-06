@@ -7,13 +7,83 @@ Phase 3 升级为二维分类：
 - intent：走哪条业务流（vpn/password/email/software/other）
 - request_type：走执行流程还是问答路径（troubleshoot/consult/other）
 一次 LLM 调用同时输出两个维度（与 extract 并行），零额外调用、零额外延迟。
+
+Phase 5 加拼写纠错兜底：LLM 判 other 时，规则层用编辑距离找近似关键词
+（bpn→vpn），避免打字错误直接转人工（详见 _fuzzy_fix_intent）。
 """
+import re
+
 from app.agents.scenarios import SCENARIOS
 from app.agents.state import HelpdeskState
 from app.llm import chat_json
 
 _INTENT_NAMES = " / ".join(list(SCENARIOS) + ["other"])
 _REQUEST_TYPES = "troubleshoot / consult / other"
+
+
+def _levenshtein(a: str, b: str) -> int:
+    """编辑距离（DP）。关键词都很短（<10 字符），成本可忽略。"""
+    if len(a) < len(b):
+        a, b = b, a
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1]
+
+
+# 消息中的「词」（拉丁字母/数字串，中文无空格不分词）
+_WORD_RE = re.compile(r"[a-z0-9]+")
+
+
+def _kw_near(msg: str, w: str) -> str | None:
+    """消息中是否有关键词 w 的近似词（编辑距离 ≤1），返回命中的词。
+
+    - 精确包含：直接命中（LLM 误判 other 但消息里就有关键词，中英文皆可）
+    - 近似：只对【ASCII 词】按词边界匹配——打字错误发生在英文/数字词上
+      （bpn→vpn 替换 / vpvn→vpn 插入 / vn→vpn 删除）
+    - 为什么不做中文近似：中文无空格，"连不上" 与 "装不上" 恰巧距离 1
+      但语义无关（踩过：vpn 命中被判歧义吞掉）。中文只走精确匹配。
+    """
+    if w in msg:
+        return w
+    if not w.isascii() or not any(c.isalpha() for c in w):
+        return None  # 非 ASCII 或纯数字（800）：只精确，不模糊
+    for word in _WORD_RE.findall(msg):
+        if _levenshtein(word, w) <= 1:
+            return word
+    return None
+
+
+def _fuzzy_fix_intent(user_msg: str, llm_intent: str) -> dict | None:
+    """拼写纠错兜底：LLM 判 other 时，规则层找场景关键词的近似词。
+
+    动机：用户把 vpn 打成 bpn，LLM 会判"非支持场景"→ 直接转人工，
+    不合理（打字错误 ≠ 业务不受支持）。编辑距离 ≤1 是"肉眼可识别"
+    的打字错误界限；且只修正"唯一命中"（多场景都近邻 = 歧义，不修）。
+    返回 {"intent": key, "correction": {...}} 或 None（保持 other）。
+    """
+    msg = user_msg.lower()
+    best: list[tuple[str, str]] = []  # (scenario, 命中的词/近似词描述)
+    for key, sc in SCENARIOS.items():
+        for kw in sc["keywords"]:
+            hit = _kw_near(msg, kw.lower())
+            if hit:
+                best.append((key, kw if hit == kw.lower() else f"{kw}≈{hit}"))
+    scenes = {k for k, _ in best}
+    if len(scenes) != 1:
+        return None  # 0 命中（真·寒暄/无关）或歧义（多个场景都近邻）
+    key = scenes.pop()
+    return {
+        "intent": key,
+        "correction": {
+            "from": llm_intent,
+            "to": key,
+            "matched": next(m for k, m in best if k == key),
+        },
+    }
 
 
 def _build_intent_prompt() -> str:
@@ -42,11 +112,16 @@ def intent_node(state: HelpdeskState) -> dict:
     不再重复调 AI（与历史行为一致，request_type 随 intent 一并复用）。
     """
     if state.get("intent"):
-        return {"trace": [{
-            "node": "intent",
-            "result": {"reused": state["intent"],
-                       "request_type": state.get("request_type", "troubleshoot")},
-        }]}
+        # 复用分支同时清除 multi_scenarios：多问题只在首轮检测，
+        # 不清理会残留导致后续轮次每轮都走多问题引导（死循环）
+        return {
+            "multi_scenarios": None,
+            "trace": [{
+                "node": "intent",
+                "result": {"reused": state["intent"],
+                           "request_type": state.get("request_type", "troubleshoot")},
+            }],
+        }
 
     user_msg = state["messages"][-1]["content"]
 
@@ -61,11 +136,45 @@ def intent_node(state: HelpdeskState) -> dict:
     request_type = reply.get("request_type", "troubleshoot")
     if request_type not in ("troubleshoot", "consult", "other"):
         request_type = "troubleshoot"  # 非法值归一化：默认故障（宁多问不漏报障）
+
+    # 拼写纠错兜底：LLM 判 other 时，规则层找近似关键词（bpn→vpn）。
+    # 打字错误 ≠ 业务不受支持，直接转人工不合理——修正后走正常流程。
+    # 兜底在【规则层】而非 LLM：编辑距离确定性可测试，免费模型不稳定。
+    if intent == "other":
+        fix = _fuzzy_fix_intent(user_msg, intent)
+        if fix:
+            intent = fix["intent"]
+            # 场景词通常是报障（"bpn"=想修 VPN）；寒暄判定不再成立
+            if request_type == "other":
+                request_type = "troubleshoot"
+            reply = {**reply, "correction": fix["correction"]}
+
+    # 多问题检测：一条消息含 ≥2 个场景关键词（如 "vpn和密码都连不上"）。
+    # intent 是单一值装不下多个诉求——交给 multi 节点引导逐个描述
+    # （真实客服同样做法；之前这种消息会转人工，不合理）。
+    multi = _detect_multi(user_msg)
+    if multi:
+        reply = {**reply, "multi_scenarios": multi}
+
     return {
         "intent": intent,
         "request_type": request_type,
+        "multi_scenarios": multi,
         "trace": [{
             "node": "intent",
             "result": reply,
         }],
     }
+
+
+def _detect_multi(user_msg: str) -> list[str] | None:
+    """多问题检测：消息里精确命中 ≥2 个不同场景的关键词 → 返回场景列表。
+
+    规则层（与拼写纠错同理）：确定性可测试，不依赖免费模型的分类能力。
+    """
+    msg = user_msg.lower()
+    found: list[str] = []
+    for key, sc in SCENARIOS.items():
+        if any(kw.lower() in msg for kw in sc["keywords"]):
+            found.append(key)
+    return found if len(found) >= 2 else None

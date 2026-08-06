@@ -16,8 +16,10 @@ from app.agents.nodes.check import check_node
 from app.agents.nodes.close import close_node
 from app.agents.nodes.execute import execute_node
 from app.agents.nodes.finalize import finalize_node
+from app.agents.nodes.greeting import greeting_node
 from app.agents.nodes.handoff import handoff_node
 from app.agents.nodes.kb import kb_node
+from app.agents.nodes.multi import multi_node
 from app.agents.nodes.parallel import parallel_round_node
 from app.agents.nodes.rag_query import rag_query_node
 from app.agents.nodes.risk import risk_node
@@ -35,20 +37,32 @@ def should_ask_or_proceed(state: HelpdeskState) -> str:
 
 
 def route_after_parallel(state: HelpdeskState) -> str:
-    """条件边①·前置：并行节点之后——系统异常/咨询/场景状态三级路由。
+    """条件边①·前置：并行节点之后——转人工触发面收窄（Phase 5）。
 
-    优先级：异常 > request_type（咨询走问答）> 场景状态（active 走执行）。
-    consult 与场景状态无关：password/email/software 是 coming 也能问答
-    （文档在知识库即答），troubleshoot 才看场景状态。
+    优先级：异常 > 多问题 > 寒暄 > 咨询 > 场景状态。
+    转人工只保留三类【安全边界】：
+      1. 系统异常（state.error）：LLM 彻底失败，不 500
+      2. 高风险执行审批（risk=human）与执行失败（execute 失败）
+      3. 知识库真答不了（rag_query 内部兜底）
+    其余诉求一律先让知识库/规则回答，不直接转人工：
+      - 多问题（vpn+密码）→ 引导逐个描述
+      - 寒暄（你好）→ 友好回复
+      - coming/other 场景故障 → RAG 问答兜底（SOP 文档在知识库即答）
     """
     if state.get("error"):
-        return "handoff"  # LLM 彻底失败：兜底转人工（不 500）
+        return "handoff"  # 系统异常：兜底转人工（不 500）
+    if state.get("multi_scenarios"):
+        return "multi"  # 多问题：引导用户逐个描述（不转人工）
+    if state.get("request_type") == "other":
+        return "greeting"  # 寒暄：友好回复（不转人工）
     if state.get("request_type") == "consult":
         return "rag_query"  # 咨询诉求：知识问答路径（纯只读，不触发执行）
     sc = SCENARIOS.get(state.get("intent"))
     if sc and sc.get("status") == "active":
         return "check"
-    return "finalize"  # other / coming 场景：收尾（转人工话术）
+    # coming 场景故障（密码/邮箱/软件）或非支持场景：
+    # 之前直接转人工——现在先走 RAG 问答兜底（知识库有 SOP 即答步骤）
+    return "rag_query"
 
 
 def route_after_verify(state: HelpdeskState) -> str:
@@ -85,15 +99,20 @@ def build_graph():
     g.add_node("close", close_node)
     g.add_node("handoff", handoff_node)
     g.add_node("finalize", finalize_node)
-    g.add_node("rag_query", safe(rag_query_node))  # 咨询问答：多跳检索 + 证据生成
+    g.add_node("multi", multi_node)                       # 多问题引导（不转人工）
+    g.add_node("greeting", greeting_node)                 # 寒暄回复（不转人工）
+    g.add_node("rag_query", safe(rag_query_node))  # 问答：多跳检索 + 证据生成
 
     g.set_entry_point("parallel")
-    # parallel 后路由：异常→handoff；咨询→rag_query；active 场景→check；其他→收尾
+    # parallel 后路由：异常→handoff；多问题→multi；寒暄→greeting；
+    # 咨询→rag_query；active 场景→check；coming/other→rag_query 兜底
     g.add_conditional_edges("parallel", route_after_parallel, {
         "handoff": "handoff",
         "check": "check",
         "finalize": "finalize",
         "rag_query": "rag_query",
+        "multi": "multi",
+        "greeting": "greeting",
     })
     g.add_conditional_edges("check", should_ask_or_proceed, {
         "ask": "ask",
@@ -116,6 +135,8 @@ def build_graph():
     g.add_edge("close", END)
     g.add_edge("handoff", END)
     g.add_edge("finalize", END)
+    g.add_edge("multi", END)        # 多问题引导结束：等用户下一轮聚焦单问题
+    g.add_edge("greeting", END)     # 寒暄结束：不产生工单动作
     g.add_edge("rag_query", END)  # 咨询问答结束：纯回答，不产生工单动作
 
     return g.compile()

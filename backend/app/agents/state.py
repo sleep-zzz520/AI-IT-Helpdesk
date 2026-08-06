@@ -19,6 +19,9 @@ class HelpdeskState(TypedDict):
     # 诉求类型：troubleshoot（故障→执行）/ consult（咨询→问答）/ other（寒暄）
     # 与 intent 一样会话级复用（graph 路由消费）
     request_type: str
+    # 多问题检测：消息里精确命中 ≥2 个场景关键词时非空（如 "vpn和密码都连不上"）
+    # 路由优先消费：引导用户逐个描述（不转人工，见 nodes/multi.py）
+    multi_scenarios: list[str]
     # 还缺哪些信息（多轮追问用）
     missing_info: list[str]
     # 已收集的上下文

@@ -31,6 +31,10 @@ class RetrievalStats:
     fused_total: int = 0
     reranked: bool = False
     notes: list[str] = field(default_factory=list)
+    # 调试用（知识库管理页"检索调试"）：双路各自召回明细。
+    # 平时 None（不占内存）；retrieve(debug=True) 时填充
+    debug_vector_hits: list | None = None
+    debug_bm25_hits: list | None = None
 
 
 def _build_where(scenario: str | None) -> dict:
@@ -98,11 +102,13 @@ def _attach_parents(hits: list[Hit], store: VectorStore) -> None:
 
 def retrieve(query_text: str, scenario: str | None = None,
              top_k: int = 5, store=None, bm25=None,
-             stats: RetrievalStats | None = None) -> list[Hit]:
+             stats: RetrievalStats | None = None,
+             debug: bool = False) -> list[Hit]:
     """混合检索最相关的知识块。
 
     - store/bm25：可注入（测试用独立库）；默认生产库
     - stats：可传入收集检索统计（Trace/评估），不传则忽略
+    - debug=True：stats 里附带双路召回明细（知识库管理页"检索调试"用）
     - 命中子块：Hit.text 是子块，Hit.parent_text 是父块全文
     """
     store = store or create_store()
@@ -122,6 +128,11 @@ def retrieve(query_text: str, scenario: str | None = None,
                  for cid, text, score, meta in raw_bm25
                  if _passes_filter(meta, scenario)][:settings.RRF_RECALL_N]
     stats.bm25_recall = len(bm25_hits)
+
+    # 调试：双路召回明细（不拷贝 parent_text，父块全文太重）
+    if debug:
+        stats.debug_vector_hits = vector_hits
+        stats.debug_bm25_hits = bm25_hits
 
     # ---- RRF 融合 ----
     fused = _rrf_fuse(vector_hits, bm25_hits, k=settings.RRF_K, top_k=top_k * 2)

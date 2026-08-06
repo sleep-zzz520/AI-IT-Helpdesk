@@ -50,6 +50,17 @@ class Settings:
     KB_VECTOR_DIR: str = os.getenv("KB_VECTOR_DIR", str(BASE_DIR / ".rag" / "kb_chroma"))
     KB_COLLECTION: str = os.getenv("KB_COLLECTION", "kb_docs")  # Chroma 要求 ≥3 字符
 
+    # ===== 蓝绿切换（Phase 5）=====
+    # 两套 Chroma collection 交替承载索引，任何时刻只有一套"在岗"（active）：
+    # - 蓝 = kb_docs（老库名）：存量数据天然是蓝，零迁移平滑进入蓝绿体系
+    # - 绿 = kb_docs_candidate：候选库（sync 全量写入的目标）
+    # sync 永远写"当前非 active"的那套 → 线上检索零中断；
+    # 切换 = 改落盘指针（秒级生效 + 重启保持）；旧库未被覆盖前随时可回滚
+    KB_COLLECTION_BLUE: str = os.getenv("KB_COLLECTION_BLUE", "kb_docs")
+    KB_COLLECTION_GREEN: str = os.getenv("KB_COLLECTION_GREEN", "kb_docs_candidate")
+    # active 指针落盘文件（内容 = collection 名；不存在 → 默认蓝，兼容老部署）
+    KB_ACTIVE_FILE: Path = BASE_DIR / ".rag" / "kb_active.txt"
+
     # ===== 混合检索（Phase 2）=====
     # RRF 融合参数：score = Σ weight / (rrf_k + rank)；k 越大越平滑
     RRF_K: float = float(os.getenv("RRF_K", "60"))
@@ -67,6 +78,37 @@ class Settings:
     VIDEO_MAX_FRAMES: int = int(os.getenv("VIDEO_MAX_FRAMES", "10"))
     # 视频音轨转写时长上限（秒）：ASR 计时收费，知识片段前 N 秒足够
     VIDEO_MAX_AUDIO_SECONDS: int = int(os.getenv("VIDEO_MAX_AUDIO_SECONDS", "60"))
+
+    @property
+    def active_collection(self) -> str:
+        """当前在岗的 collection（动态读落盘指针，切换后立即生效）。
+
+        为什么每次读文件而不是缓存：蓝绿切换就是改这个文件，缓存会让
+        切换在重启前不生效（"秒级切换"卖点就没了）。文件读取开销纳秒级。
+        """
+        try:
+            v = self.KB_ACTIVE_FILE.read_text().strip()
+            if v in (self.KB_COLLECTION_BLUE, self.KB_COLLECTION_GREEN):
+                return v
+        except OSError:
+            pass  # 指针文件不存在（首次部署/老库）→ 蓝
+        return self.KB_COLLECTION_BLUE
+
+    @property
+    def candidate_collection(self) -> str:
+        """当前候选 collection（sync 写入目标；与 active 交替复用）。"""
+        return (self.KB_COLLECTION_GREEN
+                if self.active_collection == self.KB_COLLECTION_BLUE
+                else self.KB_COLLECTION_BLUE)
+
+    def switch_active(self) -> str:
+        """切换 active 指针到候选库（回滚 = 再调用一次：两库交替）。
+
+        调用前需校验候选库非空（切到空库 = 全站检索瘫痪，见 kb API）。
+        """
+        self.KB_ACTIVE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        self.KB_ACTIVE_FILE.write_text(self.candidate_collection, encoding="utf-8")
+        return self.active_collection
 
     @property
     def mysql_url(self) -> str:

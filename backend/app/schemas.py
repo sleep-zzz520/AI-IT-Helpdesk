@@ -19,8 +19,14 @@ class MessageCreate(BaseModel):
     mode: Literal["fast", "accurate"] = "accurate"
 
 
+class FeedbackCreate(BaseModel):
+    # 👍 有用 / 👎 没用；null = 取消反馈（点错可改：再点已选值 → 取消）
+    feedback: Literal["up", "down"] | None
+
+
 # ===== 响应 =====
 class MessageOut(BaseModel):
+    id: int | None = None       # 消息 id（👍/👎 反馈需要；历史消息必有）
     role: str
     content: str
     elapsed_ms: int | None = None  # agent 回复总耗时（ms，仅 assistant 消息有）

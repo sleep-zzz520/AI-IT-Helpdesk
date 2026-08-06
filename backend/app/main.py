@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.conversations import router as conversations_router
+from app.api.feedback import router as feedback_router
+from app.api.kb import router as kb_router
 from app.config import settings
 from app.db import init_db
 
@@ -28,6 +30,8 @@ app.add_middleware(
 
 # 挂载业务路由
 app.include_router(conversations_router)
+app.include_router(feedback_router)
+app.include_router(kb_router)
 
 
 @app.get("/health")

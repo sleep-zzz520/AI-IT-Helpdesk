@@ -30,9 +30,15 @@ def init_db() -> None:
 
 # 新增列清单：表名 → [列名, DDL 类型]。缺列就 ALTER 补上（老库平滑升级）。
 _EXTRA_COLUMNS = {
-    "messages": [("elapsed_ms", "INT NULL")],   # agent 回复总耗时（ms）
+    "messages": [
+        ("elapsed_ms", "INT NULL"),                          # agent 回复总耗时（ms）
+        ("feedback", "VARCHAR(8) NULL"),                     # 用户反馈 up/down（反馈闭环）
+    ],
     "traces": [("elapsed_ms", "INT NULL")],     # 节点执行耗时（ms）
-    "kb_documents": [("kb_name", "VARCHAR(32) NOT NULL DEFAULT 'default'")],  # 台账隔离
+    "kb_documents": [
+        ("kb_name", "VARCHAR(32) NOT NULL DEFAULT 'default'"),  # 台账隔离
+        ("valid_to", "VARCHAR(16) NULL"),                      # 文档有效期（过期预警）
+    ],
 }
 
 

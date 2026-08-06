@@ -1,0 +1,19 @@
+{
+  "active": {
+    "collection": "kb_docs",
+    "recall_at_1": 0.6,
+    "recall_at_3": 0.9,
+    "recall_at_5": 1.0,
+    "mrr": 0.7583
+  },
+  "candidate": {
+    "collection": "kb_docs_candidate",
+    "recall_at_1": 0.6,
+    "recall_at_3": 0.9,
+    "recall_at_5": 1.0,
+    "mrr": 0.7583
+  },
+  "better": 0,
+  "worse": 0,
+  "verdict": "✅ 候选不劣于在岗，可以切换"
+}

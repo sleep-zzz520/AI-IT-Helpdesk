@@ -102,3 +102,21 @@ export const fetchConversation = (convId) =>
 
 export const fetchTraces = (convId) =>
   request(`/api/conversations/${convId}/traces`);
+
+// ===== 👍/👎 反馈闭环 =====
+export const submitFeedback = (msgId, feedback) =>
+  request(`/api/messages/${msgId}/feedback`, {
+    method: 'POST',
+    body: JSON.stringify({ feedback }),
+  });
+
+export const fetchFeedbackAnalysis = () =>
+  request('/api/feedback/analysis');
+
+// ===== 知识库管理（台账/同步/蓝绿/检索调试）=====
+export const fetchKbDocuments = () => request('/api/kb/documents');
+export const fetchKbStats = () => request('/api/kb/stats');
+export const syncKb = () => request('/api/kb/sync', { method: 'POST' });
+export const switchKb = () => request('/api/kb/switch', { method: 'POST' });
+export const debugKbQuery = (body) =>
+  request('/api/kb/debug', { method: 'POST', body: JSON.stringify(body) });

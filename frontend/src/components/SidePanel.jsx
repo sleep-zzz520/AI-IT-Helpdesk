@@ -51,8 +51,10 @@ function describe(node, result) {
       const req = result?.request_type ?? 'troubleshoot'
       const names = { vpn: 'VPN', password: '密码', email: '邮箱', software: '软件' }
       const kind = { consult: '咨询', other: '其他', troubleshoot: '故障' }[req] ?? '故障'
+      // 拼写纠错（bpn→vpn）：Trace 展示修正过程（可观测性卖点）
+      const corr = result?.correction
       const label = names[intent]
-        ? `识别为 ${names[intent]}${kind}`
+        ? `识别为 ${names[intent]}${kind}${corr ? `（拼写纠错：${corr.matched} → ${corr.to}）` : ''}`
         : '非支持场景，直接收尾'
       return {
         label: '意图识别', type: 'AI',
@@ -114,6 +116,10 @@ function describe(node, result) {
       return { label: '转人工', type: '收尾', summary: '工单已转人工处理', tone: 'warn' }
     case 'finalize':
       return { label: '收尾回复', type: '收尾', summary: result?.reply ?? '', tone: 'neutral' }
+    case 'multi':
+      return { label: '多问题引导', type: '规则', summary: `检测到多问题：${(result?.scenarios ?? []).join('、')} → 引导逐个描述`, tone: 'warn' }
+    case 'greeting':
+      return { label: '寒暄回复', type: '规则', summary: '打招呼 → 友好回复，不触发流程', tone: 'neutral' }
     case 'rag_query': {
       const hops = result?.hops ?? []
       const n = hops.length

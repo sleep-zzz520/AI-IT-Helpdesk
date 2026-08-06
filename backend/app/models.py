@@ -47,6 +47,9 @@ class Message(Base):
     content: Mapped[str] = mapped_column(Text)
     # 本轮 Agent 回复的总耗时（ms，assistant 消息才有值；可观测性用）
     elapsed_ms: Mapped[int | None] = mapped_column(nullable=True)
+    # 用户反馈（assistant 消息才有值）：up（有用）/ down（没用）。null = 未反馈
+    # 反馈闭环数据源：负反馈分析从这里读，再结合 trace 判断文档缺失 vs 过时
+    feedback: Mapped[str | None] = mapped_column(String(8), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     conversation: Mapped[Conversation] = relationship(back_populates="messages")
@@ -90,6 +93,10 @@ class KbDocument(Base):
     doc_hash: Mapped[str] = mapped_column(String(64))
     chunk_count: Mapped[int] = mapped_column(default=0)
     status: Mapped[str] = mapped_column(String(16), default="active")
+    # 文档有效期（YYYYMMDD，来自 frontmatter valid_to）：过期预警数据源
+    # 为什么冗余存台账：读源文件要解析/转译（媒体文档调 GLM-4V，重），
+    # 台账快照让「列表/预警」只查 MySQL，永远不碰源文件与向量库
+    valid_to: Mapped[str | None] = mapped_column(String(16), nullable=True)
     changelog: Mapped[str | None] = mapped_column(Text, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now())

@@ -131,7 +131,11 @@ def send_message(conv_id: int, body: MessageCreate, db: Session = Depends(get_db
                         el = m.get("elapsed_ms")
                         if el is None and m["role"] == "assistant" and i >= n_before:
                             el = total_ms
-                        return MessageOut(role=m["role"], content=m["content"], elapsed_ms=el)
+                        # 带消息 id（👍/👎 反馈需要）：save_turn 已全量落库，
+                        # conv.messages 与 final["messages"] 同序一一对应
+                        mid = conv.messages[i].id if i < len(conv.messages) else None
+                        return MessageOut(id=mid, role=m["role"],
+                                          content=m["content"], elapsed_ms=el)
 
                     payload = {
                         "conversation_id": conv_id,

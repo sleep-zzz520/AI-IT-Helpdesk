@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Clock, Image as ImageIcon, X } from '@phosphor-icons/react'
+import { Clock, Image as ImageIcon, ThumbsDown, ThumbsUp, X } from '@phosphor-icons/react'
 import { fmtDuration } from '../format'
+import { submitFeedback } from '../api'
 
 // 压缩图片：手机截图常 2-5MB，视觉接口有大小限制，必须先压缩（Canvas）
 function compressImage(file, maxSize = 1280, quality = 0.8) {
@@ -26,6 +27,21 @@ export default function ChatPanel({ messages, sending, error, onSend }) {
   const [image, setImage] = useState(null)
   const bottomRef = useRef(null)
   const fileRef = useRef(null)
+  // 反馈状态：msg_id → 'up' | 'down'（会话内记住；点击后按钮高亮）
+  const [feedbackMap, setFeedbackMap] = useState({})
+
+  // 提交/修改/取消 👍/👎：调后端落库；失败只回滚不打断对话（反馈是增强，不是主流程）
+  // 交互规则：再点已选的值 = 取消（null）；点另一侧 = 切换（点错可改）
+  async function handleFeedback(msgId, value) {
+    const current = feedbackMap[msgId] ?? null
+    const next = current === value ? null : value
+    setFeedbackMap((prev) => ({ ...prev, [msgId]: next })) // 乐观更新
+    try {
+      await submitFeedback(msgId, next)
+    } catch {
+      setFeedbackMap((prev) => ({ ...prev, [msgId]: current })) // 失败回滚
+    }
+  }
 
   // 新消息自动滚到底
   useEffect(() => {
@@ -94,17 +110,43 @@ export default function ChatPanel({ messages, sending, error, onSend }) {
                 style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
               >
                 {m.content}
-                {/* Agent 本轮回复的总耗时（毫秒 → 可读格式） */}
-                {m.elapsed_ms != null && (
-                  <div
-                    className="mono mt-1.5 flex items-center gap-1 border-t pt-1.5 text-[10px] text-[var(--text-secondary)]"
-                    style={{ borderColor: 'var(--border)' }}
-                    title="节点并行执行（intent ∥ extract），总耗时不等于各阶段耗时之和"
-                  >
-                    <Clock size={11} weight="regular" />
-                    总耗时 {fmtDuration(m.elapsed_ms)}
-                  </div>
-                )}
+                {/* 气泡底部：左总耗时，右 👍/👎 反馈（反馈闭环数据源） */}
+                <div
+                  className="mt-1.5 flex items-center justify-between gap-2 border-t pt-1.5"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  {m.elapsed_ms != null ? (
+                    <span
+                      className="mono flex items-center gap-1 text-[10px] text-[var(--text-secondary)]"
+                      title="节点并行执行（intent ∥ extract），总耗时不等于各阶段耗时之和"
+                    >
+                      <Clock size={11} weight="regular" />
+                      总耗时 {fmtDuration(m.elapsed_ms)}
+                    </span>
+                  ) : <span />}
+                  {/* 只对 Agent 回复（assistant）且已落库（有 id）的消息显示反馈；
+                      不过滤 role 会出现在用户消息上（后端也校验拒绝 400），踩过 */}
+                  {m.id != null && m.role === 'assistant' && (
+                    <span className="flex items-center gap-0.5">
+                      {[['up', ThumbsUp, '回答有用', 'var(--success)'],
+                        ['down', ThumbsDown, '没帮到我（进入负反馈分析）', 'var(--warn)']].map(([val, Icon, tip, color]) => {
+                        const active = feedbackMap[m.id] === val
+                        return (
+                          <button
+                            key={val}
+                            onClick={() => handleFeedback(m.id, val)}
+                            title={active ? `取消${tip}（再点一次）` : tip}
+                            aria-label={active ? `取消反馈` : tip}
+                            className="press rounded p-0.5 transition-colors"
+                            style={{ color: active ? color : 'var(--text-secondary)' }}
+                          >
+                            <Icon size={11} weight={active ? 'fill' : 'regular'} />
+                          </button>
+                        )
+                      })}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ) : (

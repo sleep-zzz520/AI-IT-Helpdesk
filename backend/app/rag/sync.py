@@ -148,14 +148,29 @@ def run_sync(kb_root: Path | None = None, store: VectorStore | None = None,
                     report.updated.append(rel_path)
                 else:
                     # ---- 未变：跳过（幂等） ----
+                    # 幂等补写（蓝绿候选模式的关键）：台账说"在库"，但【目标库】
+                    # 可能没有这篇（候选库 clear 后全量重建时，所有文档都会走这里）。
+                    # 只对"目标库缺这篇"才补写——正常增量模式库里有 → 零成本跳过。
+                    if not store.get_doc_ids(doc.doc_id):
+                        _sync_doc(doc, doc_hash, store, report)
+                    # 轻量回填：老库可能没存 valid_to（迁移前入库的文档），
+                    # 这里只补台账列、不重建 chunk（hash 没变 = 内容没变）
+                    if existing.valid_to is None and doc.meta.get("valid_to"):
+                        existing.valid_to = doc.meta["valid_to"]
+                        sp.commit()  # 有写操作：必须 commit 才生效（savepoint 内）
+                    else:
+                        # 无写操作：释放 savepoint（回滚无害）
+                        # 踩坑：不能无条件 rollback——会把上面的回填一起回滚掉
+                        sp.rollback()
                     report.skipped.append(rel_path)
-                    sp.rollback()  # 释放 savepoint（无写操作，回滚无害）
                     continue
                 # 更新台账 chunk_count（本文档的 chunk 数：父块 + 子块）
                 split = split_all([doc])[0]
                 target.chunk_count = 1 + len(split.children)
                 # 同步 frontmatter 的 status（软删除：文档置 inactive → 台账也置 inactive）
                 target.status = doc.meta.get("status", "active")
+                # 有效期冗余快照（过期预警只查台账，不碰源文件/向量库）
+                target.valid_to = doc.meta.get("valid_to")
                 target.changelog = f"sync {doc_hash[:8]}"
                 sp.commit()  # 释放 savepoint
             except Exception as e:  # noqa: BLE001 单文档失败不阻塞其他文档
@@ -185,7 +200,11 @@ def run_sync(kb_root: Path | None = None, store: VectorStore | None = None,
 
 
 def main() -> None:
-    """CLI 入口：python -m app.rag.sync [--kb-root path] [--kb-name name]"""
+    """CLI 入口：python -m app.rag.sync [--kb-root path] [--kb-name name]
+
+    蓝绿流程（Phase 5）：sync 永远全量写入【候选 collection】（先清空再重建），
+    在岗 collection 不受影响；跑完报告后手动调用切换接口生效。
+    """
     import argparse
 
     from app.db import init_db
@@ -194,11 +213,18 @@ def main() -> None:
     parser.add_argument("--kb-root", default=None, help="源文档目录（默认用配置 KB_ROOT）")
     parser.add_argument("--kb-name", default="default",
                         help="台账实例名（规模压测用 scale，与运维知识库隔离）")
+    parser.add_argument("--collection", default=None,
+                        help="目标 collection（默认蓝绿候选库；独立语料库如 scale 用"
+                             "独立 collection——否则会被蓝绿交替清掉，踩过坑）")
     args = parser.parse_args()
 
     init_db()  # 确保 kb_documents 台账表存在（幂等）
+    # 全量替换语义：先清空目标库再写入（失败则目标为空，active 不受影响）
+    target = create_store(collection_name=args.collection
+                          or settings.candidate_collection)
+    target.clear()
     report = run_sync(Path(args.kb_root) if args.kb_root else None,
-                      kb_name=args.kb_name)
+                      store=target, kb_name=args.kb_name)
     print(f"=== 知识库同步报告（kb_name={args.kb_name}）===")
     print(report.summary)
     for path in report.added:
@@ -211,6 +237,15 @@ def main() -> None:
         print(f"  [失败] {path}: {err}")
     for dup in report.duplicates:
         print(f"  [疑似重复] {dup}")
+    # 蓝绿提示：写入的是候选库，验证后再切换（零中断发布）
+    if args.collection:
+        print(f"\n已写入独立 collection（{args.collection}）——不参与蓝绿交替，"
+              f"不会被后续 sync 清掉。")
+    else:
+        print(f"\n已写入候选库（{settings.candidate_collection}），在岗仍是"
+              f"（{settings.active_collection}）。")
+        print("验证候选库后执行切换：python -m scripts.test_shadow（影子对比）"
+              "→ POST /api/kb/switch（或调 kb.py 的 switch_active）")
 
 
 if __name__ == "__main__":
