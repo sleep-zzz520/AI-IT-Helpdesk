@@ -8,7 +8,9 @@
 """
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import (
+    JSON, DateTime, ForeignKey, String, Text, UniqueConstraint, func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -62,3 +64,32 @@ class Trace(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     conversation: Mapped[Conversation] = relationship(back_populates="traces")
+
+
+class KbDocument(Base):
+    """RAG 知识库台账：源文档与向量库的同步状态（知识库生命周期管理）。
+
+    设计要点：
+    - path（相对路径）是文档的唯一身份；doc_id 是路径哈希（稳定不随内容变化）
+    - doc_hash（内容 sha256）是变更检测的依据：hash 变了 → 该文档需重建
+    - status: active（在库）/ removed（已删除，保留审计痕迹）
+    - changelog 记录最近一次 sync 对该文档做了什么（审计可追溯）
+    """
+
+    __tablename__ = "kb_documents"
+    # 复合唯一：(kb_name, path) —— 多知识库实例的同名路径互不冲突
+    __table_args__ = (
+        UniqueConstraint("kb_name", "path", name="uq_kb_name_path"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    # 知识库实例名（默认 default；测试/多知识库用独立名隔离台账，互不误判删除）
+    kb_name: Mapped[str] = mapped_column(String(32), default="default")
+    path: Mapped[str] = mapped_column(String(255))
+    doc_id: Mapped[str] = mapped_column(String(16))  # 同 path 不同 kb 会重复，不设全局唯一
+    doc_hash: Mapped[str] = mapped_column(String(64))
+    chunk_count: Mapped[int] = mapped_column(default=0)
+    status: Mapped[str] = mapped_column(String(16), default="active")
+    changelog: Mapped[str | None] = mapped_column(Text, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now())

@@ -5,6 +5,14 @@ AGENTS.md
 # ===== 内部文档（不上传 GitHub）=====
 ROADMAP.md
 docs/optimization-log.md
+docs/RAG设计参考文档
+docs/RAG知识库更新应对方案参考文档.md
+
+# ===== 外部数据集（CRUD-RAG，约 325MB，仅本地压测用）=====
+数据集/
+
+# ===== ChromaDB 向量库持久化（本地文件，可随时重建）=====
+.rag/
 
 # ===== Python =====
 __pycache__/

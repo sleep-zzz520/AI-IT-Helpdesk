@@ -1,0 +1,22 @@
+{
+  "task": "rag_retrieval",
+  "cases": 10,
+  "results": [
+    {
+      "name": "vector_only",
+      "cases": 10,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "name": "hybrid",
+      "cases": 10,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0,
+      "mrr": 1.0
+    }
+  ]
+}

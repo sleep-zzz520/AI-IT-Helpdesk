@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
-/* ===== 设计 token（单一暗色主题，Page Theme Lock）===== */
+/* ===== 设计 token（白色主色调，黑色点缀，Page Theme Lock）===== */
 :root {
-  --bg: #0a0e14;            /* 页面底色：近黑深蓝灰 */
-  --surface: #111722;       /* 面板底色 */
-  --surface-2: #161e2b;     /* 次级面板/输入区 */
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --text-primary: #e6e9ef;
-  --text-secondary: #8b93a1;
-  --accent: #2dd4a7;        /* 单一强调色：青绿 */
-  --accent-dim: rgba(45, 212, 167, 0.12);
-  --success: #34d399;       /* 语义色：仅状态徽章用 */
-  --warn: #fbbf24;
-  --error: #f87171;
+  --bg: #f6f7f9;            /* 页面底色：冷白 */
+  --surface: #ffffff;       /* 面板底色：纯白 */
+  --surface-2: #f1f3f5;     /* 次级面板/输入区：浅灰 */
+  --border: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.16);
+  --text-primary: #111827;  /* 主文字：近黑（黑色点缀主色） */
+  --text-secondary: #64748b;
+  --accent: #0d9488;        /* 单一强调色：teal-600（白底可读性优于原青绿） */
+  --accent-dim: rgba(13, 148, 136, 0.1);
+  --success: #16a34a;       /* 语义色：仅状态徽章用（白底加深保证对比度） */
+  --warn: #d97706;
+  --error: #dc2626;
   --radius: 12px;           /* 统一圆角系统 */
 }
 

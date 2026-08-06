@@ -111,7 +111,7 @@ export default function ChatPanel({ messages, sending, error, onSend }) {
             <div key={i} className="rise-in flex justify-end">
               <div
                 className="max-w-[78%] rounded-[12px] border px-4 py-3 text-sm leading-relaxed"
-                style={{ background: 'var(--accent-dim)', borderColor: 'rgba(45,212,167,0.3)' }}
+                style={{ background: 'var(--accent-dim)', borderColor: 'rgba(13, 148, 136, 0.35)' }}
               >
                 {/* 用户上传的截图（本地 data URL，当前会话可见） */}
                 {m.image && (
@@ -140,7 +140,7 @@ export default function ChatPanel({ messages, sending, error, onSend }) {
 
       {/* 错误提示（内联，不弹窗） */}
       {error && (
-        <div className="mx-4 mb-2 rounded-lg border px-3 py-2 text-xs" style={{ borderColor: 'rgba(248,113,113,0.3)', background: 'rgba(248,113,113,0.08)', color: 'var(--error)' }}>
+        <div className="mx-4 mb-2 rounded-lg border px-3 py-2 text-xs" style={{ borderColor: 'rgba(220,38,38,0.3)', background: 'rgba(220,38,38,0.08)', color: 'var(--error)' }}>
           {error}
         </div>
       )}
