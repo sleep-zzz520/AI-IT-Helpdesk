@@ -19,6 +19,7 @@ from app.agents.nodes.finalize import finalize_node
 from app.agents.nodes.handoff import handoff_node
 from app.agents.nodes.kb import kb_node
 from app.agents.nodes.parallel import parallel_round_node
+from app.agents.nodes.rag_query import rag_query_node
 from app.agents.nodes.risk import risk_node
 from app.agents.nodes.safe import safe
 from app.agents.nodes.verify import verify_node
@@ -34,9 +35,16 @@ def should_ask_or_proceed(state: HelpdeskState) -> str:
 
 
 def route_after_parallel(state: HelpdeskState) -> str:
-    """条件边①·前置：并行节点之后——系统异常/非 active 场景直接收尾转人工。"""
+    """条件边①·前置：并行节点之后——系统异常/咨询/场景状态三级路由。
+
+    优先级：异常 > request_type（咨询走问答）> 场景状态（active 走执行）。
+    consult 与场景状态无关：password/email/software 是 coming 也能问答
+    （文档在知识库即答），troubleshoot 才看场景状态。
+    """
     if state.get("error"):
         return "handoff"  # LLM 彻底失败：兜底转人工（不 500）
+    if state.get("request_type") == "consult":
+        return "rag_query"  # 咨询诉求：知识问答路径（纯只读，不触发执行）
     sc = SCENARIOS.get(state.get("intent"))
     if sc and sc.get("status") == "active":
         return "check"
@@ -77,13 +85,15 @@ def build_graph():
     g.add_node("close", close_node)
     g.add_node("handoff", handoff_node)
     g.add_node("finalize", finalize_node)
+    g.add_node("rag_query", safe(rag_query_node))  # 咨询问答：多跳检索 + 证据生成
 
     g.set_entry_point("parallel")
-    # parallel 后路由：异常→handoff；active 场景→check；其他→收尾
+    # parallel 后路由：异常→handoff；咨询→rag_query；active 场景→check；其他→收尾
     g.add_conditional_edges("parallel", route_after_parallel, {
         "handoff": "handoff",
         "check": "check",
         "finalize": "finalize",
+        "rag_query": "rag_query",
     })
     g.add_conditional_edges("check", should_ask_or_proceed, {
         "ask": "ask",
@@ -106,6 +116,7 @@ def build_graph():
     g.add_edge("close", END)
     g.add_edge("handoff", END)
     g.add_edge("finalize", END)
+    g.add_edge("rag_query", END)  # 咨询问答结束：纯回答，不产生工单动作
 
     return g.compile()
 
