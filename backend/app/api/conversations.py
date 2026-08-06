@@ -22,6 +22,7 @@ from app.schemas import (
     ConversationOut,
     MessageCreate,
     MessageOut,
+    StatusLogOut,
     TraceOut,
 )
 from app.security import get_current_user
@@ -134,6 +135,8 @@ def send_message(
     if body.image:
         msg["image"] = body.image
     state["messages"] = state.get("messages", []) + [msg]
+    # 2.3 本轮用户消息（工单状态机触发用：new→processing 与"未解决"重开）
+    state["new_user_message"] = body.content
     # 2.5 模型链模式（前端"速度/准确"切换）→ 注入 state，节点据此选链
     state["model_chain"] = settings.GLM_MODELS_FAST if body.mode == "fast" else settings.GLM_MODELS
 
@@ -220,3 +223,21 @@ def get_traces(
     """查会话的 Trace 记录（可视化面板数据源）。"""
     conv = _get_owned_conversation(db, conv_id, user)
     return conv.traces
+
+
+@router.get("/{conv_id}/status_logs", response_model=list[StatusLogOut])
+def get_status_logs(
+    conv_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """查工单状态流转历史（状态机履历：new→processing→resolved ...）。"""
+    conv = _get_owned_conversation(db, conv_id, user)
+    return [
+        StatusLogOut(
+            id=log.id, from_status=log.from_status, to_status=log.to_status,
+            reason=log.reason,
+            created_at=log.created_at.isoformat() if log.created_at else None,
+        )
+        for log in conv.status_logs
+    ]

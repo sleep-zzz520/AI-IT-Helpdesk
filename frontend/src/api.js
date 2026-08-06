@@ -139,6 +139,10 @@ export const fetchConversation = (convId) =>
 export const fetchTraces = (convId) =>
   request(`/api/conversations/${convId}/traces`);
 
+// 工单状态流转历史（状态机履历）
+export const fetchStatusLogs = (convId) =>
+  request(`/api/conversations/${convId}/status_logs`);
+
 // ===== 👍/👎 反馈闭环 =====
 export const submitFeedback = (msgId, feedback) =>
   request(`/api/messages/${msgId}/feedback`, {

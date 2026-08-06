@@ -1,14 +1,28 @@
 import { Timer } from '@phosphor-icons/react'
 import { fmtDuration } from '../format'
+import { fetchStatusLogs } from '../api'
+import { useEffect, useState } from 'react'
 
-// 工单状态 → 徽章（语义色 + 文字，仅状态处使用）
+// 工单状态 → 徽章（状态机四态：new → processing → resolved/handoff）
 const STATUS_META = {
-  open:     { label: '处理中', color: 'var(--accent)' },
-  resolved: { label: '已解决', color: 'var(--success)' },
-  handoff:  { label: '转人工', color: 'var(--warn)' },
+  new:        { label: '新建', color: 'var(--text-secondary)' },
+  processing: { label: '处理中', color: 'var(--accent)' },
+  resolved:   { label: '已解决', color: 'var(--success)' },
+  handoff:    { label: '转人工', color: 'var(--warn)' },
 }
 
 function TicketCard({ conv }) {
+  // 流转历史（状态机履历）：会话变化时重新拉取
+  const [logs, setLogs] = useState([])
+  useEffect(() => {
+    if (!conv) return
+    let alive = true
+    fetchStatusLogs(conv.id)
+      .then((rows) => { if (alive) setLogs(rows) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [conv?.id])
+
   if (!conv) return null
   const st = STATUS_META[conv.status] ?? { label: conv.status, color: 'var(--text-secondary)' }
   return (
@@ -29,6 +43,30 @@ function TicketCard({ conv }) {
         />
         <Row k="工单号" v={conv.ticket_id ? <span className="mono">{conv.ticket_id}</span> : '—'} />
       </div>
+
+      {/* 状态流转历史：状态机履历（new → processing → resolved ...） */}
+      {logs.length > 0 && (
+        <div className="mt-3 border-t pt-3" style={{ borderColor: 'var(--border)' }}>
+          <p className="mono mb-2 text-[10px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">流转历史</p>
+          <ol className="space-y-1.5">
+            {logs.map((log) => {
+              const from = STATUS_META[log.from_status]?.label ?? log.from_status
+              const to = STATUS_META[log.to_status]?.label ?? log.to_status
+              return (
+                <li key={log.id} className="flex items-start gap-2 text-[11px]">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--accent)' }} />
+                  <div className="min-w-0">
+                    <span className="text-[var(--text-primary)]">{from} → {to}</span>
+                    {log.reason && (
+                      <span className="ml-1.5 text-[var(--text-secondary)]">{log.reason}</span>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
+          </ol>
+        </div>
+      )}
     </div>
   )
 }

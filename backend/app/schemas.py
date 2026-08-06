@@ -65,6 +65,14 @@ class ConversationOut(BaseModel):
     ticket_id: str | None = None
 
 
+class StatusLogOut(BaseModel):
+    id: int
+    from_status: str
+    to_status: str
+    reason: str | None = None
+    created_at: str | None = None
+
+
 class MessageReply(BaseModel):
     conversation_id: int
     reply: str                      # 最新 assistant 回复

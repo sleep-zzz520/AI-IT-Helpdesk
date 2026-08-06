@@ -26,6 +26,7 @@ def init_db() -> None:
     import app.models  # noqa: F401 确保模型已注册
     Base.metadata.create_all(engine)
     _ensure_columns()
+    _migrate_status()
     _seed()
 
 
@@ -40,7 +41,10 @@ _EXTRA_COLUMNS = {
         ("kb_name", "VARCHAR(32) NOT NULL DEFAULT 'default'"),  # 台账隔离
         ("valid_to", "VARCHAR(16) NULL"),                      # 文档有效期（过期预警）
     ],
-    "conversations": [("tenant_id", "INT NULL")],  # 多租户隔离（老会话可空=未归租户）
+    "conversations": [
+        ("tenant_id", "INT NULL"),  # 多租户隔离（老会话可空=未归租户）
+        ("request_type", "VARCHAR(16) NULL"),  # 诉求类型（跨轮路由用，见 load_state 踩坑）
+    ],
 }
 
 
@@ -78,6 +82,41 @@ def _ensure_kb_constraints() -> None:
         if not _has_index("uq_kb_name_path"):
             conn.execute(text(
                 "CREATE UNIQUE INDEX uq_kb_name_path ON kb_documents (kb_name, path)"))
+
+
+def _migrate_status() -> None:
+    """工单状态迁移：老库 open 状态 → 新状态机语义（幂等）。
+
+    背景：状态机上线前 status 只有 open/resolved/handoff 三态，
+    open 混着"刚新建"和"正在处理"两种含义。
+    迁移规则（只影响老数据，新数据走状态机不受影响）：
+    - open 且没有任何消息 → new（还没开始处理）
+    - open 且有消息 → processing（已在处理中）
+    - resolved / handoff 语义不变（直接进入状态机合法状态）
+
+    另外把列的默认值改成 new（新会话直接落库为新建态）。
+    """
+    with engine.begin() as conn:
+        inspector = inspect(engine)
+        cols = {c["name"] for c in inspector.get_columns("conversations")}
+        if "status" not in cols:
+            return  # 老表无 status 列（极早期）：create_all 会建新表，无需迁移
+        # 有消息的 open → processing（JOIN 统计更稳：直接用子查询）
+        conn.execute(text(
+            "UPDATE conversations c SET c.status = 'processing' "
+            "WHERE c.status = 'open' AND c.id IN "
+            "(SELECT DISTINCT conversation_id FROM messages)"
+        ))
+        # 无消息的 open → new
+        conn.execute(text(
+            "UPDATE conversations c SET c.status = 'new' "
+            "WHERE c.status = 'open'"
+        ))
+        # 默认值改成 new（新建会话直接落库为新建态）
+        conn.execute(text(
+            "ALTER TABLE conversations "
+            "MODIFY COLUMN status VARCHAR(16) NOT NULL DEFAULT 'new'"
+        ))
 
 
 # ===== 种子数据（幂等：只在空表时灌入，重复启动不重复插入）=====

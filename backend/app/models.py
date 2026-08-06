@@ -69,6 +69,25 @@ class AuditLog(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
 
+class TicketStatusLog(Base):
+    """工单状态流转历史：每一次 from→to 都留痕（状态机可追溯）。
+
+    与 AuditLog 的区别：AuditLog 记"人做了什么操作"（登录/发消息），
+    这个表记"工单状态机本身怎么走的"（new→processing→resolved）——
+    是工单的"履历"，查询状态机轨迹用这张表。
+    """
+    __tablename__ = "ticket_status_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"))
+    from_status: Mapped[str] = mapped_column(String(16))
+    to_status: Mapped[str] = mapped_column(String(16))
+    reason: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    conversation: Mapped["Conversation"] = relationship(back_populates="status_logs")
+
+
 class Conversation(Base):
     __tablename__ = "conversations"
 
@@ -78,12 +97,18 @@ class Conversation(Base):
     tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     # 会话级状态：intent 判定一次后复用（见优化文档「意图是会话级状态」）
     intent: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # 诉求类型（troubleshoot/consult/other）：路由的关键依据。
+    # 踩坑：之前只存 intent 不存 request_type，跨轮 load_state 时 request_type
+    # 丢失 → 寒暄后报障被错误路由到 rag_query（见优化文档，2026-08-07）
+    request_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
     # 业务字段必须持久化：图片等不可重抽来源的信息，落库才能跨轮记忆
     device: Mapped[str | None] = mapped_column(String(64), nullable=True)
     error_code: Mapped[str | None] = mapped_column(String(16), nullable=True)
     username: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    # 工单状态：open（进行中）/ resolved（已解决）/ handoff（转人工）
-    status: Mapped[str] = mapped_column(String(16), default="open")
+    # 工单状态（状态机，见 services/ticket_state.py）：
+    # new（新建）→ processing（处理中）→ resolved（已解决）/ handoff（转人工）
+    # resolved --"未解决"--> processing（重新打开）
+    status: Mapped[str] = mapped_column(String(16), default="new")
     ticket_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
@@ -91,6 +116,9 @@ class Conversation(Base):
         back_populates="conversation", cascade="all, delete-orphan")
     traces: Mapped[list["Trace"]] = relationship(
         back_populates="conversation", cascade="all, delete-orphan")
+    status_logs: Mapped[list["TicketStatusLog"]] = relationship(
+        back_populates="conversation", cascade="all, delete-orphan",
+        order_by="TicketStatusLog.id")
 
 
 class Message(Base):
