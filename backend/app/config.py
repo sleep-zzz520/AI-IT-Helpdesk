@@ -71,6 +71,23 @@ class Settings:
     # 精排后保留条数（召回 10 条精排取 5）
     RERANK_TOP_N: int = int(os.getenv("RERANK_TOP_N", "5"))
 
+    # ===== 安全（多租户/权限体系）=====
+    # Token 签名密钥：生产必须改成随机强密钥（openssl rand -hex 32），
+    # 默认值是开发用——泄露=token 可被伪造（但密码哈希仍安全，不影响已存账号）
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-change-me-in-production")
+
+    # ===== 监控 API 对接（P2：替代 mock）=====
+    # mock=读内存字典（离线测试，零依赖）；real=HTTP 调用监控服务
+    MONITOR_MODE: str = os.getenv("MONITOR_MODE", "mock")
+    # 监控服务地址（real 模式）：换真实系统只改这一项
+    MONITOR_BASE_URL: str = os.getenv("MONITOR_BASE_URL", "http://127.0.0.1:9100")
+    # 认证 token（真实系统用；本地模拟服务不需要）
+    MONITOR_API_TOKEN: str = os.getenv("MONITOR_API_TOKEN", "")
+    # HTTP 超时（秒）——真实网络必须设，否则 Agent 卡死
+    MONITOR_TIMEOUT: float = float(os.getenv("MONITOR_TIMEOUT", "5.0"))
+    # 失败重试次数（5xx/超时才重试，4xx 不重试）
+    MONITOR_MAX_RETRIES: int = int(os.getenv("MONITOR_MAX_RETRIES", "2"))
+
     # ===== 音频/视频（Phase 4，GLM-ASR 付费接口）=====
     # real=真实调用（~0.02 元/分钟）；mock=占位转写（离线测试不烧钱）
     ASR_MODE: str = os.getenv("ASR_MODE", "real")

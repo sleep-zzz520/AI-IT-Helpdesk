@@ -1,4 +1,4 @@
-# 一键部署：mysql + backend + frontend(nginx)
+# 一键部署：mysql + monitor(模拟企业监控) + backend + frontend(nginx)
 # 用法：docker compose up -d --build
 # 访问：http://localhost:8080
 
@@ -20,6 +20,23 @@ services:
       retries: 12
     networks: [app]
 
+  # 模拟企业 VPN 证书监控系统（P2：替代 mock 字典，走真实 HTTP 对接）
+  # 换真实系统时删掉这个服务 + 改 backend 的 MONITOR_BASE_URL 指向真实地址
+  monitor:
+    build: ./backend
+    command: uvicorn mock_monitor.server:app --host 0.0.0.0 --port 9100
+    environment:
+      MONITOR_JITTER_MS: ${MONITOR_JITTER_MS:-0}
+      MONITOR_FAILURE_RATE: ${MONITOR_FAILURE_RATE:-0}
+    volumes:
+      - monitor_data:/app/backend/mock_monitor
+    networks: [app]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9100/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+
   backend:
     build: ./backend
     environment:
@@ -32,8 +49,17 @@ services:
       MYSQL_USER: ${MYSQL_USER:-helpdesk}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请在 .env 配置 MYSQL_PASSWORD}
       MYSQL_DB: ${MYSQL_DB:-it_helpdesk}
+      # 监控对接：real 模式走 HTTP 调 monitor 服务
+      MONITOR_MODE: ${MONITOR_MODE:-real}
+      MONITOR_BASE_URL: http://monitor:9100
+      MONITOR_TIMEOUT: ${MONITOR_TIMEOUT:-5.0}
+      MONITOR_MAX_RETRIES: ${MONITOR_MAX_RETRIES:-2}
+      # 安全：Token 签名密钥（生产务必在 .env 配置强随机值）
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me-in-production}
     depends_on:
       mysql:
+        condition: service_healthy
+      monitor:
         condition: service_healthy
     networks: [app]
     # 不暴露端口：只经 nginx 反代（内部服务）
@@ -48,6 +74,7 @@ services:
 
 volumes:
   mysql_data:
+  monitor_data:
 
 networks:
   app:

@@ -4,17 +4,17 @@
 知识库给的是工具【名字】，这里维护"名字 → 函数"的映射。
 加新工具 = 注册表加一行，节点代码零改动。
 """
-from app.tools.monitor_api import MOCK_USERS
+from app.tools.monitor_api import renew_certificate
 
 
 def _renew_certificate(user_id: str) -> dict:
-    """mock 续期：模拟执行 certutil -renew + 重新拨号。"""
-    if user_id == "error_user":  # 演示执行失败的账号
-        return {"status": "error", "reason": "证书服务当前不可达，续期失败"}
-    # 模拟续期成功：把证书有效期更新到明年
-    MOCK_USERS[user_id]["cert_valid_until"] = "2027-01-15"
-    MOCK_USERS[user_id]["expired"] = False
-    return {"status": "ok", "message": f"已为用户 {user_id} 自动续期证书，有效期至 2027-01-15"}
+    """续期证书：调 monitor_api（mock/real 双模式自动切换）。
+
+    原来直接改 MOCK_USERS 字典，现在收敛到 monitor_api.renew_certificate，
+    real 模式走 HTTP POST 到监控服务的续期接口。
+    本函数只是注册表里的一个薄封装，保持 TOOL_REGISTRY 模式不变。
+    """
+    return renew_certificate(user_id)
 
 
 def _rebuild_connection(user_id: str) -> dict:
