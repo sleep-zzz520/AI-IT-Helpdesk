@@ -14,6 +14,7 @@ import jieba
 from app.agents.state import HelpdeskState
 from app.llm import chat, chat_json
 from app.rag.retriever import retrieve
+from app.rag.transcribe import transcribe_data_url
 
 MAX_HOPS = 2              # 最多跳数（每跳 = 一次检索 + 一次 judge）
 HOP_TOP_K = 5             # 每跳召回数
@@ -22,6 +23,30 @@ EVIDENCE_MAX_CHARS = 800  # 单条证据进入 LLM 上下文的最大字符数�
 # next_query 校验的无效词（运维问答泛词——不算"引用了证据实体"）
 _STOP_TERMS = {"怎么", "如何", "什么", "可以", "需要", "帮助", "一下", "为什么",
                "处理", "解决", "问题", "配置", "设置", "这个", "那个"}
+
+
+def _enrich_query_with_image(text: str, image_data_url: str | None) -> str:
+    """截图转译 → 拼进检索 query（Phase 4 查询侧：截图变知识资产）。
+
+    拼接格式是双通道的（混合检索两路各取所需）：
+    - summary（自然语言摘要）→ 向量路（语义召回）
+    - 错误码 + 关键文字（精确词）→ BM25 路（词法命中，历史截图块的错误码
+      "800" 与用户截图转译出的 "800" 词面一致才能命中）
+    转译失败/无图 → 返回原文（截图是增强不是依赖，检索必须始终可用）。
+    """
+    if not image_data_url:
+        return text
+    trans = transcribe_data_url(image_data_url, media_ref="user-screenshot")
+    if trans is None:
+        return text
+    parts = [text]
+    if trans.summary:
+        parts.append(f"截图转译：{trans.summary}")
+    if trans.error_code:
+        parts.append(f"错误码：{trans.error_code}")
+    if trans.key_texts:
+        parts.append(f"关键文字：{' '.join(trans.key_texts)}")
+    return " ".join(parts)
 
 
 def _hit_to_evidence(hit) -> dict:
@@ -110,8 +135,15 @@ def generate_answer(query: str, evidence: list[dict], judge: dict) -> str:
     ], temperature=0.2)
 
 
-def answer_question(query: str, scenario: str | None = None) -> dict:
+def answer_question(question: str, scenario: str | None = None,
+                    search_query: str | None = None) -> dict:
     """核心问答逻辑（节点与 RAGAS 评估共用）：多跳检索 → judge → 生成。
+
+    为什么 question 与 search_query 分离（Phase 4 截图转译增强）：
+    - question：用户的原始问题——judge 判断证据充分性、answer 生成都用它
+    - search_query：实际检索用的 query——默认等于 question；
+      用户带截图时，转译结果拼进 search_query 增强检索（截图→知识资产），
+      但 judge/answer 保持干净的自然语言（增强是给"找"用的，不是给"答"用的）
 
     返回 {answer, evidence, hops}：
     - evidence: 跨跳去重后的证据列表 [{id, text, source}]
@@ -125,7 +157,7 @@ def answer_question(query: str, scenario: str | None = None) -> dict:
     evidence: list[dict] = []
     seen_ids: set[str] = set()
     hops: list[dict] = []
-    current_query = query
+    current_query = search_query or question
 
     for hop in range(1, MAX_HOPS + 1):
         # 第 1 跳按场景过滤（缩小范围提精度）；后续跳放宽 scenario=None
@@ -143,7 +175,7 @@ def answer_question(query: str, scenario: str | None = None) -> dict:
                 evidence.append(_hit_to_evidence(h))
 
         try:
-            judge = judge_evidence(query, evidence)
+            judge = judge_evidence(question, evidence)  # judge 用原始问题（非增强检索词）
         except Exception as e:  # noqa: BLE001 judge 失败 → 退化为单跳直接回答
             hops.append({"hop": hop, "query": current_query,
                          "hits": [{"source": h.metadata.get("source_url", ""),
@@ -166,24 +198,30 @@ def answer_question(query: str, scenario: str | None = None) -> dict:
             break
         current_query = nq
 
-    answer = generate_answer(query, evidence, hops[-1].get("judge", {}))
+    answer = generate_answer(question, evidence, hops[-1].get("judge", {}))
     return {"answer": answer, "evidence": evidence, "hops": hops}
 
 
 def rag_query_node(state: HelpdeskState) -> dict:
-    """咨询问答节点：读最新用户消息 → 多跳检索问答 → 回复 + Trace。
+    """咨询问答节点：读最新用户消息（文本 + 可选截图）→ 检索问答 → 回复 + Trace。
 
     Trace 结构（前端"依据来源"展示）：
-    {node: rag_query, result: {query, hops: [...], answer, sources: [url...]}}
+    {node: rag_query, result: {query, image_enriched, hops: [...], answer, sources}}
     """
     query = state["messages"][-1]["content"]
+    image = state["messages"][-1].get("image")
+    # 截图转译增强检索（截图→知识资产）；judge/answer 仍用原始 query
+    enriched = _enrich_query_with_image(query, image) if image else query
     try:
-        result = answer_question(query, state.get("intent"))
+        result = answer_question(query, state.get("intent"),
+                                 search_query=enriched if enriched != query else None)
     except Exception as e:  # noqa: BLE001 —— 生成回答也失败：友好兜底
         reply = f"⚠️ 知识库查询失败（{type(e).__name__}），请稍后重试，或转人工客服处理。"
         return {
             "messages": state["messages"] + [{"role": "assistant", "content": reply}],
-            "trace": [{"node": "rag_query", "result": {"query": query, "error": str(e)}}],
+            "trace": [{"node": "rag_query", "result": {"query": query,
+                                                       "image_enriched": enriched != query,
+                                                       "error": str(e)}}],
         }
     return {
         "messages": state["messages"] + [{"role": "assistant", "content": result["answer"]}],
@@ -191,6 +229,7 @@ def rag_query_node(state: HelpdeskState) -> dict:
             "node": "rag_query",
             "result": {
                 "query": query,
+                "image_enriched": enriched != query,
                 "hops": result["hops"],
                 "answer": result["answer"],
                 "sources": list(dict.fromkeys(

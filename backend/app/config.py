@@ -60,6 +60,14 @@ class Settings:
     # 精排后保留条数（召回 10 条精排取 5）
     RERANK_TOP_N: int = int(os.getenv("RERANK_TOP_N", "5"))
 
+    # ===== 音频/视频（Phase 4，GLM-ASR 付费接口）=====
+    # real=真实调用（~0.02 元/分钟）；mock=占位转写（离线测试不烧钱）
+    ASR_MODE: str = os.getenv("ASR_MODE", "real")
+    # 视频抽帧上限（每帧一次 GLM-4V 转译，免费但限流：长视频不能无限抽）
+    VIDEO_MAX_FRAMES: int = int(os.getenv("VIDEO_MAX_FRAMES", "10"))
+    # 视频音轨转写时长上限（秒）：ASR 计时收费，知识片段前 N 秒足够
+    VIDEO_MAX_AUDIO_SECONDS: int = int(os.getenv("VIDEO_MAX_AUDIO_SECONDS", "60"))
+
     @property
     def mysql_url(self) -> str:
         """SQLAlchemy 连接串（后续建表/CRUD 都用它）。

@@ -21,3 +21,11 @@ rank_bm25>=0.2       # BM25 稀疏检索（混合检索的精确匹配路）
 
 # ===== 工具 =====
 python-dotenv>=1.0
+
+# ===== Phase 4 多模态（文档格式解析）=====
+pdfplumber>=0.11          # 文本型 PDF 抽文本（表格/版面质量最好）
+PyMuPDF>=1.24             # 扫描型 PDF 页面渲染成图片（纯 wheel，无需 poppler）
+python-docx>=1.1          # .docx 段落/标题/表格解析
+python-pptx>=1.0          # .pptx 逐页形状文本
+openpyxl>=3.1             # .xlsx 单元格解析
+av>=12.0               # 视频/音频解码（自带 ffmpeg 库，零系统依赖）

@@ -30,3 +30,6 @@ class Chunk:
     # doc_id / doc_hash / chunk_type(parent|child) / parent_id / scenario /
     # error_codes(str) / risk / action / version / status / valid_to /
     # source_url / tags(str) / media_type / seq
+    # media_type（Phase 4 多模态）：text（.md 默认）/ image / audio / video / pdf
+    # media_ref：原始媒体文件相对路径——回答阶段可路由给 GLM-4V 二次看图
+    # （联合嵌入升级项 bge-visualized-m3/ColPali 也靠 media_ref 找到原图）

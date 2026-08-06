@@ -1,0 +1,120 @@
+{
+  "metric": "transcribe_quality",
+  "cases": 10,
+  "error_code_acc": 1.0,
+  "scene_acc": 1.0,
+  "key_texts_coverage_avg": 1.0,
+  "summary_nonempty_rate": 1.0,
+  "results": [
+    {
+      "file": "vpn-error-800.png",
+      "expected_error_code": "800",
+      "got_error_code": "800",
+      "error_code_ok": true,
+      "expected_scene": "vpn_client_error",
+      "got_scene": "vpn_client_error",
+      "scene_ok": true,
+      "key_texts_coverage": 1.0,
+      "summary_nonempty": true
+    },
+    {
+      "file": "vpn-error-720.png",
+      "expected_error_code": "720",
+      "got_error_code": "720",
+      "error_code_ok": true,
+      "expected_scene": "vpn_client_error",
+      "got_scene": "vpn_client_error",
+      "scene_ok": true,
+      "key_texts_coverage": 1.0,
+      "summary_nonempty": true
+    },
+    {
+      "file": "vpn-error-553.png",
+      "expected_error_code": "553",
+      "got_error_code": "553",
+      "error_code_ok": true,
+      "expected_scene": "vpn_client_error",
+      "got_scene": "vpn_client_error",
+      "scene_ok": true,
+      "key_texts_coverage": 1.0,
+      "summary_nonempty": true
+    },
+    {
+      "file": "vpn-error-1068.png",
+      "expected_error_code": "1068",
+      "got_error_code": "1068",
+      "error_code_ok": true,
+      "expected_scene": "vpn_client_error",
+      "got_scene": "vpn_client_error",
+      "scene_ok": true,
+      "key_texts_coverage": 1.0,
+      "summary_nonempty": true
+    },
+    {
+      "file": "vpn-error-769.png",
+      "expected_error_code": "769",
+      "got_error_code": "769",
+      "error_code_ok": true,
+      "expected_scene": "vpn_client_error",
+      "got_scene": "vpn_client_error",
+      "scene_ok": true,
+      "key_texts_coverage": 1.0,
+      "summary_nonempty": true
+    },
+    {
+      "file": "email-error-553.png",
+      "expected_error_code": "553",
+      "got_error_code": "553",
+      "error_code_ok": true,
+      "expected_scene": "email_error",
+      "got_scene": "email_error",
+      "scene_ok": true,
+      "key_texts_coverage": 1.0,
+      "summary_nonempty": true
+    },
+    {
+      "file": "cmdline-ping-timeout.png",
+      "expected_error_code": "",
+      "got_error_code": "",
+      "error_code_ok": true,
+      "expected_scene": "cmdline_output",
+      "got_scene": "cmdline_output",
+      "scene_ok": true,
+      "key_texts_coverage": 1.0,
+      "summary_nonempty": true
+    },
+    {
+      "file": "browser-403.png",
+      "expected_error_code": "403",
+      "got_error_code": "403",
+      "error_code_ok": true,
+      "expected_scene": "web_browser_error",
+      "got_scene": "web_browser_error",
+      "scene_ok": true,
+      "key_texts_coverage": 1.0,
+      "summary_nonempty": true
+    },
+    {
+      "file": "dashboard-alert-800.png",
+      "expected_error_code": "800",
+      "got_error_code": "800",
+      "error_code_ok": true,
+      "expected_scene": "dashboard",
+      "got_scene": "dashboard",
+      "scene_ok": true,
+      "key_texts_coverage": 1.0,
+      "summary_nonempty": true
+    },
+    {
+      "file": "blank-client-window.png",
+      "expected_error_code": "",
+      "got_error_code": "",
+      "error_code_ok": true,
+      "expected_scene": "vpn_client_error",
+      "got_scene": "vpn_client_error",
+      "scene_ok": true,
+      "key_texts_coverage": 1.0,
+      "summary_nonempty": true
+    }
+  ]
+}
