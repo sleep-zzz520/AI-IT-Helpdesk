@@ -39,3 +39,6 @@ npm-debug.log*
 
 # ===== CodeBuddy IDE =====
 .codebuddy/
+
+# ===== 监控服务运行时数据 ===== 
+backend/mock_monitor/*.db
