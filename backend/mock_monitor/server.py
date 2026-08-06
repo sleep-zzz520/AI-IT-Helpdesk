@@ -29,7 +29,10 @@ from pydantic import BaseModel
 DB_PATH = Path(__file__).resolve().parent / "monitor.db"
 
 # 初始账号数据（与原 MOCK_USERS 对齐，保证 e2e 回归不破）
+# 注意：必须与登录体系 users 表种子账号对齐（admin/zhangsan/lisi）——
+# verify 节点用登录用户名查证书，监控系统没有对应账号会误报"账号不存在"
 INITIAL_USERS = {
+    "admin": {"cert_valid_until": "2026-07-30", "expired": True},  # 管理员也有证书（演示可测）
     "zhangsan": {"cert_valid_until": "2026-07-30", "expired": True},
     "lisi": {"cert_valid_until": "2027-01-15", "expired": False},
     "error_user": {"cert_valid_until": "2026-07-30", "expired": True},
