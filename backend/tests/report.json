@@ -1,81 +1,201 @@
 {
-  "metric": "intent_accuracy",
-  "total": 12,
-  "correct": 12,
+  "metric": "intent_request_accuracy",
+  "total": 16,
+  "correct": 16,
   "accuracy": 1.0,
-  "glm_calls": 12,
+  "glm_calls": 18,
   "wrong": [],
   "results": [
     {
       "message": "VPN连不上，报错Error 800",
-      "expected": "vpn",
-      "predicted": "vpn",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
       "ok": true
     },
     {
       "message": "VPN拨号失败，代码720",
-      "expected": "vpn",
-      "predicted": "vpn",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
       "ok": true
     },
     {
       "message": "无法建立VPN连接",
-      "expected": "vpn",
-      "predicted": "vpn",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
       "ok": true
     },
     {
       "message": "证书过期导致连不上VPN",
-      "expected": "vpn",
-      "predicted": "vpn",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
       "ok": true
     },
     {
       "message": "公司VPN登录不上去",
-      "expected": "vpn",
-      "predicted": "vpn",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "ok": true
+    },
+    {
+      "message": "VPN客户端怎么配置",
+      "expected": [
+        "vpn",
+        "consult"
+      ],
+      "predicted": [
+        "vpn",
+        "consult"
+      ],
+      "ok": true
+    },
+    {
+      "message": "VPN证书续期的流程是什么",
+      "expected": [
+        "vpn",
+        "consult"
+      ],
+      "predicted": [
+        "vpn",
+        "consult"
+      ],
       "ok": true
     },
     {
       "message": "我的密码忘了怎么办",
-      "expected": "password",
-      "predicted": "password",
+      "expected": [
+        "password",
+        "consult"
+      ],
+      "predicted": [
+        "password",
+        "consult"
+      ],
       "ok": true
     },
     {
       "message": "密码过期了，需要重置",
-      "expected": "password",
-      "predicted": "password",
+      "expected": [
+        "password",
+        "troubleshoot"
+      ],
+      "predicted": [
+        "password",
+        "troubleshoot"
+      ],
+      "ok": true
+    },
+    {
+      "message": "邮箱收不到邮件，IMAP怎么配",
+      "expected": [
+        "email",
+        "consult"
+      ],
+      "predicted": [
+        "email",
+        "consult"
+      ],
+      "ok": true
+    },
+    {
+      "message": "邮件发不出去，报错553",
+      "expected": [
+        "email",
+        "troubleshoot"
+      ],
+      "predicted": [
+        "email",
+        "troubleshoot"
+      ],
+      "ok": true
+    },
+    {
+      "message": "办公软件怎么安装",
+      "expected": [
+        "software",
+        "consult"
+      ],
+      "predicted": [
+        "software",
+        "consult"
+      ],
+      "ok": true
+    },
+    {
+      "message": "软件激活提示许可证无效",
+      "expected": [
+        "software",
+        "troubleshoot"
+      ],
+      "predicted": [
+        "software",
+        "troubleshoot"
+      ],
       "ok": true
     },
     {
       "message": "打印机没有反应",
-      "expected": "other",
-      "predicted": "other",
+      "expected": [
+        "other",
+        "troubleshoot"
+      ],
+      "predicted": [
+        "other",
+        "troubleshoot"
+      ],
       "ok": true
     },
     {
       "message": "电脑蓝屏了",
-      "expected": "other",
-      "predicted": "other",
-      "ok": true
-    },
-    {
-      "message": "公司网络太慢",
-      "expected": "other",
-      "predicted": "other",
-      "ok": true
-    },
-    {
-      "message": "VPN是什么？怎么用",
-      "expected": "other",
-      "predicted": "other",
+      "expected": [
+        "other",
+        "troubleshoot"
+      ],
+      "predicted": [
+        "other",
+        "troubleshoot"
+      ],
       "ok": true
     },
     {
       "message": "你好",
-      "expected": "other",
-      "predicted": "other",
+      "expected": [
+        "other",
+        "other"
+      ],
+      "predicted": [
+        "other",
+        "other"
+      ],
       "ok": true
     }
   ]
