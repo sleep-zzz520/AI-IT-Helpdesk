@@ -9,16 +9,18 @@
 import time
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.conversations import get_db
 from app.config import settings
-from app.models import KbDocument
+from app.models import KbDocument, User
 from app.rag.retriever import RetrievalStats, retrieve
 from app.rag.store import Hit, create_store
 from app.rag.sync import run_sync
+from app.security import require_admin
+from app.services.audit_service import audit
 
 router = APIRouter(prefix="/api/kb", tags=["kb"])
 
@@ -46,8 +48,12 @@ def _hit_out(hit: Hit, max_text: int = 140) -> dict:
 
 
 @router.get("/documents")
-def list_documents(db: Session = Depends(get_db), status: str | None = None,
-                   kb_name: str = "default"):
+def list_documents(
+    user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    status: str | None = None,
+    kb_name: str = "default",
+):
     """台账列表（文档体检报告）：状态 / 块数 / 有效期 / 变更记录。
 
     默认只列 default 实例（运维知识库）；压测库（scale）用 kb_name 参数显式查。
@@ -83,7 +89,10 @@ def list_documents(db: Session = Depends(get_db), status: str | None = None,
 
 
 @router.get("/stats")
-def kb_stats(db: Session = Depends(get_db)):
+def kb_stats(
+    user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     """库统计 + 蓝绿状态（管理页顶部卡片 / 切换按钮的状态依据）。"""
     active = create_store()               # 在岗库
     candidate = create_store(collection_name=settings.candidate_collection)
@@ -105,7 +114,10 @@ def kb_stats(db: Session = Depends(get_db)):
 
 
 @router.post("/sync")
-def kb_sync():
+def kb_sync(
+    request: Request,
+    user: User = Depends(require_admin),
+):
     """触发一次同步（蓝绿：全量写入候选库，在岗库不动）。
 
     流程：清空候选 → reconcile（增/改/删/跳过）→ 返回报告。
@@ -121,6 +133,13 @@ def kb_sync():
     except Exception as e:  # noqa: BLE001 —— 同步失败要告诉用户原因
         raise HTTPException(status_code=500, detail=f"同步失败：{e}") from e
     elapsed = round((time.perf_counter() - t0) * 1000)
+    from app.db import SessionLocal  # 审计需要 db 会话（本地开一个，不污染接口依赖）
+    with SessionLocal() as db:
+        audit(db, user, "kb_sync", {
+            "added": len(report.added), "updated": len(report.updated),
+            "deleted": len(report.deleted), "failed": len(report.failed),
+            "elapsed_ms": elapsed,
+        }, request=request)
     return {
         "summary": report.summary,
         "added": report.added,
@@ -139,7 +158,10 @@ def kb_sync():
 
 
 @router.post("/switch")
-def kb_switch():
+def kb_switch(
+    request: Request,
+    user: User = Depends(require_admin),
+):
     """蓝绿切换：active 指针 → 候选库（回滚 = 再调一次，两库交替）。
 
     安全校验：候选库为空禁止切换（切到空库 = 全站检索瘫痪）。
@@ -149,6 +171,9 @@ def kb_switch():
     if candidate.count() == 0:
         raise HTTPException(status_code=409, detail="候选库为空，禁止切换（请先同步）")
     new_active = settings.switch_active()
+    from app.db import SessionLocal
+    with SessionLocal() as db:
+        audit(db, user, "kb_switch", {"switched_to": new_active}, request=request)
     return {
         "switched_to": new_active,
         "active_chunks": create_store().count(),
@@ -159,7 +184,10 @@ def kb_switch():
 
 
 @router.post("/debug")
-def kb_debug(body: KbDebugRequest):
+def kb_debug(
+    body: KbDebugRequest,
+    user: User = Depends(require_admin),
+):
     """检索调试：跑一次完整混合检索，返回双路召回 + 融合的每一步明细。
 
     用途（知识库管理页"检索调试"）：运营者看到"为什么这个 query 没命中"，

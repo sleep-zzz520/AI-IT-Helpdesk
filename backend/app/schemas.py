@@ -8,8 +8,14 @@ from pydantic import BaseModel
 
 
 # ===== 请求 =====
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 class ConversationCreate(BaseModel):
-    user_id: str
+    # user_id 可选：不传则用登录用户（推荐）；传了仅管理员可替他人开（暂不开放）
+    user_id: str | None = None
 
 
 class MessageCreate(BaseModel):
@@ -25,6 +31,19 @@ class FeedbackCreate(BaseModel):
 
 
 # ===== 响应 =====
+class UserOut(BaseModel):
+    id: int
+    username: str
+    display_name: str
+    role: str                    # admin / user
+    tenant_id: int
+
+
+class TokenResponse(BaseModel):
+    token: str
+    user: UserOut
+
+
 class MessageOut(BaseModel):
     id: int | None = None       # 消息 id（👍/👎 反馈需要；历史消息必有）
     role: str

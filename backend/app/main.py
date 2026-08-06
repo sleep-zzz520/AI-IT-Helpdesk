@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.audit import router as audit_router
+from app.api.auth import router as auth_router
 from app.api.conversations import router as conversations_router
 from app.api.feedback import router as feedback_router
 from app.api.kb import router as kb_router
@@ -29,6 +31,8 @@ app.add_middleware(
 )
 
 # 挂载业务路由
+app.include_router(auth_router)          # 登录/当前用户
+app.include_router(audit_router)         # 审计日志（admin only）
 app.include_router(conversations_router)
 app.include_router(feedback_router)
 app.include_router(kb_router)

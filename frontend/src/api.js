@@ -2,19 +2,37 @@
 // BASE 用相对路径（同源）——本地开发由 vite proxy 转发，Docker 由 nginx 反代，
 // 代码零差异（生产标准做法：不用写死地址、无 CORS 问题）。
 const BASE = import.meta.env.VITE_API_BASE || '';
+const TOKEN_KEY = 'helpdesk_token';
 
-async function request(path, options) {
+// ===== token 管理（登录态持久化：刷新页面不丢）=====
+export function getToken() {
+  try { return localStorage.getItem(TOKEN_KEY) } catch { return null }
+}
+export function setToken(token) {
+  try { localStorage.setItem(TOKEN_KEY, token) } catch { /* 隐私模式兜底 */ }
+}
+export function clearToken() {
+  try { localStorage.removeItem(TOKEN_KEY) } catch { /* ignore */ }
+}
+
+// 统一请求：自动带 Authorization 头；401 清除本地 token（登录态失效）
+async function request(path, options = {}, authorized = true) {
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if (authorized && getToken()) headers.Authorization = `Bearer ${getToken()}`;
   let resp;
   try {
-    resp = await fetch(`${BASE}${path}`, {
-      headers: { 'Content-Type': 'application/json' },
-      ...options,
-    });
+    resp = await fetch(`${BASE}${path}`, { ...options, headers });
   } catch {
-    // 网络层失败（后端没启动/崩溃/端口不对）——翻译成人话 + 解决办法
     throw new Error(
       `无法连接后端服务（${BASE}）。请确认后端已启动：cd backend && source ../.venv/bin/activate && uvicorn app.main:app --reload`,
     );
+  }
+  if (resp.status === 401 && authorized) {
+    clearToken();
+    // 让上层跳回登录页（通过自定义错误标记，避免所有调用方重复判断）
+    const err = new Error('登录已过期，请重新登录');
+    err.unauthorized = true;
+    throw err;
   }
   if (!resp.ok) {
     let detail = ''
@@ -27,8 +45,17 @@ async function request(path, options) {
   return resp.json();
 }
 
-export const createConversation = (userId) =>
-  request('/api/conversations', { method: 'POST', body: JSON.stringify({ user_id: userId }) });
+// ===== 认证 =====
+export const login = (username, password) =>
+  request('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  }, false);  // 登录接口不带 token
+
+export const fetchMe = () => request('/api/auth/me');
+
+export const createConversation = () =>
+  request('/api/conversations', { method: 'POST', body: JSON.stringify({}) });
 
 // SSE 流式发消息：Agent 每完成一个节点就通过 onNode 回调推送（执行链路实时跳动），
 // 全部完成返回 done 事件（完整消息 + trace + 总耗时）。
@@ -37,7 +64,10 @@ export async function sendMessageStream(convId, content, image, mode, onNode, si
   try {
     resp = await fetch(`${BASE}/api/conversations/${convId}/messages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+      },
       body: JSON.stringify({ content, image: image ?? null, mode }),
       signal,  // 可取消：开新会话时 abort，旧请求立即断开
     });
@@ -45,6 +75,12 @@ export async function sendMessageStream(convId, content, image, mode, onNode, si
     throw new Error(
       `无法连接后端服务（${BASE}）。请确认后端已启动：cd backend && source ../.venv/bin/activate && uvicorn app.main:app --reload`,
     );
+  }
+  if (resp.status === 401) {
+    clearToken();
+    const err = new Error('登录已过期，请重新登录');
+    err.unauthorized = true;
+    throw err;
   }
   if (!resp.ok || !resp.body) {
     let detail = '';
@@ -120,3 +156,11 @@ export const syncKb = () => request('/api/kb/sync', { method: 'POST' });
 export const switchKb = () => request('/api/kb/switch', { method: 'POST' });
 export const debugKbQuery = (body) =>
   request('/api/kb/debug', { method: 'POST', body: JSON.stringify(body) });
+
+// ===== 审计日志（admin only）=====
+export const fetchAuditLogs = (params = {}) => {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => { if (v != null && v !== '') qs.set(k, v) });
+  return request(`/api/audit/logs?${qs.toString()}`);
+};
+export const fetchAuditActions = () => request('/api/audit/actions');

@@ -16,11 +16,66 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
 
+class Tenant(Base):
+    """租户：多租户隔离的顶层单位（一个租户 = 一个企业/部门）。
+
+    - code 是稳定业务标识（API/代码里用），name 是展示名
+    - 所有业务数据（用户/会话/工单）通过 tenant_id 归属租户
+    """
+    __tablename__ = "tenants"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(String(32), unique=True)  # 业务码：acme / globex
+    name: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class User(Base):
+    """平台用户：登录身份 + 角色 + 租户归属。
+
+    - password_hash：PBKDF2 哈希（绝不明文存密码，见 security.py）
+    - role: admin（管理员，可审计/管理）/ user（普通用户，只能操作本租户数据）
+    - tenant_id：数据隔离的关键——用户只能访问自己租户的数据
+    - active=False 可禁用账号（踢出登录）
+    """
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String(64), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    display_name: Mapped[str] = mapped_column(String(64), default="")
+    role: Mapped[str] = mapped_column(String(16), default="user")  # admin / user
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"))
+    active: Mapped[int] = mapped_column(default=1)  # 1=启用 0=禁用
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class AuditLog(Base):
+    """审计日志：谁在什么时候做了什么（安全可追溯）。
+
+    - action：动作名（login / create_conversation / send_message / execute_tool / kb_sync ...）
+    - detail：JSON 细节（如执行了什么工具、同步结果摘要）
+    - ip：来源 IP（网络安全基本盘）
+    - 只追加、不修改、不删除（审计日志的不可变原则）
+    """
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
+    user_id: Mapped[str] = mapped_column(String(64))
+    action: Mapped[str] = mapped_column(String(64))
+    detail: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
 class Conversation(Base):
     __tablename__ = "conversations"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[str] = mapped_column(String(64))
+    # 多租户隔离：会话归属租户（由登录用户身份注入，不是前端传的）
+    tenant_id: Mapped[int | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
     # 会话级状态：intent 判定一次后复用（见优化文档「意图是会话级状态」）
     intent: Mapped[str | None] = mapped_column(String(32), nullable=True)
     # 业务字段必须持久化：图片等不可重抽来源的信息，落库才能跨轮记忆

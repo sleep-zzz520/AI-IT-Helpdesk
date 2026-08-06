@@ -26,6 +26,7 @@ def init_db() -> None:
     import app.models  # noqa: F401 确保模型已注册
     Base.metadata.create_all(engine)
     _ensure_columns()
+    _seed()
 
 
 # 新增列清单：表名 → [列名, DDL 类型]。缺列就 ALTER 补上（老库平滑升级）。
@@ -39,6 +40,7 @@ _EXTRA_COLUMNS = {
         ("kb_name", "VARCHAR(32) NOT NULL DEFAULT 'default'"),  # 台账隔离
         ("valid_to", "VARCHAR(16) NULL"),                      # 文档有效期（过期预警）
     ],
+    "conversations": [("tenant_id", "INT NULL")],  # 多租户隔离（老会话可空=未归租户）
 }
 
 
@@ -76,3 +78,51 @@ def _ensure_kb_constraints() -> None:
         if not _has_index("uq_kb_name_path"):
             conn.execute(text(
                 "CREATE UNIQUE INDEX uq_kb_name_path ON kb_documents (kb_name, path)"))
+
+
+# ===== 种子数据（幂等：只在空表时灌入，重复启动不重复插入）=====
+# 演示账号（生产环境应移除并走注册流程）：
+# - admin / Admin@2025   管理员（租户 acme，可看审计/管理知识库）
+# - zhangsan / Zhangsan@2025  普通用户（租户 acme）
+# - lisi / Lisi@2025     普通用户（租户 globex，与 zhangsan 不同租户 → 数据隔离演示）
+_SEED_TENANTS = [
+    {"code": "acme", "name": "Acme 集团"},
+    {"code": "globex", "name": "Globex 科技"},
+]
+_SEED_USERS = [
+    {"username": "admin", "password": "Admin@2025", "display_name": "系统管理员",
+     "role": "admin", "tenant": "acme"},
+    {"username": "zhangsan", "password": "Zhangsan@2025", "display_name": "张三",
+     "role": "user", "tenant": "acme"},
+    {"username": "lisi", "password": "Lisi@2025", "display_name": "李四",
+     "role": "user", "tenant": "globex"},
+]
+
+
+def _seed() -> None:
+    """首次启动灌入演示租户和用户（幂等：已有数据则跳过）。
+
+    教学点：种子数据是"开发体验"，不是"安全实现"——
+    演示密码写死在代码里没问题，生产环境必须有注册流程 + 强密码策略。
+    """
+    from app.models import Tenant, User  # 局部导入避免循环引用
+    from app.security import hash_password  # 同上：db→security 延迟导入
+    with SessionLocal() as db:
+        if db.query(Tenant).count() > 0:
+            return  # 已初始化过，跳过（幂等）
+        tenant_map: dict[str, int] = {}
+        for t in _SEED_TENANTS:
+            row = Tenant(code=t["code"], name=t["name"])
+            db.add(row)
+            db.flush()  # 先拿到自增 id
+            tenant_map[t["code"]] = row.id
+        for u in _SEED_USERS:
+            db.add(User(
+                username=u["username"],
+                password_hash=hash_password(u["password"]),
+                display_name=u["display_name"],
+                role=u["role"],
+                tenant_id=tenant_map[u["tenant"]],
+                active=1,
+            ))
+        db.commit()

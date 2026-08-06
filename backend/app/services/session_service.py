@@ -10,8 +10,14 @@ from sqlalchemy.orm import Session
 from app.models import Conversation, Message, Trace
 
 
-def create_conversation(db: Session, user_id: str) -> Conversation:
-    conv = Conversation(user_id=user_id)
+def create_conversation(db: Session, user_id: str,
+                        tenant_id: int | None = None) -> Conversation:
+    """开新会话。tenant_id 由调用方（登录用户身份）注入。
+
+    多租户：user_id 是"谁"，tenant_id 是"哪个租户"——两者都来自登录态，
+    不信任前端传值（防伪造他人身份/跨租户数据）。
+    """
+    conv = Conversation(user_id=user_id, tenant_id=tenant_id)
     db.add(conv)
     db.commit()
     db.refresh(conv)

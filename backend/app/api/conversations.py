@@ -1,15 +1,22 @@
-"""会话相关 API 路由：创建会话 / 发消息（SSE 流式）/ 查 Trace。"""
+"""会话相关 API 路由：创建会话 / 发消息（SSE 流式）/ 查 Trace。
+
+【多租户隔离 + 权限】——本文件是权限体系的重点落点：
+- 所有接口要求登录（get_current_user 依赖）
+- 创建会话：user_id / tenant_id 从登录用户注入（不信任前端传值）
+- 查会话/发消息/查 trace：先校验租户，跨租户 → 404（"不存在"而非"无权限"，
+  避免泄露别租户的会话存在性）
+"""
 import json
 import time
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.agents.graph import graph
 from app.config import settings
 from app.db import SessionLocal
-from app.models import Conversation
+from app.models import Conversation, User
 from app.schemas import (
     ConversationCreate,
     ConversationOut,
@@ -17,7 +24,9 @@ from app.schemas import (
     MessageOut,
     TraceOut,
 )
+from app.security import get_current_user
 from app.services import session_service
+from app.services.audit_service import audit
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 
@@ -64,30 +73,60 @@ def _run_agent_stream(state: dict):
     yield "done", final, total_ms
 
 
-@router.post("", response_model=ConversationOut)
-def create_conversation(body: ConversationCreate, db: Session = Depends(get_db)):
-    """开新工单/会话。"""
-    conv = session_service.create_conversation(db, body.user_id)
-    return conv
+def _get_owned_conversation(db: Session, conv_id: int, user: User) -> Conversation:
+    """按用户租户获取会话（跨租户 → 404，不泄露存在性）。
 
-
-@router.get("/{conv_id}", response_model=ConversationOut)
-def get_conversation(conv_id: int, db: Session = Depends(get_db)):
-    """查会话（工单状态/intent/ticket_id，前端刷新用）。"""
+    多租户隔离核心：所有按 id 查会话的地方都必须过这道校验。
+    """
     conv = db.get(Conversation, conv_id)
-    if conv is None:
+    if conv is None or conv.tenant_id != user.tenant_id:
         raise HTTPException(status_code=404, detail="会话不存在")
     return conv
 
 
+@router.post("", response_model=ConversationOut)
+def create_conversation(
+    body: ConversationCreate,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """开新工单/会话。身份从登录态注入（不信任前端传的 user_id）。"""
+    # 身份注入：user_id 用登录用户名，tenant_id 用登录用户租户
+    conv = session_service.create_conversation(
+        db, user_id=user.username, tenant_id=user.tenant_id)
+    audit(db, user, "create_conversation",
+          {"conv_id": conv.id, "user_id": conv.user_id}, request=request)
+    return conv
+
+
+@router.get("/{conv_id}", response_model=ConversationOut)
+def get_conversation(
+    conv_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """查会话（工单状态/intent/ticket_id，前端刷新用）。"""
+    return _get_owned_conversation(db, conv_id, user)
+
+
 @router.post("/{conv_id}/messages")
-def send_message(conv_id: int, body: MessageCreate, db: Session = Depends(get_db)):
+def send_message(
+    conv_id: int,
+    body: MessageCreate,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """发消息（SSE 流式）：边跑 Agent 边推送节点进度，最后推完整结果。
 
     事件流：
       event: node  data: {"traces": [...]}   每完成一个节点推一次（执行链路实时跳动）
       event: done  data: {messages, elapsed_ms, ...}   全部完成（含存库后的最终数据）
     """
+    # 0. 租户校验：不能给别的租户的会话发消息
+    _get_owned_conversation(db, conv_id, user)
+    audit(db, user, "send_message", {"conv_id": conv_id}, request=request)
     # 1. 从数据库恢复会话记忆
     state = session_service.load_state(db, conv_id)
     # 2. 把新消息追加进历史（可选带截图 base64，OCR 用）
@@ -173,9 +212,11 @@ def send_message(conv_id: int, body: MessageCreate, db: Session = Depends(get_db
 
 
 @router.get("/{conv_id}/traces", response_model=list[TraceOut])
-def get_traces(conv_id: int, db: Session = Depends(get_db)):
+def get_traces(
+    conv_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """查会话的 Trace 记录（可视化面板数据源）。"""
-    conv = db.get(Conversation, conv_id)
-    if conv is None:
-        raise HTTPException(status_code=404, detail="会话不存在")
+    conv = _get_owned_conversation(db, conv_id, user)
     return conv.traces

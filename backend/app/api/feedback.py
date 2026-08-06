@@ -7,18 +7,26 @@
     sources 非空 → 有文档但回答没用 → 【文档过时/不准】（应修文档）
 - 不需要再调模型分析——已有的可观测性数据直接反哺运营。
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.api.conversations import get_db
-from app.models import Message
+from app.models import Conversation, Message, User
 from app.schemas import FeedbackCreate
+from app.security import get_current_user
+from app.services.audit_service import audit
 
 router = APIRouter(tags=["feedback"])
 
 
 @router.post("/api/messages/{msg_id}/feedback")
-def submit_feedback(msg_id: int, body: FeedbackCreate, db: Session = Depends(get_db)):
+def submit_feedback(
+    msg_id: int,
+    body: FeedbackCreate,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """提交/修改/取消 👍/👎 反馈。幂等覆盖：重复提交覆盖旧值。
 
     - feedback=up/down：设置（改主意换边 = 直接发新值，覆盖）
@@ -27,10 +35,15 @@ def submit_feedback(msg_id: int, body: FeedbackCreate, db: Session = Depends(get
     msg = db.get(Message, msg_id)
     if msg is None:
         raise HTTPException(status_code=404, detail="消息不存在")
+    # 多租户：只能给自己的会话消息反馈
+    if msg.conversation.tenant_id != user.tenant_id:
+        raise HTTPException(status_code=404, detail="消息不存在")
     if msg.role != "assistant":
         raise HTTPException(status_code=400, detail="只对 Agent 回复反馈")
     msg.feedback = body.feedback
     db.commit()
+    audit(db, user, "feedback", {"msg_id": msg_id, "feedback": body.feedback},
+          request=request)
     return {"id": msg.id, "feedback": msg.feedback}
 
 
@@ -60,12 +73,19 @@ def _classify_down(msg: Message) -> dict:
 
 
 @router.get("/api/feedback/analysis")
-def feedback_analysis(db: Session = Depends(get_db)):
-    """后台负反馈分析：统计 + 逐条归类（知识库运营的数据源）。
+def feedback_analysis(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """后台负反馈分析：统计 + 逐条归类（知识库运营的数据源，仅登录用户）。
 
     演示数据量小，直接在内存统计；生产量级应改为 SQL 聚合。
+    多租户：只统计当前租户的消息（跨租户的反馈不混进来）。
     """
-    rows = db.query(Message).all()
+    rows = (db.query(Message)
+            .join(Message.conversation)
+            .filter(Conversation.tenant_id == user.tenant_id)
+            .all())
     ups = [m for m in rows if m.feedback == "up"]
     downs = [m for m in rows if m.feedback == "down"]
     rated = ups + downs
