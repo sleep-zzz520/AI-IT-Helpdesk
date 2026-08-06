@@ -108,10 +108,14 @@ INTENT_PROMPT = _build_intent_prompt()
 def intent_node(state: HelpdeskState) -> dict:
     """输入：最新一条用户消息；输出：intent 分类 + request_type + Trace 记录。
 
-    意图与诉求类型都是【会话级】判断：一旦定下，后续轮次直接复用，
-    不再重复调 AI（与历史行为一致，request_type 随 intent 一并复用）。
+    意图复用的【边界】——这是踩坑修复（见优化文档）：
+    - 具体场景（vpn/password/email/software）复用：多轮补全信息时（"VPN连不上"
+      →"win11"）意图不该变，复用省一次 LLM 调用
+    - other（寒暄/无关）【不复用】：用户先寒暄"你好"再报障"vpn连不上"，
+      复用了 other 会把真正的报障锁死在"非支持场景"→ 错误转 rag_query。
+      寒暄是"还没开始说正事"，每轮都必须重新识别。
     """
-    if state.get("intent"):
+    if state.get("intent") and state.get("intent") != "other":
         # 复用分支同时清除 multi_scenarios：多问题只在首轮检测，
         # 不清理会残留导致后续轮次每轮都走多问题引导（死循环）
         return {

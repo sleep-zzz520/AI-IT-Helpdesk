@@ -12,7 +12,8 @@ EXTRACT_PROMPT = """你是信息抽取器。从对话中提取用户提到的 IT
 - error_code: 错误码（如 800）
 - username: 用户名/账号
 
-只输出 JSON，格式：{"device": "值或空字符串", "error_code": "值或空字符串", "username": "值或空字符串"}
+只输出 JSON。每个字段用字符串表示，没提到的字段输出空字符串 ""（不要输出"值或空字符串"这类说明文字）：
+{"device": "Windows 11", "error_code": "800", "username": ""}
 """
 
 

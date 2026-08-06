@@ -169,6 +169,15 @@ def answer_question(question: str, scenario: str | None = None,
             hops.append({"hop": hop, "query": current_query, "hits": [],
                          "judge": {"error": f"检索失败: {e}"}})
             break
+        # 性能优化（踩坑）：0 命中直接短路，不调 judge/generate——
+        # 没证据就没答案，让 LLM 硬编只会幻觉；还白烧 2 次 LLM 调用
+        # （实测 0 命中场景 judge 判断 not enough → 给 next_query →
+        #  空证据不满足实体约束 → 终止，最终 generate 对着空证据编）
+        if not hits:
+            hops.append({"hop": hop, "query": current_query, "hits": [],
+                         "judge": {"enough": False, "answerable": False,
+                                   "reason": "检索 0 命中，跳过 LLM 判断"}})
+            break
         for h in hits:
             if h.id not in seen_ids:
                 seen_ids.add(h.id)
@@ -197,6 +206,12 @@ def answer_question(question: str, scenario: str | None = None,
         if hop >= MAX_HOPS or not nq or not _shares_evidence_terms(nq, evidence):
             break
         current_query = nq
+
+    # 0 命中/无证据：固定兜底话术（不调 generate 对着空证据编——幻觉 + 烧钱 + 慢）
+    if not evidence:
+        answer = ("知识库中暂无相关内容，无法回答您的具体问题。\n\n"
+                  "如需进一步排查，请描述故障现象，我可转人工协助。")
+        return {"answer": answer, "evidence": evidence, "hops": hops}
 
     answer = generate_answer(question, evidence, hops[-1].get("judge", {}))
     return {"answer": answer, "evidence": evidence, "hops": hops}
