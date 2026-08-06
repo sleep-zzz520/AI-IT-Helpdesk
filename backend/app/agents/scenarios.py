@@ -31,6 +31,20 @@ SCENARIOS = {
         "keywords": ["密码", "忘记", "重置", "过期"],
         "reply_unsupported": "密码自助服务正在开发中，您的问题已记录并转人工处理，请留意后续通知。",
     },
+    "email": {
+        "name": "邮箱问题",
+        "status": "coming",
+        "required_fields": [],
+        "keywords": ["邮箱", "邮件", "IMAP", "SMTP", "收不到", "发不出", "553", "554"],
+        "reply_unsupported": "邮箱自助服务正在开发中，您的问题已记录并转人工处理，请留意后续通知。",
+    },
+    "software": {
+        "name": "软件安装问题",
+        "status": "coming",
+        "required_fields": [],
+        "keywords": ["软件", "安装", "激活", "许可证", "Office", "装不上"],
+        "reply_unsupported": "软件安装自助服务正在开发中，您的问题已记录并转人工处理，请留意后续通知。",
+    },
 }
 
 
