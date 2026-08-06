@@ -24,26 +24,28 @@ def run_eval() -> dict:
     correct, wrong = 0, []
     results = []
 
-    for i, (message, expected) in enumerate(INTENT_CASES):
+    for i, (message, expected_intent, expected_type) in enumerate(INTENT_CASES):
         try:
             out = intent_node({"messages": [{"role": "user", "content": message}], "trace": []})
-            predicted = out["intent"]
+            predicted = (out.get("intent"), out.get("request_type"))
         except Exception as e:  # 模型限流/异常按错误计
-            predicted = f"ERROR: {type(e).__name__}"
+            predicted = (f"ERROR: {type(e).__name__}", "")
+        expected = (expected_intent, expected_type)
 
         ok = predicted == expected
         correct += ok
         if not ok:
-            wrong.append({"message": message, "expected": expected, "predicted": predicted})
-        results.append({"message": message, "expected": expected, "predicted": predicted, "ok": ok})
-        print(f"  {'✅' if ok else '❌'} {message[:28]:<30} → {predicted} (期望 {expected})")
+            wrong.append({"message": message, "expected": list(expected), "predicted": list(predicted)})
+        results.append({"message": message, "expected": list(expected),
+                        "predicted": list(predicted), "ok": ok})
+        print(f"  {'✅' if ok else '❌'} {message[:24]:<26} → {predicted} (期望 {expected})")
 
         if i < len(INTENT_CASES) - 1:
             time.sleep(SLEEP_SECONDS)  # 防限流
 
     total = len(INTENT_CASES)
     report = {
-        "metric": "intent_accuracy",
+        "metric": "intent_request_accuracy",
         "total": total,
         "correct": correct,
         "accuracy": round(correct / total, 4),

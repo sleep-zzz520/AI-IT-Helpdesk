@@ -14,8 +14,11 @@ from typing import Annotated, TypedDict
 class HelpdeskState(TypedDict):
     # 对话历史（[{role: user/assistant, content: str}]）
     messages: list[dict]
-    # 意图分类结果：vpn / password / other（会话级，判定一次后复用）
+    # 意图分类结果：vpn / password / email / software / other（会话级，判定一次后复用）
     intent: str
+    # 诉求类型：troubleshoot（故障→执行）/ consult（咨询→问答）/ other（寒暄）
+    # 与 intent 一样会话级复用（graph 路由消费）
+    request_type: str
     # 还缺哪些信息（多轮追问用）
     missing_info: list[str]
     # 已收集的上下文
