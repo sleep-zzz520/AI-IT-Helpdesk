@@ -48,11 +48,16 @@ function describe(node, result) {
   switch (node) {
     case 'intent': {
       const intent = result?.intent ?? result?.reused
-      const label = { vpn: '识别为 VPN 故障', password: '识别为密码问题' }[intent]
+      const req = result?.request_type ?? 'troubleshoot'
+      const names = { vpn: 'VPN', password: '密码', email: '邮箱', software: '软件' }
+      const kind = { consult: '咨询', other: '其他', troubleshoot: '故障' }[req] ?? '故障'
+      const label = names[intent]
+        ? `识别为 ${names[intent]}${kind}`
+        : '非支持场景，直接收尾'
       return {
         label: '意图识别', type: 'AI',
-        summary: label ?? '非支持场景，直接收尾',
-        tone: intent === 'vpn' ? 'accent' : 'neutral',
+        summary: label,
+        tone: intent === 'vpn' && req === 'troubleshoot' ? 'accent' : 'neutral',
       }
     }
     case 'extract': {
@@ -109,13 +114,29 @@ function describe(node, result) {
       return { label: '转人工', type: '收尾', summary: '工单已转人工处理', tone: 'warn' }
     case 'finalize':
       return { label: '收尾回复', type: '收尾', summary: result?.reply ?? '', tone: 'neutral' }
+    case 'rag_query': {
+      const hops = result?.hops ?? []
+      const n = hops.length
+      const last = hops[n - 1]?.judge
+      const srcCount = result?.sources?.length ?? 0
+      const summary = n > 1
+        ? `多跳检索（${n} 跳，第${n}跳${last?.enough ? '证据充分' : '兜底回答'}）· 依据 ${srcCount} 篇文档`
+        : n === 1
+          ? `单跳命中 · 依据 ${srcCount} 篇文档`
+          : '知识问答'
+      return {
+        label: '知识问答', type: 'AI',
+        summary,
+        tone: n > 1 ? 'accent' : 'success',
+      }
+    }
     default:
       return { label: node, type: '节点', summary: JSON.stringify(result), tone: 'neutral' }
   }
 }
 
 // 执行中占位节点的友好名称（App.jsx 预置 pending trace 用）
-const PENDING_LABEL = { intent: '意图识别', extract: '信息抽取' }
+const PENDING_LABEL = { intent: '意图识别', extract: '信息抽取', rag_query: '知识问答' }
 // 并行节点（intent ∥ extract 同时执行，总耗时 ≠ 各阶段之和）
 const PARALLEL_NODES = new Set(['intent', 'extract'])
 
