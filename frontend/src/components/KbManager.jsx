@@ -25,6 +25,8 @@ const CATEGORY_LABEL = { missing: '文档缺失', stale: '文档过时', other: 
 // ===== 库状态卡：蓝绿状态 + 同步 + 切换 =====
 function StatsCard({ stats, busy, onSync, onSwitch }) {
   if (!stats) return null
+  // 独立库（蓝绿之外，如 kb_docs_scale 千级压测语料）→ 展示规模
+  const extras = Object.entries(stats.extra_collections || {})
   return (
     <div className="rounded-[12px] border p-4" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -33,6 +35,9 @@ function StatsCard({ stats, busy, onSync, onSwitch }) {
           <Stat k="候选库" v={<span className="mono">{stats.candidate_collection}</span>} />
           <Stat k="在岗 chunks" v={stats.active_chunks} />
           <Stat k="候选 chunks" v={stats.candidate_chunks} />
+          {extras.map(([name, n]) => (
+            <Stat key={name} k="独立库" v={<span className="mono">{name}（{n} chunks）</span>} />
+          ))}
           <Stat k="台账文档" v={stats.doc_count} />
           <Stat k="上次同步" v={stats.last_sync ? new Date(stats.last_sync).toLocaleString() : '—'} />
         </div>
@@ -125,9 +130,10 @@ function HitList({ title, hits, color }) {
   )
 }
 
-function KbDebug() {
+function KbDebug({ extraCollections = {} }) {
   const [query, setQuery] = useState('')
   const [scenario, setScenario] = useState('')
+  const [collection, setCollection] = useState('')  // '' = 当前在岗库
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [err, setErr] = useState(null)
@@ -136,7 +142,10 @@ function KbDebug() {
     if (!query.trim() || loading) return
     setLoading(true); setErr(null)
     try {
-      setResult(await debugKbQuery({ query: query.trim(), scenario: scenario || null, top_k: 5 }))
+      setResult(await debugKbQuery({
+        query: query.trim(), scenario: scenario || null, top_k: 5,
+        collection: collection || null,   // 选独立库（如 kb_docs_scale）可测千级
+      }))
     } catch (e) {
       setErr(e.message); setResult(null)
     } finally {
@@ -164,6 +173,19 @@ function KbDebug() {
         >
           <option value="">全部场景</option>
           {['vpn', 'password', 'email', 'software'].map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        {/* 目标库选择：默认在岗库；独立库（kb_docs_scale 千级压测）可选 */}
+        <select
+          value={collection}
+          onChange={(e) => setCollection(e.target.value)}
+          className="mono rounded-lg border px-2 py-2 text-xs"
+          style={{ background: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+          title="目标库：默认在岗库；独立库（如 kb_docs_scale）用于千级压测"
+        >
+          <option value="">在岗库</option>
+          {Object.keys(extraCollections).map((name) => (
+            <option key={name} value={name}>{name}（{extraCollections[name]}）</option>
+          ))}
         </select>
         <button
           onClick={run}
@@ -365,7 +387,7 @@ export default function KbManager() {
       )}
       <StatsCard stats={stats} busy={busy} onSync={handleSync} onSwitch={handleSwitch} />
       <SyncResult report={syncReport} />
-      <KbDebug />
+      <KbDebug extraCollections={stats?.extra_collections} />
       <DocTable docs={docs} onRefresh={load} />
       <FeedbackAnalysis />
     </div>

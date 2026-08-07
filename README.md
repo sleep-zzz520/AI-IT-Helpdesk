@@ -4,7 +4,7 @@
 
 > 企业级 IT 运维服务台：用 **LangGraph 状态机** 编排 Agent，将 L1 重复工单（如 VPN 证书续期）从「45 分钟人工介入」压缩到「**2 分钟全自动闭环**」。
 
-**一句话卖点**：不是"能聊天的 Agent demo"，而是一套**可观测、可控、可评估、能上线**的 Agent 工程系统——风险分级执行 + 全链路 Trace + RAG 混合检索 + Eval 跑分 + 多租户安全 + CI/CD 测试工程化。
+不是"能聊天的 Agent demo"，而是一套**可观测、可控、可评估、能上线**的 Agent 工程系统——风险分级执行 + 全链路 Trace + RAG 混合检索 + Eval 跑分 + 多租户安全 + CI/CD 测试工程化。
 
 ## 痛点与解法
 
@@ -39,6 +39,9 @@ L1 工程师全程无感，仅在后台审计日志看到一条成功记录。
 - 🏢 **多租户 + 权限 + 审计**：PBKDF2 密码哈希 + HMAC token + 登录态注入身份（不信任前端传值）；跨租户数据隔离；登录/会话/反馈/知识库操作全审计
 - 🔌 **真实监控 API 对接**：`MONITOR_MODE=mock|real` 双模式，real 走 HTTP（超时/重试/错误归一化），换真实系统只改 `MONITOR_BASE_URL`
 - 🧪 **测试工程化**：pytest 一条命令跑全量离线回归（mock LLM + 内存 SQLite），CI 自动验证，改坏流程立刻红
+- 📜 **统一日志系统**：logging 级别/文件轮转/结构化格式（时间|级别|模块|消息），容器日志卷持久化——生产排障可查，不再 print 满天飞
+- 🧹 **代码规范强制**：后端 ruff + 前端 oxlint，CI 必跑，改坏规范立刻红
+- 💾 **备份与恢复**：MySQL 全量备份（在线不锁表、保留 7 份滚动）+ 向量库打包 + 恢复演练脚本，数据可回滚
 
 ## 架构图
 
@@ -141,6 +144,8 @@ npm install                                           # 首次
 npm run dev                                           # http://localhost:5173
 ```
 
+> 💡 **接口文档**：FastAPI 自带 Swagger UI——本地开发访问 http://127.0.0.1:8000/docs；Docker 部署访问 http://localhost:8080/docs（nginx 已反代）。可在浏览器直接调接口、看请求/响应结构。
+
 ### 演示路径
 
 1. **登录**（多租户/权限体系）：用演示账号一键填充登录
@@ -164,7 +169,7 @@ python -m scripts.test_shadow             # 影子测试：新旧索引 Recall �
 curl -X POST http://localhost:8000/api/kb/switch   # 切换生效（零中断）
 ```
 
-## Eval 跑分（真实数据，不伪造）
+## Eval 跑分
 
 ```bash
 cd backend && source ../.venv/bin/activate
@@ -207,12 +212,22 @@ pytest                            # 离线单测（mock LLM + 内存 SQLite + mo
 
 | 工作流 | 触发 | 依赖 | 跑什么 |
 |---|---|---|---|
-| [CI](.github/workflows/ci.yml) | push / PR | 零密钥、零数据库 | 后端语法检查 + import 冒烟 + **pytest 离线单测**（mock LLM + 内存 DB）；前端 `npm ci` → lint → build |
+| [CI](.github/workflows/ci.yml) | push / PR | 零密钥、零数据库 | 后端语法检查 + **ruff lint** + import 冒烟 + **pytest 离线单测**（mock LLM + 内存 DB）；前端 `npm ci` → lint（oxlint）→ build |
 | [Eval](.github/workflows/eval.yml) | 手动触发 | `ZHIPU_API_KEY` + MySQL | 四份 Eval（intent / rag / qa / transcribe）+ 报告上传 |
 
 - **CI**：任何 commit 都自动验证「工程可信度」（改坏一个 import / 前端 build 挂了立刻红），不依赖真实模型，免费稳定。
 - **Eval**：四份真实 Eval 依赖 GLM（免费但限流）+ MySQL，故走 `workflow_dispatch` 手动触发；需在仓库 `Settings → Secrets` 配置 `ZHIPU_API_KEY`。跑完上传四份 `*_report.json`，可用于复盘和 README 贴分。
 - 为什么分开：真实 Eval 每次跑都要花钱/等限流，混进主流程会让 CI 频繁红，违背"每次提交都安心"的初衷。
+
+## 备份与恢复
+
+```bash
+scripts/backup_mysql.sh    # MySQL 全量备份 → backups/mysql/，保留最近 7 份
+scripts/backup_kb.sh       # 向量库 .rag/ 打包（台账在 MySQL，向量库可由文档重建）
+scripts/restore_mysql.sh   # 恢复演练：清空重建 → 导入 → 校验表数
+```
+
+**备份链路设计**：MySQL 台账是事实来源（会话/工单/Trace/知识库台账/审计日志），向量库只是索引——所以 MySQL 备份是底线；向量库坏了直接用 `python -m app.rag.sync` 从 `docs/knowledge` 幂等重建，无需恢复。备份脚本用 `--single-transaction` 在线备份不锁表，保留 N 份滚动清理，`backups/` 已入 `.gitignore`。
 
 ## 设计决策
 
@@ -232,6 +247,7 @@ pytest                            # 离线单测（mock LLM + 内存 SQLite + mo
 | **SSE 流式推送执行链路** | 用户从"干等回复"变"实时看 Agent 每步在干嘛"；边跑边落库防断连丢数据（nginx 关缓冲解决 2s 缓冲踩坑） |
 | **登录态注入身份（不信任前端）** | 多租户隔离靠登录态（token → user_id → tenant_id），前端传值一律不采纳——跨租户访问直接 404 |
 | **测试工程化（mock LLM + 内存 DB）** | 回归零真实 GLM、零 MySQL：conftest 在 import 前锁环境变量 + patch 5 个 LLM 调用点 + SQLite 内存库——CI 稳定免费不依赖外部 |
+| **台账备份为底线、向量库可重建** | MySQL 是事实来源、向量库只是索引，所以备份 MySQL 优先；向量库坏了 `sync` 幂等重建，降低备份复杂度 |
 
 ## 目录结构
 
@@ -244,14 +260,16 @@ pytest                            # 离线单测（mock LLM + 内存 SQLite + mo
 │   │   │                 #   reranker/retriever/sync/transcribe/asr/video）
 │   │   ├── api/          # FastAPI 路由（conversations / kb 管理 / feedback）
 │   │   ├── services/     # 会话持久化（存取 state）
+│   │   ├── logging_config.py  # 统一日志（级别/文件轮转/结构化）
 │   │   └── models.py     # ORM（conversations/messages/traces/kb_documents）
 │   ├── scripts/          # 验证脚本（e2e/sync 闭环/影子测试/OCR/转译…）
 │   ├── tests/            # pytest 离线单测（test_*.py）+ Eval 测试集与评估器
 │   ├── conftest.py       # pytest 全局配置（mock LLM + 内存 DB + 隔离 KB）
+│   ├── pyproject.toml    # ruff 配置（后端代码规范）
 │   └── pytest.ini        # pytest 配置（pythonpath/testpaths/markers）
 ├── frontend/             # React + Tailwind（对话/工单/Trace/知识库管理）
 ├── docs/knowledge/       # 知识文档源（唯一事实来源，sync 扫描它）
-├── scripts/              # 环境安装脚本
+├── scripts/              # 环境安装 / 备份恢复（backup_mysql / backup_kb / restore_mysql）
 └── docker-compose.yml    # 一键部署
 ```
 
@@ -267,17 +285,6 @@ pytest                            # 离线单测（mock LLM + 内存 SQLite + mo
 | 检索 | BM25（jieba + rank_bm25）⊕ 向量 → RRF 融合 → 智谱 Rerank（可选）|
 | 前端 | React + Vite + Tailwind v4 + Phosphor（对话/工单/Trace/知识库管理）|
 | 测试 | pytest（mock LLM + 内存 SQLite，离线回归）+ 四份真实 Eval |
+| 代码规范 | ruff（后端，替代 black/isort 一体）+ oxlint（前端）|
 | CI/CD | GitHub Actions（主 CI 零密钥自动验证 + Eval 手动触发）|
 | 部署 | Docker Compose（nginx 反代 + mock_monitor 监控服务）|
-
-## 已知局限与改进方向
-
-- **图片不持久化**：截图 base64 仅当前会话可见（历史存 `[图片]` 标记），后续可接对象存储
-- **免费模型限流**：GLM-4.7-Flash 有频率限制（已加自动重试 + failover），生产建议付费模型 + 更完善的重试/降级
-- **ChromaDB 单目录单进程**：同一 persist_dir 只支持一个进程访问（官方限制），多 worker/多实例部署需切远端模式或按实例分目录
-- **转人工闭环未打通**：`handoff` 目前是终态（转人工后无"人工接管→处理→回写→关单"链路），真实服务台核心能力，见改进方向
-- **长对话压缩/摘要**：`messages` 无限累积，`extract` 每轮读全量历史，成本随轮次上涨；需对话压缩
-- **监控数据为合成数据**：`mock_monitor` 模拟企业 VPN 证书系统，`MONITOR_MODE=real` 已预留 HTTP 对接，换真实系统只改 `MONITOR_BASE_URL`
-- **表结构迁移**：目前 `create_all` + 增量补列，生产需引入 Alembic
-- **反馈分析是规则版**：按 Trace 命中情况归类（缺失/过时），可升级为 LLM 二次归类（成本换精度）
-- **Token 无刷新/无登出失效**：HMAC token 24h 过期，生产需刷新机制

@@ -26,6 +26,7 @@ def mock_retrieve(monkeypatch):
             parent_text="VPN 客户端配置步骤：1. 下载客户端 2. 输入服务器地址 3. 连接测试",
             score=0.9,
             metadata={"source_url": "docs/knowledge/vpn/client-config.md"},
+            routes={"vector", "bm25"},  # 检索路标（Hit.routes，judge 降级判定用）
         )
         return [hit]
 

@@ -72,7 +72,10 @@ def kb_node(state: HelpdeskState) -> dict:
     # ② RAG 兜底：规则未命中 → 检索知识文档库
     try:
         query = _build_query(scenario, error_code, cert_expired)
-        hits = retrieve(query, scenario=scenario, top_k=RAG_TOP_K)
+        # joint=False：kb 节点输出驱动 risk/execute（真实执行动作），
+        # 独立语料（新闻等）绝不能成为"可执行方案"的来源——只有
+        # rag_query 问答路径做多库联合检索（安全边界，见 retriever.py）
+        hits = retrieve(query, scenario=scenario, top_k=RAG_TOP_K, joint=False)
     except Exception as e:
         return {
             "kb_match": {"matched": False, "reason": f"知识库检索失败: {e}"},

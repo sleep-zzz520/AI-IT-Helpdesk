@@ -20,6 +20,18 @@ from app.llm import chat_json
 _INTENT_NAMES = " / ".join([*list(SCENARIOS), "other"])
 _REQUEST_TYPES = "troubleshoot / consult / other"
 
+# 寒暄/礼貌词：消息去掉这些词后无实质内容 = 纯寒暄（走 greeting 友好回复）。
+# 踩坑（会话 175 实测）：LLM 把"比亚迪"这种知识库语料话题词误判成
+# other/other → 直接 greeting 答非所问。规则层收窄寒暄判定：
+# 有任何实质内容 → 降级咨询走知识库（语料库可能命中），与"转人工触发面
+# 收窄"同一哲学（寒暄不是"没分类到"的同义词，寒暄是"消息里只有问候"）。
+_GREETING_WORDS = (
+    "你好", "您好", "嗨", "哈喽", "hello", "hi", "hey",
+    "在吗", "在不在", "早上好", "中午好", "下午好", "晚上好", "晚安",
+    "谢谢", "感谢", "多谢", "再见", "拜拜", "打扰", "抱歉", "麻烦",
+    "吗", "呢", "啊", "呀", "哦",   # 语气词（"你好吗"→ 空；"比亚迪吗"→ 仍有"比亚迪"）
+)
+
 
 def _levenshtein(a: str, b: str) -> int:
     """编辑距离（DP）。关键词都很短（<10 字符），成本可忽略。"""
@@ -84,6 +96,21 @@ def _fuzzy_fix_intent(user_msg: str, llm_intent: str) -> dict | None:
             "matched": next(m for k, m in best if k == key),
         },
     }
+
+
+def _is_pure_greeting(msg: str) -> bool:
+    """纯寒暄判定：去掉寒暄/礼貌词与标点后是否还有实质内容。
+
+    为什么规则层（会话 175 踩坑）：LLM 把知识库语料话题词（"比亚迪"）
+    误判 other/other → 路由 greeting 答非所问。规则层确定性判定——
+    "你好" / "在吗？" / "谢谢" → 纯寒暄；"比亚迪" / "今天天气怎么样"
+    → 有实质内容，不是寒暄（降级 consult 走知识库，语料可能命中）。
+    """
+    rest = msg
+    for w in _GREETING_WORDS:
+        rest = rest.replace(w, "")
+    rest = re.sub(r"[^\w一-鿿]", "", rest)  # 去标点/空白/emoji
+    return not rest
 
 
 def _build_intent_prompt() -> str:
@@ -152,6 +179,13 @@ def intent_node(state: HelpdeskState) -> dict:
             if request_type == "other":
                 request_type = "troubleshoot"
             reply = {**reply, "correction": fix["correction"]}
+
+    # 寒暄收窄（会话 175 踩坑）：LLM 可能把知识库话题词（"比亚迪"）误判成
+    # other/other → 路由 greeting 答非所问。规则层判定：只有"纯寒暄"
+    # （消息里全是问候/礼貌词）才保持 greeting；有实质内容 → 降级咨询，
+    # 走 rag_query 全库检索（多库联合下语料库可命中）
+    if request_type == "other" and not _is_pure_greeting(user_msg):
+        request_type = "consult"
 
     # 多问题检测：一条消息含 ≥2 个场景关键词（如 "vpn和密码都连不上"）。
     # intent 是单一值装不下多个诉求——交给 multi 节点引导逐个描述

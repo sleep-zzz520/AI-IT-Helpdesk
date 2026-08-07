@@ -27,6 +27,14 @@ class Hit:
     metadata: dict = field(default_factory=dict)
     score: float = 0.0          # 0~1，越大越相关（由距离转换）
     parent_text: str = ""       # 若命中子块，附带父块全文（生成用）
+    # 来源库标记（多库联合检索）：命中来自哪个 collection。
+    # 为什么用独立字段而非 metadata：Bm25Index._metas 持有 metadata 的
+    # 共享引用，原地打标会污染 BM25 缓存（已实测确认）
+    source_collection: str = ""
+    # 检索路标（RRF 融合后合并）：该命中经由哪些召回路（"vector"/"bm25"）。
+    # 用途：judge 缺席时规则层判定证据强度——BM25 词法命中（错误码 800
+    # 精确命中）即使向量分低也是确定性相关（会话 179 系统性修复）
+    routes: set[str] = field(default_factory=set)
 
 
 class VectorStore(ABC):
@@ -75,6 +83,7 @@ class ChromaStore(VectorStore):
 
     def __init__(self, persist_dir: str, collection_name: str = "kb_docs"):
         self._client = chromadb.PersistentClient(path=persist_dir)
+        self.collection_name = collection_name  # BM25 索引缓存的稳定 key
         self._col = self._client.get_or_create_collection(
             name=collection_name,
             metadata={"hnsw:space": "cosine"},   # 余弦相似度空间（检索默认）
@@ -167,6 +176,23 @@ def create_store(collection_name: str | None = None) -> VectorStore:
     collection_name：
     - 不传 → 当前 active collection（检索/查询默认打"在岗"库）
     - 传候选 collection（蓝绿切换）→ sync 写入目标，线上零感知
+    - 传独立库名（如 kb_docs_scale）→ 千级压测库等独立语料
     """
     return ChromaStore(persist_dir=settings.KB_VECTOR_DIR,
                        collection_name=collection_name or settings.active_collection)
+
+
+def list_collections(persist_dir: str) -> dict[str, int]:
+    """列出持久化目录下的全部 collection 及 chunk 数（管理页展示独立库用）。
+
+    蓝绿之外的都是独立库（如 kb_docs_scale 千级压测语料）——管理页
+    需要能看到它们，否则"恢复了多少"无从确认。
+    """
+    client = chromadb.PersistentClient(path=persist_dir)
+    out: dict[str, int] = {}
+    for col in client.list_collections():
+        try:
+            out[col.name] = col.count()
+        except Exception:  # noqa: BLE001 单库读取失败不阻塞其他库
+            out[col.name] = -1
+    return out

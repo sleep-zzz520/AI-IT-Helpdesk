@@ -78,6 +78,16 @@ class Settings:
     # 精排后保留条数（召回 10 条精排取 5）
     RERANK_TOP_N: int = int(os.getenv("RERANK_TOP_N", "5"))
 
+    # ===== 联合检索（多库，Phase 5）=====
+    # 逗号分隔的独立库名（如 kb_docs_scale）：对话问答跨库联合检索。
+    # 默认空 = 仅检索在岗库（与旧版行为一致，opt-in 开启）。
+    # 蓝绿库/在岗库自动排除（防 RRF 同 id 双重加分）。
+    KB_EXTRA_COLLECTIONS: str = os.getenv("KB_EXTRA_COLLECTIONS", "")
+    # 向量路召回的最低相关度（cosine 相似度）：
+    # 0.5 以下的"弱相关"命中不进证据池（实测：0.43 的弱命中让模型
+    # 基于无关文档瞎编回答——宁可诚实"暂无"，不可错答）
+    VECTOR_MIN_SCORE: float = float(os.getenv("VECTOR_MIN_SCORE", "0.5"))
+
     # ===== 安全（多租户/权限体系）=====
     # Token 签名密钥：生产必须改成随机强密钥（openssl rand -hex 32），
     # 默认值是开发用——泄露=token 可被伪造（但密码哈希仍安全，不影响已存账号）
@@ -133,6 +143,19 @@ class Settings:
         self.KB_ACTIVE_FILE.parent.mkdir(parents=True, exist_ok=True)
         self.KB_ACTIVE_FILE.write_text(self.candidate_collection, encoding="utf-8")
         return self.active_collection
+
+    @property
+    def extra_collections(self) -> list[str]:
+        """解析后的独立库名单：去空白、去重、排除蓝绿与在岗库。
+
+        为什么排除蓝绿/在岗：候选库可能是进行中的全量同步（半新半旧），
+        且与在岗库 chunk id 完全相同——联合检索会把同一批 chunk 双重加分。
+        """
+        excluded = {self.KB_COLLECTION_BLUE, self.KB_COLLECTION_GREEN,
+                    self.active_collection}
+        return list(dict.fromkeys(
+            n.strip() for n in self.KB_EXTRA_COLLECTIONS.split(",")
+            if n.strip() and n.strip() not in excluded))
 
     @property
     def mysql_url(self) -> str:

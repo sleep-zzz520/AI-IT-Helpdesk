@@ -18,7 +18,7 @@ from app.api.conversations import get_db
 from app.config import settings
 from app.models import KbDocument, User
 from app.rag.retriever import RetrievalStats, retrieve
-from app.rag.store import Hit, create_store
+from app.rag.store import Hit, create_store, list_collections
 from app.rag.sync import run_sync
 from app.security import require_admin
 from app.services.audit_service import audit
@@ -33,6 +33,8 @@ class KbDebugRequest(BaseModel):
     query: str
     scenario: str | None = None  # 过滤场景（如 vpn）；不传 = 全部
     top_k: int = 5
+    # 目标库：不传 = 当前在岗库；传独立库名（如 kb_docs_scale）= 压测/独立语料
+    collection: str | None = None
 
 
 def _hit_out(hit: Hit, max_text: int = 140) -> dict:
@@ -44,6 +46,7 @@ def _hit_out(hit: Hit, max_text: int = 140) -> dict:
         "source_url": meta.get("source_url") or meta.get("doc_id", "?"),
         "chunk_type": meta.get("chunk_type", "child"),
         "scenario": meta.get("scenario", ""),
+        "collection": hit.source_collection,   # 命中来源库（联合检索区分）
         "text": hit.text[:max_text],
     }
 
@@ -100,11 +103,17 @@ def kb_stats(
     # total_docs 含压测库（scale）——列表/预警都只看 default，避免 3300 条干扰
     active_rows = (db.query(KbDocument)
                    .filter_by(status="active", kb_name="default").all())
+    # 独立库（蓝绿之外，如 kb_docs_scale 千级压测语料）：管理页展示
+    blue_green = {settings.KB_COLLECTION_BLUE, settings.KB_COLLECTION_GREEN}
+    extra_collections = {name: n for name, n in
+                         list_collections(settings.KB_VECTOR_DIR).items()
+                         if name not in blue_green}
     return {
         "active_collection": settings.active_collection,
         "candidate_collection": settings.candidate_collection,
         "active_chunks": active.count(),
         "candidate_chunks": candidate.count(),
+        "extra_collections": extra_collections,   # {独立库名: chunks}
         "doc_count": len(active_rows),          # default 实例在册文档数
         "total_docs": db.query(KbDocument).filter_by(status="active").count(),
         "removed_docs": db.query(KbDocument).filter_by(status="removed",
@@ -192,20 +201,29 @@ def kb_debug(
 
     用途（知识库管理页"检索调试"）：运营者看到"为什么这个 query 没命中"，
     是向量路没召回？BM25 没召回？还是都被 RRF 挤掉了。
+    body.collection：可选目标库（独立库如 kb_docs_scale）——千级压测库
+    也能在前端直接检索调试，对比耗时与命中。
+    不传 collection = 联合检索（在岗 + 配置的独立库），返回每库召回统计。
     """
     t0 = time.perf_counter()
+    store = (create_store(collection_name=body.collection) if body.collection
+             else None)  # None → 联合检索（retrieve 内部解析 extra collections）
     stats = RetrievalStats()
-    hits = retrieve(body.query, body.scenario, body.top_k, stats=stats, debug=True)
+    hits = retrieve(body.query, body.scenario, body.top_k,
+                    store=store, stats=stats, debug=True)
     elapsed = round((time.perf_counter() - t0) * 1000)
     return {
         "query": body.query,
         "scenario": body.scenario,
+        "collection": store.collection_name if store else None,  # 单库调试时为库名
+        "collections": list(stats.per_collection.keys()),        # 实际检索的库（联合模式）
         "elapsed_ms": elapsed,
         "stats": {
             "vector_recall": stats.vector_recall,
             "bm25_recall": stats.bm25_recall,
             "fused_total": stats.fused_total,
             "reranked": stats.reranked,
+            "per_collection": stats.per_collection,   # 每库召回（联合模式）
         },
         "vector_hits": [_hit_out(h) for h in (stats.debug_vector_hits or [])],
         "bm25_hits": [_hit_out(h) for h in (stats.debug_bm25_hits or [])],

@@ -11,6 +11,7 @@
 """
 import jieba
 
+from app.agents.scenarios import SCENARIOS
 from app.agents.state import HelpdeskState
 from app.llm import chat, chat_json
 from app.rag.retriever import retrieve
@@ -19,10 +20,18 @@ from app.rag.transcribe import transcribe_data_url
 MAX_HOPS = 2              # 最多跳数（每跳 = 一次检索 + 一次 judge）
 HOP_TOP_K = 5             # 每跳召回数
 EVIDENCE_MAX_CHARS = 800  # 单条证据进入 LLM 上下文的最大字符数（防超上下文）
+# 规则层"强证据"阈值（judge 缺席时的降级裁判，会话 179 系统性修复）：
+# 证据最高分 ≥ 此值 = 向量路语义强相关（0.62 的英特尔新闻即此——
+# 之前 judge 限流失败把强证据一并误杀成"暂无"，见优化文档 #29）
+STRONG_EVIDENCE_SCORE = 0.55
 
 # next_query 校验的无效词（运维问答泛词——不算"引用了证据实体"）
 _STOP_TERMS = {"怎么", "如何", "什么", "可以", "需要", "帮助", "一下", "为什么",
                "处理", "解决", "问题", "配置", "设置", "这个", "那个"}
+
+# 无证据/弱证据/模型全挂时的兜底话术（诚实"暂无"，不调 generate 硬编）
+_EMPTY_ANSWER = ("知识库中暂无相关内容，无法回答您的具体问题。\n\n"
+                 "如需进一步排查，请描述故障现象，我可转人工协助。")
 
 
 def _enrich_query_with_image(text: str, image_data_url: str | None) -> str:
@@ -66,6 +75,27 @@ def _hit_to_evidence(hit) -> dict:
 def _evidence_texts(evidence: list[dict]) -> str:
     """证据列表 → LLM 上下文（编号引用，judge 与回答生成共用同一格式）。"""
     return "\n\n".join(f"[证据{i + 1}] {e['text']}" for i, e in enumerate(evidence))
+
+
+def _evidence_strong(hops: list[dict]) -> bool:
+    """规则层证据强度判定（judge 缺席时的降级裁判）。
+
+    为什么需要（会话 179 系统性修复）：judge 是免费模型，限流/非法 JSON
+    是常态——裁判缺席 ≠ 证据不足。用确定性规则替代 judge：
+    - ① 任一命中最高分 ≥ STRONG_EVIDENCE_SCORE：向量路语义强相关
+      （179 的 0.62 英特尔新闻即此，之前被 judge 失败误杀成"暂无"）
+    - ② 任一命中带 BM25 路标：词面重叠的确定性相关（错误码 800 精确
+      命中，即使向量分低也是强信号——运维最常问的场景）
+    满足任一即"强"，直接基于证据生成（generate 的 faithful 约束防编造）。
+    """
+    best = 0.0
+    has_bm25 = False
+    for h in hops:
+        for hit in h.get("hits", []):
+            best = max(best, hit.get("score", 0.0))
+            if "bm25" in hit.get("routes", ()):
+                has_bm25 = True
+    return best >= STRONG_EVIDENCE_SCORE or has_bm25
 
 
 def _shares_evidence_terms(next_query: str, evidence: list[dict]) -> bool:
@@ -162,7 +192,10 @@ def answer_question(question: str, scenario: str | None = None,
     for hop in range(1, MAX_HOPS + 1):
         # 第 1 跳按场景过滤（缩小范围提精度）；后续跳放宽 scenario=None
         # （跨场景补检——"重置密码后邮箱报错"需要 password+email 两份证据）
-        hop_scenario = scenario if hop == 1 else None
+        # 踩坑：intent=other 时传 "other" 是无效过滤（没有 chunk 的 scenario
+        # =other）——会把独立语料库（scenario=scale）一并过滤 → "知识库暂无
+        # 相关内容"。只对受支持场景传 scenario；other 全库检索（语料可命中）
+        hop_scenario = scenario if (hop == 1 and scenario in SCENARIOS) else None
         try:
             hits = retrieve(current_query, scenario=hop_scenario, top_k=HOP_TOP_K)
         except Exception as e:
@@ -183,20 +216,22 @@ def answer_question(question: str, scenario: str | None = None,
                 seen_ids.add(h.id)
                 evidence.append(_hit_to_evidence(h))
 
+        def _hit_out(h):
+            """命中 → Trace 记录（含检索路标，judge 降级判定用）。"""
+            return {"source": h.metadata.get("source_url", ""), "score": h.score,
+                    "preview": h.text[:60], "routes": sorted(h.routes)}
+
         try:
             judge = judge_evidence(question, evidence)  # judge 用原始问题（非增强检索词）
         except Exception as e:
             hops.append({"hop": hop, "query": current_query,
-                         "hits": [{"source": h.metadata.get("source_url", ""),
-                                   "score": h.score, "preview": h.text[:60]}
-                                  for h in hits],
+                         "hits": [_hit_out(h) for h in hits],
                          "judge": {"error": f"judge 失败: {e}"}})
             break
         hops.append({
             "hop": hop,
             "query": current_query,
-            "hits": [{"source": h.metadata.get("source_url", ""), "score": h.score,
-                      "preview": h.text[:60]} for h in hits],
+            "hits": [_hit_out(h) for h in hits],
             "judge": judge,
         })
 
@@ -209,8 +244,25 @@ def answer_question(question: str, scenario: str | None = None,
 
     # 0 命中/无证据：固定兜底话术（不调 generate 对着空证据编——幻觉 + 烧钱 + 慢）
     if not evidence:
-        answer = ("知识库中暂无相关内容，无法回答您的具体问题。\n\n"
-                  "如需进一步排查，请描述故障现象，我可转人工协助。")
+        return {"answer": _EMPTY_ANSWER, "evidence": evidence, "hops": hops}
+
+    # judge 失败（模型异常/限流）→ 规则层降级判定（会话 179 系统性修复）：
+    # 裁判缺席 ≠ 证据不足。强证据（最高分 ≥ 0.55 或含 BM25 词法命中）
+    # 直接基于证据生成（generate 的 faithful 约束防编造）；弱证据才
+    # 保守"暂无"（会话 170 实测：judge 失败拿 0.43 弱命中硬生成瞎编
+    # "邮件安全提醒"——弱证据下宁可诚实"暂无"，不可错答）。
+    # hops 记 fallback 标记（strong/weak），Trace 面板可观测降级路径。
+    if hops and hops[-1].get("judge", {}).get("error"):
+        strong = _evidence_strong(hops)
+        hops[-1]["judge"]["fallback"] = "strong" if strong else "weak"
+        if strong:
+            try:
+                answer = generate_answer(question, evidence, {})
+            except Exception:
+                # generate 也失败 = 模型全挂，退保守"暂无"（诚实而非报错）
+                answer = _EMPTY_ANSWER
+        else:
+            answer = _EMPTY_ANSWER
         return {"answer": answer, "evidence": evidence, "hops": hops}
 
     answer = generate_answer(question, evidence, hops[-1].get("judge", {}))
