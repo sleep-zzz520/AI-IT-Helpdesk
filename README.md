@@ -181,13 +181,27 @@ faithfulness=0.905 / answer_relevancy=0.777
 
 用例设计：正例变体（测泛化）+ 密码/邮箱/软件场景 + 干扰项（测不误判）+ 边界（询问≠故障）；全部报告落盘 `tests/*.json`（含影子测试 `shadow_report.json`）。
 
+## 运行测试
+
+**一条命令跑全量离线回归**（不依赖真实 GLM、不连 MySQL）：
+
+```bash
+cd backend && source ../.venv/bin/activate
+pip install -r requirements.txt   # 首次：含 pytest
+pytest                            # 离线单测（mock LLM + 内存 SQLite + mock 监控）
+```
+
+- **离线单测**（`tests/test_*.py`，pytest）：Agent 故障执行链路（mock LLM + mock 监控）、咨询问答路径（mock 检索）、工单状态机（纯逻辑）、会话持久化（内存 SQLite）。conftest 在 import 前设 `MONITOR_MODE=mock` 等，回归零外部依赖。
+- **真实 Eval**（`tests/*_eval.py`）：需要 `ZHIPU_API_KEY` + MySQL，验证模型真实能力，见上节（也可在 CI 手动触发 eval.yml）。
+- CI 里 `pytest` 是必跑步骤，任何 commit 都会自动验证，改坏流程立刻红。
+
 ## CI/CD（GitHub Actions）
 
 **分层设计**：把「工程可信度」和「真实 Eval」分开，主流程不因外部依赖而红。
 
 | 工作流 | 触发 | 依赖 | 跑什么 |
 |---|---|---|---|
-| [CI](.github/workflows/ci.yml) | push / PR | 零密钥、零数据库 | 后端全模块语法检查 + import 冒烟；前端 `npm ci` → lint → build |
+| [CI](.github/workflows/ci.yml) | push / PR | 零密钥、零数据库 | 后端语法检查 + import 冒烟 + **pytest 离线单测**（mock LLM + 内存 DB）；前端 `npm ci` → lint → build |
 | [Eval](.github/workflows/eval.yml) | 手动触发 | `ZHIPU_API_KEY` + MySQL | 四份 Eval（intent / rag / qa / transcribe）+ 报告上传 |
 
 - **CI**：任何 commit 都自动验证「工程可信度」（改坏一个 import / 前端 build 挂了立刻红），不依赖真实模型，免费稳定。
@@ -222,7 +236,9 @@ faithfulness=0.905 / answer_relevancy=0.777
 │   │   ├── services/     # 会话持久化（存取 state）
 │   │   └── models.py     # ORM（conversations/messages/traces/kb_documents）
 │   ├── scripts/          # 验证脚本（e2e/sync 闭环/影子测试/OCR/转译…）
-│   └── tests/            # Eval 测试集与评估器（四份报告 json）
+│   ├── tests/            # pytest 离线单测（test_*.py）+ Eval 测试集与评估器
+│   ├── conftest.py       # pytest 全局配置（mock LLM + 内存 DB + 隔离 KB）
+│   └── pytest.ini        # pytest 配置（pythonpath/testpaths/markers）
 ├── frontend/             # React + Tailwind（对话/工单/Trace/知识库管理）
 ├── docs/knowledge/       # 知识文档源（唯一事实来源，sync 扫描它）
 ├── scripts/              # 环境安装脚本

@@ -22,7 +22,7 @@ on:
 
 jobs:
   backend:
-    name: Backend (syntax + import smoke)
+    name: Backend (syntax + import + unit tests)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -58,6 +58,10 @@ jobs:
           assert config.settings.ZHIPU_API_KEY == "ci-placeholder"
           print("core modules + langgraph graph import OK")
           EOF
+
+      - name: Unit tests (offline, mock LLM + in-memory DB)
+        run: |
+          ZHIPU_API_KEY="ci-placeholder" python -m pytest -v
 
   frontend:
     name: Frontend (build + lint)

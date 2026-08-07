@@ -30,3 +30,6 @@ python-docx>=1.1          # .docx 段落/标题/表格解析
 python-pptx>=1.0          # .pptx 逐页形状文本
 openpyxl>=3.1             # .xlsx 单元格解析
 av>=12.0               # 视频/音频解码（自带 ffmpeg 库，零系统依赖）
+
+# ===== 测试工程化（ROADMAP P3.1）=====
+pytest>=8.0            # 统一测试套件（离线回归：mock LLM + 内存 DB）
