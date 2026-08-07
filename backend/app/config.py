@@ -19,9 +19,11 @@ class Settings:
     ZHIPU_API_KEY: str = os.getenv("ZHIPU_API_KEY", "")
     GLM_BASE_URL: str = os.getenv("GLM_BASE_URL", "https://open.bigmodel.cn/api/paas/v4")
     # 模型链：按优先级排列，限流/不可用时自动切下一个（故障转移）
+    # 注意：glm-4.6-flash 部分账号 403 无权访问（实测），已从默认链移除；
+    # 4.7/4.5 是深度思考模型，对话路径 OK，JSON 任务走 GLM_JSON_MODELS。
     GLM_MODELS: list[str] = [
         m.strip() for m in os.getenv(
-            "GLM_MODELS", "glm-4.7-flash,glm-4.6-flash,glm-4.5-flash,glm-4-flash"
+            "GLM_MODELS", "glm-4.7-flash,glm-4.5-flash,glm-4-flash"
         ).split(",") if m.strip()
     ]
     # 速度优先链（前端可切换）：glm-4-flash 最快但能力最弱，放最前；
@@ -29,6 +31,15 @@ class Settings:
     GLM_MODELS_FAST: list[str] = [
         m.strip() for m in os.getenv(
             "GLM_MODELS_FAST", "glm-4-flash,glm-4.7-flash,glm-4.5-flash"
+        ).split(",") if m.strip()
+    ]
+    # JSON 结构化任务专用链（chat_json：intent/extract/judge 等）：
+    # GLM-4.7/4.5 是「深度思考」模型——max_tokens 受限时把配额全花在
+    # reasoning_content 上，content 返回空串，JSON 解析必失败（实测踩坑）。
+    # glm-4-flash 非思考模型，直接输出 JSON，快且稳——JSON 任务必须优先。
+    GLM_JSON_MODELS: list[str] = [
+        m.strip() for m in os.getenv(
+            "GLM_JSON_MODELS", "glm-4-flash,glm-4.7-flash"
         ).split(",") if m.strip()
     ]
     # 视觉模型链（OCR 用）
@@ -42,6 +53,11 @@ class Settings:
     MYSQL_USER: str = os.getenv("MYSQL_USER", "helpdesk")
     MYSQL_PASSWORD: str = os.getenv("MYSQL_PASSWORD", "")
     MYSQL_DB: str = os.getenv("MYSQL_DB", "it_helpdesk")
+    # TiDB Cloud Serverless 等托管 MySQL 强制 TLS：云端置 true，
+    # 本地 MySQL 保持 false（零开销）。CA 路径仅 Linux 容器默认有效
+    # （Debian/Ubuntu 的 ca-certificates 包；macOS 本地不用开）。
+    MYSQL_SSL: bool = os.getenv("MYSQL_SSL", "false").lower() == "true"
+    MYSQL_SSL_CA: str = os.getenv("MYSQL_SSL_CA", "/etc/ssl/certs/ca-certificates.crt")
 
     # ===== 日志 =====
     # 生产排障可查：统一 logging（级别可配 + 按天轮转文件 + 结构化格式）
@@ -163,11 +179,20 @@ class Settings:
 
         注意：密码里的特殊字符（@ : / 等）必须 URL 编码，
         否则 URL 解析会把 @ 后面当成主机名（经典坑：'2025@127.0.0.1'）。
+        TiDB Serverless（MYSQL_SSL=true）：连接串追加 ssl_verify_cert /
+        ssl_verify_identity——强制校验服务端证书，防止中间人（云数据库必须）。
         """
-        return (
-            f"mysql+pymysql://{self.MYSQL_USER}:{quote_plus(self.MYSQL_PASSWORD)}"
-            f"@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DB}?charset=utf8mb4"
+        url = (
+            f"mysql+pymysql://{quote_plus(self.MYSQL_USER)}:"
+            f"{quote_plus(self.MYSQL_PASSWORD)}@{self.MYSQL_HOST}:"
+            f"{self.MYSQL_PORT}/{self.MYSQL_DB}?charset=utf8mb4"
         )
+        if self.MYSQL_SSL:
+            url += (
+                f"&ssl_ca={quote_plus(self.MYSQL_SSL_CA)}"
+                "&ssl_verify_cert=true&ssl_verify_identity=true"
+            )
+        return url
 
 
 settings = Settings()

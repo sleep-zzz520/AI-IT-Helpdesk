@@ -49,3 +49,6 @@ logs/
 
 # ===== 备份（脚本生成，含敏感数据，不提交）=====
 backups/
+
+# ===== HF Spaces 部署打包目录（build_hf_space.sh 生成，含副本）=====
+.hf_space/
