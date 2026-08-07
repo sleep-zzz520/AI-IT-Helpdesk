@@ -33,3 +33,6 @@ av>=12.0               # 视频/音频解码（自带 ffmpeg 库，零系统依�
 
 # ===== 测试工程化（ROADMAP P3.1）=====
 pytest>=8.0            # 统一测试套件（离线回归：mock LLM + 内存 DB）
+
+# ===== 后端 lint/format（ROADMAP P3.3）=====
+ruff>=0.6              # linter+formatter+isort 一体（替代 black/flake8/isort）

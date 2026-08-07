@@ -25,7 +25,7 @@ CONSULT_CASES = [
 
 if __name__ == "__main__":
     print("===== 咨询问答路径 =====")
-    for msg, expect_intent in CONSULT_CASES:
+    for msg, _ in CONSULT_CASES:
         out = run("zhangsan", msg)
         nodes = [t["node"] for t in out.get("trace", [])]
         reply = out["messages"][-1]["content"]

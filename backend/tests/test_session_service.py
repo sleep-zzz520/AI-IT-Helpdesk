@@ -4,8 +4,7 @@
 SQLite :memory:，验证 create_conversation → save_turn → load_state 往返一致。
 替代原 scripts/test_db.py 的 MySQL 依赖版本。
 """
-from app.services.session_service import (create_conversation, load_state,
-                                          save_turn)
+from app.services.session_service import create_conversation, load_state, save_turn
 
 
 def test_save_load_roundtrip(db_session):

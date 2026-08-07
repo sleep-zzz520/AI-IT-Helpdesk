@@ -59,7 +59,7 @@ class SyncReport:
 def _doc_hash(doc: KnowledgeDoc) -> str:
     """内容指纹：正文 + 元数据（排序保证稳定），任一变化都触发重建。"""
     meta_json = json.dumps(doc.meta, sort_keys=True, ensure_ascii=False)
-    return hashlib.sha256(f"{meta_json}\n{doc.content}".encode("utf-8")).hexdigest()
+    return hashlib.sha256(f"{meta_json}\n{doc.content}".encode()).hexdigest()
 
 
 def _inject_hash(chunks, doc_hash: str):
@@ -73,7 +73,7 @@ def _sync_doc(doc: KnowledgeDoc, doc_hash: str, store: VectorStore,
               report: SyncReport) -> None:
     """新增或更新一篇文档（切分 → 嵌入 → 入库）。任一异常向上抛（由调用方兜底）。"""
     split = split_all([doc])[0]
-    chunks = _inject_hash([split.parent] + split.children, doc_hash)
+    chunks = _inject_hash([split.parent, *split.children], doc_hash)
 
     # 语义去重（轻量版）：抽样首个子块的向量，去库中查最相似的一条
     if split.children:
@@ -173,7 +173,7 @@ def run_sync(kb_root: Path | None = None, store: VectorStore | None = None,
                 target.valid_to = doc.meta.get("valid_to")
                 target.changelog = f"sync {doc_hash[:8]}"
                 sp.commit()  # 释放 savepoint
-            except Exception as e:  # noqa: BLE001 单文档失败不阻塞其他文档
+            except Exception as e:
                 sp.rollback()  # 只回滚这一篇的 SQL（Chroma 写入不可回滚，靠幂等覆盖）
                 report.failed.append((rel_path, str(e)))
             # 分批 commit：防长事务锁表（全量补入 4.7 万条时尤其关键）
@@ -190,7 +190,7 @@ def run_sync(kb_root: Path | None = None, store: VectorStore | None = None,
                     row.status = "removed"
                     row.changelog = "source file removed"
                     report.deleted.append(path)
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     db.rollback()
                     report.failed.append((path, f"delete: {e}"))
 

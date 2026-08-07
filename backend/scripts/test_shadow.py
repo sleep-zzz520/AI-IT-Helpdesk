@@ -84,7 +84,7 @@ def main() -> None:
     # ---- 逐条对比表 ----
     print(f"\n=== 逐条对比（top-{args.top_k}，{elapsed}ms）===")
     print(f"{'query':<30}{'期望':<14}{'在岗':<6}{'候选':<6}{'候选 top-3 命中'}")
-    for a, c in zip(active_rows, cand_rows):
+    for a, c in zip(active_rows, cand_rows, strict=True):
         hit_a = f"#{a['hit_pos']}" if a["hit_pos"] else "—"
         hit_c = f"#{c['hit_pos']}" if c["hit_pos"] else "—"
         mark = "✓" if (a["hit_pos"] or 99) == (c["hit_pos"] or 99) else "△ 差异"
@@ -102,9 +102,9 @@ def main() -> None:
         flag = "✓" if c >= a else "⚠️ 退化"
         print(f"{label:<12}{a:<16}{c:<16}{flag}")
 
-    better = sum(1 for a, c in zip(active_rows, cand_rows)
+    better = sum(1 for a, c in zip(active_rows, cand_rows, strict=True)
                  if (c["hit_pos"] or 99) < (a["hit_pos"] or 99))
-    worse = sum(1 for a, c in zip(active_rows, cand_rows)
+    worse = sum(1 for a, c in zip(active_rows, cand_rows, strict=True)
                 if (c["hit_pos"] or 99) > (a["hit_pos"] or 99))
     print(f"\n候选相对在岗：{better} 条更靠前 / {worse} 条更靠后")
     verdict = "✅ 候选不劣于在岗，可以切换" if worse == 0 else \

@@ -14,11 +14,10 @@ import tempfile
 from pathlib import Path
 
 import fitz
+from docx import Document as DocxDocument
 from openpyxl import Workbook
 from PIL import Image, ImageDraw
 from pptx import Presentation
-from pptx.util import Inches, Pt
-from docx import Document as DocxDocument
 
 from app.db import SessionLocal
 from app.models import KbDocument
@@ -50,7 +49,7 @@ def make_screenshot_bytes() -> bytes:
     d.text((90, 110), "Error 800 - Connection failed", fill=(255, 90, 90))
     d.text((90, 140), "Certificate is expired (2026-08-01)", fill=(225, 230, 240))
     d.text((90, 170), "错误代码: 800", fill=(225, 230, 240))
-    buf = tempfile.SpooledTemporaryFile()
+    buf = tempfile.SpooledTemporaryFile()  # noqa: SIM115 需返回 read()，关闭会失效
     img.save(buf, format="PNG")
     buf.seek(0)
     return buf.read()

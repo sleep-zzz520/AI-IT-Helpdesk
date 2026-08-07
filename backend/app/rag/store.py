@@ -130,13 +130,14 @@ class ChromaStore(VectorStore):
         got = self._col.get(ids=ids)
         id_list = got.get("ids") or []
         doc_list = got.get("documents") or []
-        return dict(zip(id_list, doc_list))
+        # strict=True：ChromaDB 的 ids 与 documents 必须等长，不等长说明数据损坏，立即暴露
+        return dict(zip(id_list, doc_list, strict=True))
 
     def get_all(self) -> dict[str, str]:
         got = self._col.get()
         id_list = got.get("ids") or []
         doc_list = got.get("documents") or []
-        return dict(zip(id_list, doc_list))
+        return dict(zip(id_list, doc_list, strict=True))
 
     def get_all_meta(self) -> dict[str, dict]:
         got = self._col.get()

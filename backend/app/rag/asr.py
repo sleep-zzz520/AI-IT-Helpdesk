@@ -50,7 +50,7 @@ def to_wav(input_path: Path, out_path: Path, max_seconds: float | None = None) -
                 for packet in out_stream.encode(None):  # 冲刷编码器尾部
                     out.mux(packet)
         return out_path.exists() and out_path.stat().st_size > 44  # 至少有个 wav 头
-    except Exception:  # noqa: BLE001 —— 解码失败不拖垮调用方
+    except Exception:
         return False
 
 
@@ -73,7 +73,7 @@ def transcribe_audio(audio_path: Path) -> str:
             return (resp.text or "").strip()
         finally:
             wav_path.unlink(missing_ok=True)
-    except Exception:  # noqa: BLE001 —— 转写失败不拖垮流程
+    except Exception:
         return ""
 
 

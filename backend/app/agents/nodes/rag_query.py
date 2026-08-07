@@ -165,7 +165,7 @@ def answer_question(question: str, scenario: str | None = None,
         hop_scenario = scenario if hop == 1 else None
         try:
             hits = retrieve(current_query, scenario=hop_scenario, top_k=HOP_TOP_K)
-        except Exception as e:  # noqa: BLE001 检索失败不 500，兜底
+        except Exception as e:
             hops.append({"hop": hop, "query": current_query, "hits": [],
                          "judge": {"error": f"检索失败: {e}"}})
             break
@@ -185,7 +185,7 @@ def answer_question(question: str, scenario: str | None = None,
 
         try:
             judge = judge_evidence(question, evidence)  # judge 用原始问题（非增强检索词）
-        except Exception as e:  # noqa: BLE001 judge 失败 → 退化为单跳直接回答
+        except Exception as e:
             hops.append({"hop": hop, "query": current_query,
                          "hits": [{"source": h.metadata.get("source_url", ""),
                                    "score": h.score, "preview": h.text[:60]}
@@ -230,7 +230,7 @@ def rag_query_node(state: HelpdeskState) -> dict:
     try:
         result = answer_question(query, state.get("intent"),
                                  search_query=enriched if enriched != query else None)
-    except Exception as e:  # noqa: BLE001 —— 生成回答也失败：友好兜底
+    except Exception as e:
         reply = f"⚠️ 知识库查询失败（{type(e).__name__}），请稍后重试，或转人工客服处理。"
         return {
             "messages": state["messages"] + [{"role": "assistant", "content": reply}],

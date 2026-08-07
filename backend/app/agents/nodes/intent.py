@@ -17,7 +17,7 @@ from app.agents.scenarios import SCENARIOS
 from app.agents.state import HelpdeskState
 from app.llm import chat_json
 
-_INTENT_NAMES = " / ".join(list(SCENARIOS) + ["other"])
+_INTENT_NAMES = " / ".join([*list(SCENARIOS), "other"])
 _REQUEST_TYPES = "troubleshoot / consult / other"
 
 
@@ -89,7 +89,7 @@ def _fuzzy_fix_intent(user_msg: str, llm_intent: str) -> dict | None:
 def _build_intent_prompt() -> str:
     """从场景注册表生成分类规则（加场景 = 自动出现在这里）。"""
     parts = ["你是 IT 运维服务台的意图分类器。判断用户问题的【场景】和【诉求类型】："]
-    for key, sc in SCENARIOS.items():
+    for sc in SCENARIOS.values():
         parts.append(f"\n【{sc['name']}】典型描述：{' / '.join(sc['keywords'])}")
     parts.append("\n【其他】不属于以上任何一类（寒暄、与 IT 无关等）。")
     parts.append(f"""
@@ -135,7 +135,7 @@ def intent_node(state: HelpdeskState) -> dict:
     ], model_chain=state.get("model_chain"))
 
     intent = reply.get("intent", "other")
-    if intent not in list(SCENARIOS) + ["other"]:
+    if intent not in [*list(SCENARIOS), "other"]:
         intent = "other"
     request_type = reply.get("request_type", "troubleshoot")
     if request_type not in ("troubleshoot", "consult", "other"):

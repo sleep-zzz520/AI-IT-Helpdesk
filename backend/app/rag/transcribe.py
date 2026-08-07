@@ -21,7 +21,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from app.config import BASE_DIR, settings
+from app.config import BASE_DIR
 from app.llm import chat_with_image
 
 # ===== 转译缓存 =====
@@ -168,7 +168,7 @@ def _transcribe_bytes(data: bytes, media_ref: str = "") -> TranscribeResult | No
             "summary": result.summary,
         })
         return result
-    except Exception:  # noqa: BLE001 —— 转译失败不应拖垮调用方，返回 None 由上层兜底
+    except Exception:
         return None
 
 
@@ -192,7 +192,7 @@ def transcribe_data_url(image_data_url: str, media_ref: str = "") -> TranscribeR
     try:
         payload = image_data_url.split(",", 1)[1] if "," in image_data_url else image_data_url
         return _transcribe_bytes(base64.b64decode(payload), media_ref=media_ref)
-    except (ValueError, TypeError):  # noqa: BLE001 —— 非法 data URL：不转译
+    except (ValueError, TypeError):
         return None
 
 

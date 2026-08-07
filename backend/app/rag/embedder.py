@@ -56,7 +56,7 @@ def _embed_batch(texts: list[str]) -> list[list[float]]:
             )
             # OpenAI 兼容响应：data 顺序与 input 一致
             return [d.embedding for d in resp.data]
-        except Exception as e:  # noqa: BLE001 嵌入失败不致命，重试后仍失败向上抛
+        except Exception as e:
             last_error = e
             if attempt < MAX_RETRIES - 1:
                 time.sleep(RETRY_BACKOFF ** attempt)
@@ -83,7 +83,7 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
         got = _embed_batch(valid_texts)
         # 还原到原位：有效位填真实向量，空位填零向量
         result = [zero] * len(batch)
-        for pos, vec in zip(valid_idx, got):
+        for pos, vec in zip(valid_idx, got, strict=True):
             result[pos] = vec
         vectors.extend(result)
     return vectors

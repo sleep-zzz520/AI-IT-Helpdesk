@@ -10,7 +10,6 @@
 4. 节点级：answer_question 检索用增强词，judge/生成用原始问题（hops 可观测）
 """
 import base64
-import io
 import tempfile
 from pathlib import Path
 
@@ -66,7 +65,7 @@ def main() -> None:
         "VPN 客户端报错 553，说明证书已被吊销，需要重新申请证书。", encoding="utf-8")
     report = run_sync(kb_root=TMP_KB, store=TEST_STORE, kb_name=TEST_KB_NAME)
     assert len(report.added) == 3, f"3 篇应入库: {report.summary}"
-    print(f"[准备] 历史截图块 + 2 篇干扰文档已入库")
+    print("[准备] 历史截图块 + 2 篇干扰文档已入库")
 
     # 用户新截图：同一错误码但窗口布局不同（v4.2.1）→ data URL（前端消息协议）
     user_shot = vpn_dir / "user-new.png"

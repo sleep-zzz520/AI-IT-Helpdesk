@@ -61,7 +61,7 @@ def _run_agent_stream(state: dict):
     t_all = time.perf_counter()
     prev_t = t_all
     for chunk in graph.stream(state, stream_mode="updates"):
-        for node, update in chunk.items():
+        for update in chunk.values():
             elapsed_ms = round((time.perf_counter() - prev_t) * 1000)
             # 给该节点新增的 trace 补耗时；parallel 内部已注入精确耗时，不覆盖
             for t in update.get("trace", []):
@@ -137,7 +137,7 @@ def send_message(
     msg = {"role": "user", "content": body.content}
     if body.image:
         msg["image"] = body.image
-    state["messages"] = state.get("messages", []) + [msg]
+    state["messages"] = [*state.get("messages", []), msg]
     # 2.3 本轮用户消息（工单状态机触发用：new→processing 与"未解决"重开）
     state["new_user_message"] = body.content
     # 2.5 模型链模式（前端"速度/准确"切换）→ 注入 state，节点据此选链
@@ -198,7 +198,7 @@ def send_message(
                         },
                     }
                     yield f"event: done\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
-        except Exception as e:  # noqa: BLE001 —— Agent 崩溃也不能让用户消息丢
+        except Exception as e:
             # 兜底：至少把用户消息落库（save_turn 幂等，长度对比不会重复），
             # 并推送明确 error 事件，前端能显示"执行失败"而不是"连接中断"
             conv = db.get(Conversation, conv_id)

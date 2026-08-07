@@ -9,8 +9,10 @@
 #
 # 后端检查策略：
 #   1. ast 语法检查：全模块 parse（不 import，避免触发 GLM client 校验）
-#   2. import 冒烟：用占位 key 加载核心模块 + graph，验证装配正确
+#   2. ruff lint：统一代码规范（RUF001/002/003 等中文项目已忽略）
+#   3. import 冒烟：用占位 key 加载核心模块 + graph，验证装配正确
 #      （无真实调用，placeholder key 只让 OpenAI client 通过空 key 校验）
+#   4. pytest 离线单测：mock LLM + 内存 DB，零外部依赖
 # =====================================================================
 name: CI
 
@@ -48,6 +50,9 @@ jobs:
               ast.parse(open(f, encoding="utf-8").read())
           print(f"OK: {len(files)} python files syntax valid")
           EOF
+
+      - name: Ruff lint
+        run: ruff check app/
 
       - name: Import smoke (placeholder key, no real GLM call)
         run: |

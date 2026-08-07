@@ -46,7 +46,7 @@ def extract_frames(video_path: Path, max_frames: int | None = None) -> list[Imag
                     data=buf.getvalue(),
                     page=0,  # 视频帧统一放文档末尾（帧间无章节语义）
                 ))
-    except Exception:  # noqa: BLE001 —— 解码失败返回已抽帧（部分可用）
+    except Exception:
         return frames
     return frames
 
@@ -65,7 +65,7 @@ def extract_audio_text(video_path: Path) -> str:
                       max_seconds=settings.VIDEO_MAX_AUDIO_SECONDS):
             return ""
         return transcribe_audio(wav_path)
-    except Exception:  # noqa: BLE001 —— 转写失败返回空（sync 重试兜底）
+    except Exception:
         return ""
     finally:
         wav_path.unlink(missing_ok=True)

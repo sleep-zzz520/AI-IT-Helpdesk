@@ -61,7 +61,7 @@ def run_eval() -> dict:
 if __name__ == "__main__":
     print(f"=== 意图识别 Eval（{len(INTENT_CASES)} 条合成用例）===\n")
     r = run_eval()
-    print(f"\n=== 结果 ===")
+    print("\n=== 结果 ===")
     print(f"准确率 : {r['correct']}/{r['total']} = {r['accuracy']:.1%}")
     print(f"GLM 调用: {llm.CALL_COUNT} 次")
     if r["wrong"]:

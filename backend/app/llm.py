@@ -60,7 +60,7 @@ def _pick_chain(model_chain: list[str], now: float) -> list[str]:
     global _TRY_MODEL, _TRY_CHAIN
     with _LLM_LOCK:
         key = tuple(model_chain)
-        if _TRY_CHAIN != key:
+        if key != _TRY_CHAIN:
             _TRY_MODEL, _TRY_CHAIN = "", key  # 换链 → 重置游标
         if _TRY_MODEL and now - _CURSOR_AT > _CURSOR_TTL:
             _TRY_MODEL = ""  # 定期回链头，防止模型恢复后一直被跳过
@@ -96,7 +96,7 @@ def _create(model_chain: list[str], **kwargs) -> tuple[object, str]:
                 _CURSOR_AT = time.time()
                 _BLACKLISTED.pop(model, None)  # 能成功说明恢复了，解除拉黑
             return resp, model
-        except _FAILOVER_EXCEPTIONS as e:  # noqa: PERF203
+        except _FAILOVER_EXCEPTIONS as e:
             last_error = e
             with _LLM_LOCK:
                 _TRY_MODEL = model          # 记住位置；拉黑让它从下一个开始

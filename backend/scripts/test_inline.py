@@ -12,14 +12,13 @@
 import tempfile
 from pathlib import Path
 
-import fitz
 from PIL import Image, ImageDraw
 from pptx import Presentation
 from pptx.util import Inches
 
 from app.db import SessionLocal
 from app.models import KbDocument
-from app.rag.loader import load_doc, scan_docs
+from app.rag.loader import load_doc
 from app.rag.retriever import retrieve
 from app.rag.splitter import split_all
 from app.rag.store import ChromaStore
@@ -97,7 +96,7 @@ def main() -> None:
     # 顺序：前文 → 图引用 → 转译块 → 后文
     order = [c.index(s) for s in ("如下图所示", "![VPN 报错截图]", "### 截图转译", "图中显示")]
     assert order == sorted(order), f"上下文顺序被拆散: {order}"
-    print(f"[md-原位] 顺序正确（前文→引用→转译→后文），转译块含错误码 800")
+    print("[md-原位] 顺序正确（前文→引用→转译→后文），转译块含错误码 800")
 
     # ---- 2) 关键断言：同一个子块里同时有 前文/转译/后文（上下文连贯） ----
     children = split_all([doc])[0].children
@@ -105,7 +104,7 @@ def main() -> None:
     blk = children[0].text
     assert all(s in blk for s in ("如下图所示", "### 截图转译", "图中显示")), \
         "前文/转译/后文必须在同一子块（上下文连贯）"
-    print(f"[splitter] 子块数不变（1 个），同一子块内含 前文+转译+后文 ✅")
+    print("[splitter] 子块数不变（1 个），同一子块内含 前文+转译+后文 ✅")
 
     # ---- 3) pptx 页码锚点：转译块在第二页 section 内 ----
     from app.rag.loader import load_pptx_doc
@@ -117,7 +116,7 @@ def main() -> None:
     after_second = pdoc.content[second_page_start + len("## 错误码 800 处理流程"):]
     new_chapters = [ln for ln in after_second.splitlines() if ln.startswith("## ")]
     assert not new_chapters, f"第二页之后不应再有新章节（图是 ### 内联块）: {new_chapters}"
-    print(f"[pptx-原位] 图片转译块插入第二页 section 内（页码锚点生效）")
+    print("[pptx-原位] 图片转译块插入第二页 section 内（页码锚点生效）")
 
     # ---- 4) 入库 + 检索 + 幂等 ----
     report1 = run_sync(kb_root=TMP_KB, store=TEST_STORE, kb_name=TEST_KB_NAME)

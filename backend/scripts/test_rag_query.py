@@ -29,6 +29,7 @@ def test_multihop_loop() -> None:
     这是工程原则：**不确定的行为用确定性测试兜底**。
     """
     import unittest.mock as mock
+
     from app.agents.nodes import rag_query as m
 
     judge_calls = {"n": 0}

@@ -122,7 +122,7 @@ def evaluate() -> dict:
 if __name__ == "__main__":
     print("=== RAGAS 风格回答质量评估（10 条咨询用例）===\n")
     r = evaluate()
-    print(f"\n=== 结果 ===")
+    print("\n=== 结果 ===")
     print(f"faithfulness（忠实性）    : {r['faithfulness_avg']}")
     print(f"answer_relevancy（相关性）: {r['answer_relevancy_avg']}")
     print(f"多跳用例数: {r['multihop_cases']}/{r['cases']}")

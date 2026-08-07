@@ -68,11 +68,11 @@ def _evaluate(name: str, search_fn) -> dict:
 def main() -> None:
     import argparse
     import tempfile
+    from pathlib import Path
 
     from app.config import settings
     from app.rag.store import ChromaStore
     from app.rag.sync import run_sync
-    from pathlib import Path
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--tmp-kb", action="store_true",

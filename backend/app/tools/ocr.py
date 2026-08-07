@@ -20,6 +20,6 @@ def extract_error_code(image_data_url: str) -> str:
         m = re.search(r"\{.*\}", raw, re.S)
         if m:
             return json.loads(m.group()).get("error_code", "")
-    except Exception:  # noqa: BLE001 —— OCR 失败不应拖垮流程
+    except Exception:
         pass
     return ""

@@ -11,7 +11,7 @@
 一级（#）太粗退化成整篇。无 ## 的短文档整篇作为单个子块。
 """
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from app.rag.chunks import Chunk, KnowledgeDoc
 
@@ -107,7 +107,7 @@ def split_markdown(doc: KnowledgeDoc) -> SplitResult:
         ))
 
     # 每个 ## 章节一个子块
-    for idx, (start, title) in enumerate(h2_positions):
+    for idx, (start, _) in enumerate(h2_positions):
         end = h2_positions[idx + 1][0] if idx + 1 < len(h2_positions) else len(lines)
         section = "\n".join(lines[start:end]).strip()
         if not section:

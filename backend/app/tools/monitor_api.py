@@ -22,7 +22,6 @@
 - 失败: {"status": "error", "reason": str}
 """
 import logging
-import os
 
 import httpx
 
@@ -119,7 +118,7 @@ def _http_renew_cert(username: str) -> dict:
     """真实 HTTP 续期证书。"""
     url = f"{MONITOR_BASE_URL}/api/v1/cert/{username}/renew"
     last_exc = None
-    for attempt in range(1, MONITOR_MAX_RETRIES + 2):
+    for _attempt in range(1, MONITOR_MAX_RETRIES + 2):
         try:
             resp = httpx.post(url, headers=_http_headers(),
                               json={"days": 180}, timeout=MONITOR_TIMEOUT)

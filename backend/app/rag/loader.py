@@ -26,8 +26,15 @@ import yaml
 
 from app.config import BASE_DIR
 from app.rag.chunks import KnowledgeDoc
-from app.rag.parsers import ImageRef, ParsedDoc
-from app.rag.parsers import parse_docx, parse_pdf, parse_pptx, parse_xlsx, render_pdf_pages
+from app.rag.parsers import (
+    ImageRef,
+    ParsedDoc,
+    parse_docx,
+    parse_pdf,
+    parse_pptx,
+    parse_xlsx,
+    render_pdf_pages,
+)
 from app.rag.transcribe import to_inline_text, to_knowledge_text, transcribe_image
 
 # 图片扩展名（Phase 4 多模态：转译降维后以文本形态入库）

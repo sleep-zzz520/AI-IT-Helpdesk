@@ -96,7 +96,7 @@ def parse_pdf(path: Path) -> ParsedDoc:
             doc.scanned = True
             return doc
         doc.sections = [(f"第 {i + 1} 页", t) for i, t in enumerate(page_texts) if t]
-    except Exception:  # noqa: BLE001 —— PDF 损坏返回空 ParsedDoc（loader 跳过并报告）
+    except Exception:
         return doc
     return doc
 
@@ -113,7 +113,7 @@ def render_pdf_pages(path: Path) -> list[ImageRef]:
             for i, page in enumerate(pdf, start=1):
                 pix = page.get_pixmap(dpi=150)
                 pages.append(ImageRef(name=f"page-{i}.png", data=pix.tobytes("png")))
-    except Exception:  # noqa: BLE001
+    except Exception:
         return []
     return pages
 
@@ -190,7 +190,7 @@ def parse_docx(path: Path) -> ParsedDoc:
                 doc.sections = [("文档正文", "\n".join(body))]
 
         doc.images = _extract_zip_media(path, "word/media/")
-    except Exception:  # noqa: BLE001
+    except Exception:
         return doc
     return doc
 
@@ -234,7 +234,7 @@ def parse_pptx(path: Path) -> ParsedDoc:
             if body:
                 doc.sections.append((heading, body))
         doc.page_count = len(prs.slides)
-    except Exception:  # noqa: BLE001
+    except Exception:
         return doc
     return doc
 
@@ -267,6 +267,6 @@ def parse_xlsx(path: Path) -> ParsedDoc:
             doc.sections.append((ws.title, "\n".join(lines)))
         wb.close()
         doc.page_count = len(doc.sections)
-    except Exception:  # noqa: BLE001
+    except Exception:
         return doc
     return doc

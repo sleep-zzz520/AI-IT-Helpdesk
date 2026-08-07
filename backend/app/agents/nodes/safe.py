@@ -3,7 +3,7 @@
 原理：给节点函数套一层 try/except，任何异常写入 state["error"]，
 路由层检测到 error 就转人工。**用户永远不该看到 500，应该看到"已转人工"。**
 """
-from typing import Callable
+from collections.abc import Callable
 
 
 def safe(fn: Callable) -> Callable:
@@ -11,7 +11,7 @@ def safe(fn: Callable) -> Callable:
     def wrapper(state):
         try:
             return fn(state)
-        except Exception as e:  # noqa: BLE001 —— 兜底必须捕获一切
+        except Exception as e:
             return {
                 "error": f"{type(e).__name__}: {e}",
                 "trace": [{

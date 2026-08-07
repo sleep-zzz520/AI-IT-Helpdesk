@@ -74,7 +74,7 @@ def make_video(path: Path, wav: Path) -> bool:
         # 编码器自动回退：h264 不可用时用 mpeg4
         try:
             vstream = container.add_stream("h264", rate=1)
-        except Exception:  # noqa: BLE001
+        except Exception:
             vstream = container.add_stream("mpeg4", rate=1)
         astream = container.add_stream("aac", rate=16000)
 
@@ -101,7 +101,7 @@ def make_video(path: Path, wav: Path) -> bool:
             container.mux(p)
         container.close()
         return True
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         print(f"[合成视频失败] {type(e).__name__}: {e}")
         return False
 

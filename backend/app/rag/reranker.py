@@ -48,7 +48,7 @@ def rerank(query: str, hits: list[Hit], top_n: int | None = None) -> list[Hit]:
         )
         resp.raise_for_status()
         results = resp.json().get("results", [])
-    except Exception as e:  # noqa: BLE001 重排失败降级：原顺序返回
+    except Exception as e:
         logger.warning("Rerank 调用失败，降级原顺序: %s: %s", type(e).__name__, e)
         return hits[:top_n] if top_n else hits
 
@@ -56,6 +56,7 @@ def rerank(query: str, hits: list[Hit], top_n: int | None = None) -> list[Hit]:
     order = sorted(results, key=lambda r: r.get("relevance_score", 0), reverse=True)
     ranked = [hits[r["index"]] for r in order if r["index"] < len(hits)]
     # 精排后的 score 用模型相关性分（更可信）
-    for r, h in zip(order, ranked):
+    # strict=False：ranked 是 order 过滤"index 越界"后的子集，长度可不一致
+    for r, h in zip(order, ranked, strict=False):
         h.score = round(r.get("relevance_score", 0.0), 4)
     return ranked[:top_n] if top_n else ranked

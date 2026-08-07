@@ -9,8 +9,8 @@
 - ThreadPoolExecutor 线程池并发两个节点函数（openai SDK 线程安全）
 - trace 各自只返回新增记录，合并后由 state 的 reducer（Annotated[list, add]）累积
 """
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from app.agents.nodes.extract import extract_node
 from app.agents.nodes.intent import intent_node

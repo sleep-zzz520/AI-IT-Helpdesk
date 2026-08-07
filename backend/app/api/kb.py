@@ -7,6 +7,7 @@
   切指针（秒级生效 + 秒级回滚）；切换只改一个落盘文件，无数据搬迁。
 """
 import time
+from contextlib import suppress
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -70,11 +71,10 @@ def list_documents(
     for r in rows:
         expiring_days = None
         if r.valid_to:
-            try:
+            with suppress(ValueError):
+                # 格式异常（如 20991231）：不预警，保持原始字符串展示
                 expiring_days = (datetime.strptime(r.valid_to, "%Y-%m-%d").date()
                                  - today).days
-            except ValueError:
-                pass  # 格式异常（如 20991231）：不预警，保持原始字符串展示
         docs.append({
             "id": r.id,
             "path": r.path,
@@ -130,7 +130,7 @@ def kb_sync(
     candidate.clear()
     try:
         report = run_sync(store=candidate, kb_name="default")
-    except Exception as e:  # noqa: BLE001 —— 同步失败要告诉用户原因
+    except Exception as e:
         raise HTTPException(status_code=500, detail=f"同步失败：{e}") from e
     elapsed = round((time.perf_counter() - t0) * 1000)
     from app.db import SessionLocal  # 审计需要 db 会话（本地开一个，不污染接口依赖）

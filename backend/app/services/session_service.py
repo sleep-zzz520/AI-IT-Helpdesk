@@ -128,8 +128,7 @@ def _is_reopen_request(state: dict) -> bool:
     if state.get("new_user_message") is None:
         return False
     content = state["new_user_message"].strip()
-    return content.startswith("未解决") or content.startswith("没有解决") \
-        or content.startswith("还没好") or content.startswith("没解决")
+    return content.startswith(("未解决", "没有解决", "还没好", "没解决"))
 
 
 def load_state(db: Session, conv_id: int) -> dict:

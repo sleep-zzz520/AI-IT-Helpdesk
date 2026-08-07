@@ -30,6 +30,6 @@ def audit(db, user, action: str, detail: dict | None = None, request=None) -> No
             ip=ip,
         ))
         db.commit()
-    except Exception as e:  # noqa: BLE001 —— 审计失败不能拖垮业务
+    except Exception as e:
         logger.warning("审计日志写入失败: %s", e)
         db.rollback()

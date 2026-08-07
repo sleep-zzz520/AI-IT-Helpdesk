@@ -73,7 +73,7 @@ def kb_node(state: HelpdeskState) -> dict:
     try:
         query = _build_query(scenario, error_code, cert_expired)
         hits = retrieve(query, scenario=scenario, top_k=RAG_TOP_K)
-    except Exception as e:  # noqa: BLE001 检索失败不能 500，转人工兜底
+    except Exception as e:
         return {
             "kb_match": {"matched": False, "reason": f"知识库检索失败: {e}"},
             "trace": [{"node": "kb", "result": {"mode": "rag", "error": str(e)}}],

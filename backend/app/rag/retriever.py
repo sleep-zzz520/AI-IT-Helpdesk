@@ -61,9 +61,7 @@ def _passes_filter(meta: dict, scenario: str | None) -> bool:
     if scenario and meta.get("scenario") != scenario:
         return False
     valid_to = meta.get("valid_to")
-    if valid_to and valid_to < int(date.today().strftime("%Y%m%d")):
-        return False
-    return True
+    return not (valid_to and valid_to < int(date.today().strftime("%Y%m%d")))
 
 
 def _enhance_query(query: str) -> str:

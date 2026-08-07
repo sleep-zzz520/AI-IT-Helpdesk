@@ -13,9 +13,8 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from app.rag.loader import scan_docs
 from app.rag.retriever import retrieve
-from app.rag.store import ChromaStore, create_store
+from app.rag.store import ChromaStore
 from app.rag.sync import run_sync
 
 TMP = Path(tempfile.mkdtemp(prefix="kb_test_"))
@@ -143,7 +142,7 @@ def main() -> None:
     # 旧内容零残留：v1 的 chunk（version=1.0）必须全部删除（按 doc_id 删旧 + 重建）
     old_chunks = [h for h in hits if h.metadata.get("version") == "1.0"]
     assert not old_chunks, f"v1 旧 chunk 仍有残留: {old_chunks[0].id}"
-    print(f"✓ 用例2 修改后旧内容零残留（v2『重新拨号验证』可检索，无 version=1.0 chunk）")
+    print("✓ 用例2 修改后旧内容零残留（v2『重新拨号验证』可检索，无 version=1.0 chunk）")
 
     # ---- 用例 3：幂等（第二次全跳过） ----
     r3 = run_sync(KB_ROOT, store, kb_name="test")
@@ -161,7 +160,7 @@ def main() -> None:
     with SessionLocal() as db:
         row = db.query(KbDocument).filter_by(kb_name="test", path="email/test-b.md").first()
         assert row and row.status == "inactive", "台账应保留 inactive 记录（审计）"
-    print(f"✓ 用例4 软删除：检索不到但台账保留 status=inactive（审计可查）")
+    print("✓ 用例4 软删除：检索不到但台账保留 status=inactive（审计可查）")
 
     # ---- 用例 5：物理删除（源文件消失） ----
     (KB_ROOT / "email" / "test-b.md").unlink()
@@ -172,7 +171,7 @@ def main() -> None:
     with SessionLocal() as db:
         row = db.query(KbDocument).filter_by(kb_name="test", path="email/test-b.md").first()
         assert row and row.status == "removed", "台账应置 removed"
-    print(f"✓ 用例5 物理删除：不再召回，台账置 removed（审计痕迹保留）")
+    print("✓ 用例5 物理删除：不再召回，台账置 removed（审计痕迹保留）")
 
     # ---- 用例 6：删除后可新增（removed → active 复活） ----
     write(KB_ROOT / "email" / "test-b.md", DOC_B)
@@ -180,7 +179,7 @@ def main() -> None:
     assert len(r6.added) == 1, f"复活失败: {r6.summary}"
     hits = retrieve("邮箱无法收发", scenario="email", top_k=1, store=store)
     assert hits, "复活后应可检索"
-    print(f"✓ 用例6 复活：removed → active，可重新检索")
+    print("✓ 用例6 复活：removed → active，可重新检索")
 
     print(f"\n全部用例通过 🎉  库内最终 {store.count()} chunk")
     clean_ledger("test")

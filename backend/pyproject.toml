@@ -1,0 +1,39 @@
+# ===== 后端 lint/format（ROADMAP P3.3）=====
+# ruff：一个工具同时做 linter + formatter + isort（替代 black/flake8/isort 三件套）
+# 用法：
+#   ruff check app/          # 检查
+#   ruff check app/ --fix    # 自动修复可修复项
+#   ruff format app/         # 格式化（等价 black）
+#
+# 规则集选择：默认启 E(风格) F(错误) I(导入) UP(现代化)，
+# 额外加 B(bugbear) SIM(简化) PERF(性能) RUF(ruff专用) PIE(flakes)。
+# 忽略 B008：FastAPI 的 `Depends()` 放在参数默认值是【标准用法】（依赖注入），
+#   ruff 会误报"不要在默认值里调用函数"——这是 FastAPI 官方推荐写法，不能改。
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "PERF", "RUF", "PIE"]
+ignore = [
+    "B008",          # FastAPI Depends() 在参数默认值 = 标准用法（误报）
+    "BLE001",        # 代码已用 # noqa: BLE001 标注"兜底转人工"等故意吞异常
+    "E501",          # 行宽：中文长注释多，不强制 88 列
+    "S110",          # try-except-pass 已用 noqa 标注（OCR 故意吞异常）
+    "RUF001",        # 全角标点歧义检查——中文项目 docstring/注释大量全角标点，误报
+    "RUF002",
+    "RUF003",
+    "B023",          # 循环内定义函数闭包捕获循环变量——SSE 生成器立即使用，非延迟调用，误报
+    "RUF012",        # config 类属性可变默认值——Pydantic Settings 的 list 字段是标准模式
+    "PERF102",       # 性能微优化（dict.values()）——改动边界有风险，收益可忽略
+    "PERF401",
+    "PERF403",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# 测试脚本允许更宽松（工具代码，非生产）
+"tests/*.py" = ["E", "F401"]
+"scripts/*.py" = ["E"]
+
+[tool.ruff.lint.isort]
+# 与项目现有导入风格一致：known-first-party 让 app/ 内部导入归为一组
+known-first-party = ["app", "tests"]
