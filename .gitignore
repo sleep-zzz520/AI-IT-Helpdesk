@@ -42,3 +42,7 @@ npm-debug.log*
 
 # ===== 监控服务运行时数据 ===== 
 backend/mock_monitor/*.db
+
+# ===== 日志（运行时生成，排障时本地看，不提交）=====
+logs/
+*.log

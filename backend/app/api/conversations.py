@@ -7,6 +7,7 @@
   避免泄露别租户的会话存在性）
 """
 import json
+import logging
 import time
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -28,6 +29,8 @@ from app.schemas import (
 from app.security import get_current_user
 from app.services import session_service
 from app.services.audit_service import audit
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 
@@ -200,7 +203,7 @@ def send_message(
             # 并推送明确 error 事件，前端能显示"执行失败"而不是"连接中断"
             conv = db.get(Conversation, conv_id)
             session_service.save_turn(db, conv, state)
-            print(f"[api] Agent 执行异常: {type(e).__name__}: {e}")
+            logger.error("Agent 执行异常: %s: %s", type(e).__name__, e)
             yield f"event: error\ndata: {json.dumps({'message': f'Agent 执行失败（{type(e).__name__}），您的消息已保存'}, ensure_ascii=False)}\n\n"
             return
 

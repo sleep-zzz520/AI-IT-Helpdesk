@@ -10,10 +10,14 @@ API：POST /paas/v4/rerank（httpx 调用，openai SDK 无此接口）
 - documents 最多 128 条、单条 4096 字符
 - 失败降级：返回原顺序（配置开关 RERANK_ENABLED 可关）
 """
+import logging
+
 import httpx
 
 from app.config import settings
 from app.rag.store import Hit
+
+logger = logging.getLogger(__name__)
 
 RERANK_MODEL = "rerank"
 _MAX_DOCS = 128
@@ -45,7 +49,7 @@ def rerank(query: str, hits: list[Hit], top_n: int | None = None) -> list[Hit]:
         resp.raise_for_status()
         results = resp.json().get("results", [])
     except Exception as e:  # noqa: BLE001 重排失败降级：原顺序返回
-        print(f"[rerank] 调用失败，降级原顺序: {type(e).__name__}: {e}")
+        logger.warning("Rerank 调用失败，降级原顺序: %s: %s", type(e).__name__, e)
         return hits[:top_n] if top_n else hits
 
     # results: [{index, relevance_score}] —— index 对应 docs 的下标（即 hits 的下标）

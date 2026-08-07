@@ -6,6 +6,7 @@
   时【立即切换下一个模型】，不再 sleep 退避白等——免费模型限流的现实解法
 """
 import json
+import logging
 import re
 import threading
 import time
@@ -18,6 +19,8 @@ from openai import (
 )
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 client = OpenAI(
     api_key=settings.ZHIPU_API_KEY,
@@ -100,11 +103,13 @@ def _create(model_chain: list[str], **kwargs) -> tuple[object, str]:
                 _CURSOR_AT = time.time()
                 if isinstance(e, APIStatusError) and e.status_code in (403, 404):
                     _BLACKLISTED[model] = time.time() + _BLACKLIST_TTL
-                    print(f"[llm] 模型 {model} 拉黑（{e.status_code} 账号/模型级错误）")
+                    logger.warning("模型 %s 拉黑（%s 账号/模型级错误）",
+                                   model, e.status_code)
                 else:
                     # 429/5xx 临时故障：短拉黑，避免同一请求内外的反复踩
                     _BLACKLISTED[model] = time.time() + _RATE_TTL
-                    print(f"[llm] 模型 {model} 不可用({type(e).__name__})，切换下一个")
+                    logger.warning("模型 %s 不可用(%s)，切换下一个",
+                                   model, type(e).__name__)
             continue
     # 全部失败。模型链为空时 last_error 是 None，不能直接 raise（会抛 TypeError）
     raise last_error or RuntimeError("模型链为空，无法调用 LLM")
@@ -170,7 +175,8 @@ def chat_json(messages: list[dict], temperature: float = 0.1, model_chain: list[
     # （不能用全局 LAST_MODEL：并发下可能读到别的请求刚用的模型，拉黑打偏）
     with _LLM_LOCK:
         _BLACKLISTED[used_model] = time.time() + _RATE_TTL
-    print(f"[llm] 模型 {used_model} 返回异常内容({raw[:40]!r})，短拉黑并重试（换下一个模型）")
+    logger.warning("模型 %s 返回异常内容(%r)，短拉黑并重试（换下一个模型）",
+                   used_model, raw[:40])
     resp, used_model = _call()
     raw = (resp.choices[0].message.content or "").strip()
     parsed = _parse(raw)

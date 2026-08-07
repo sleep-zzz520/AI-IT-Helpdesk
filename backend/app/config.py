@@ -43,6 +43,13 @@ class Settings:
     MYSQL_PASSWORD: str = os.getenv("MYSQL_PASSWORD", "")
     MYSQL_DB: str = os.getenv("MYSQL_DB", "it_helpdesk")
 
+    # ===== 日志 =====
+    # 生产排障可查：统一 logging（级别可配 + 按天轮转文件 + 结构化格式）
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")          # DEBUG/INFO/WARNING/ERROR
+    LOG_DIR: str = os.getenv("LOG_DIR", str(BASE_DIR / "logs"))  # 日志目录（容器挂卷持久化）
+    LOG_MAX_BYTES: int = int(os.getenv("LOG_MAX_BYTES", "10485760"))  # 单文件 10MB 轮转
+    LOG_BACKUPS: int = int(os.getenv("LOG_BACKUPS", "5"))           # 保留 5 个轮转文件
+
     # ===== RAG 知识库 =====
     # 源文档目录（唯一事实来源，sync 引擎扫描它）——绝对路径，与 cwd 无关
     KB_ROOT: str = os.getenv("KB_ROOT", str(BASE_DIR / "docs/knowledge"))

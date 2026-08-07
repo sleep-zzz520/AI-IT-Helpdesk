@@ -11,11 +11,13 @@ from app.api.feedback import router as feedback_router
 from app.api.kb import router as kb_router
 from app.config import settings
 from app.db import init_db
+from app.logging_config import setup_logging
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用启动时自动建表（容器化部署必需：无手动初始化步骤）。"""
+    setup_logging()  # 统一日志：级别可配 + 文件轮转（生产排障可查）
     init_db()
     yield
 
