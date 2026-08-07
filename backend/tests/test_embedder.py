@@ -24,15 +24,44 @@ def test_clean_preserves_normal():
     assert _clean_text("VPN 客户端配置步骤") == "VPN 客户端配置步骤"
 
 
-def test_empty_text_zero_vector():
-    """空文本返回零向量，不抛错（之前会崩整个流程）。"""
-    vecs = embed_texts(["", "正常文本"])
-    assert len(vecs) == 2
-    assert vecs[0] == [0.0] * EMBED_DIM  # 空文本 → 零向量
-    assert len(vecs[1]) == EMBED_DIM     # 正常文本占位（长度正确）
+def test_empty_text_zero_vector(monkeypatch):
+    """空文本不送 API、返回零向量；正常文本才走真实批次（mock 掉 _embed_batch）。
+
+    关键：mock `_embed_batch` 避免触发真实 embedding API（CI 无有效 key 会 401）。
+    验证的是【清洗分发逻辑】——空文本被拦截、只有非空文本送批次。
+    """
+    import app.rag.embedder as m
+
+    # mock 掉真实批次：只记录它收到了哪些文本，返回假向量
+    captured = []
+
+    def fake_batch(texts):
+        captured.extend(texts)
+        return [[i + 1] * EMBED_DIM for i in range(len(texts))]
+
+    monkeypatch.setattr(m, "_embed_batch", fake_batch)
+
+    vecs = embed_texts(["", "正常文本", "  ", "另一段"])
+
+    assert len(vecs) == 4
+    assert vecs[0] == [0.0] * EMBED_DIM   # 空文本 → 零向量
+    assert vecs[2] == [0.0] * EMBED_DIM   # 纯空白 → 零向量
+    assert captured == ["正常文本", "另一段"], \
+        f"只有非空文本送批次，实际: {captured}"  # 空/空白不送 API
 
 
-def test_all_empty_batch():
-    """全空批次不调 API，全部零向量。"""
+def test_all_empty_batch(monkeypatch):
+    """全空批次不调 API（_embed_batch 不被调用），全部零向量。"""
+    import app.rag.embedder as m
+
+    called = []
+
+    def fake_batch(texts):
+        called.append(texts)
+        return []
+
+    monkeypatch.setattr(m, "_embed_batch", fake_batch)
+
     vecs = embed_texts(["", ""])
     assert vecs == [[0.0] * EMBED_DIM, [0.0] * EMBED_DIM]
+    assert called == [], "全空批次不应调用真实 embedding API"
