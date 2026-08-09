@@ -193,6 +193,6 @@ def list_collections(persist_dir: str) -> dict[str, int]:
     for col in client.list_collections():
         try:
             out[col.name] = col.count()
-        except Exception:  # noqa: BLE001 单库读取失败不阻塞其他库
+        except Exception:  # 单库读取失败不阻塞其他库
             out[col.name] = -1
     return out

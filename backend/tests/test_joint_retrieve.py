@@ -19,6 +19,7 @@ from app.rag import retriever
 from app.rag.chunks import Chunk
 from app.rag.store import ChromaStore, list_collections
 
+
 # 确定性伪向量：同文本同向量（模拟语义编码；8 维足够区分测试文本）
 def _fake_vec(text: str, dim: int = 8) -> list[float]:
     h = hashlib.sha256(text.encode()).hexdigest()
@@ -89,7 +90,7 @@ def test_corpus_query_hits_corpus(joint_env):
     ③来源标记正确。排序质量由真实库联测/rag_eval 负责（非伪向量职责）。
     """
     stats = retriever.RetrievalStats()
-    hits = retriever.retrieve("公司年终奖什么时候发", top_k=5, stats=stats, debug=True)
+    retriever.retrieve("公司年终奖什么时候发", top_k=5, stats=stats, debug=True)
     assert set(stats.per_collection) == {"kb_docs", "kb_eval_b"}, \
         f"联合应查两个库: {stats.per_collection}"
     assert stats.per_collection["kb_eval_b"]["bm25_recall"] > 0, \
