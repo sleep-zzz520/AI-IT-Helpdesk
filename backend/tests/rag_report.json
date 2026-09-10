@@ -1,22 +1,1956 @@
 {
-  "task": "rag_retrieval",
-  "cases": 10,
+  "task": "rag_gold_chunk_retrieval",
+  "cases": 60,
+  "dataset": {
+    "question_types": {
+      "cross_context": 1,
+      "direct": 20,
+      "distractor": 18,
+      "exact_term": 14,
+      "paraphrase": 7
+    },
+    "difficulties": {
+      "easy": 13,
+      "hard": 18,
+      "medium": 29
+    },
+    "behaviors": {
+      "answer": 60
+    }
+  },
   "results": [
     {
       "name": "vector_only",
-      "cases": 10,
-      "recall@1": 0.6,
-      "recall@3": 0.9,
-      "recall@5": 1.0,
-      "mrr": 0.758
+      "cases": 60,
+      "gold_chunk_recall@1": 0.6,
+      "gold_chunk_recall@3": 0.8,
+      "gold_chunk_recall@5": 0.9,
+      "mrr": 0.711,
+      "per_case": [
+        {
+          "case_id": "r01",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "152f7eabd9735b5c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "152f7eabd9735b5c:4",
+            "52480350fccf8031:1",
+            "dcc196094d9a0e03:1",
+            "152f7eabd9735b5c:1",
+            "152f7eabd9735b5c:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r02",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "52480350fccf8031:2"
+          ],
+          "retrieved_chunk_ids": [
+            "52480350fccf8031:2",
+            "dcc196094d9a0e03:2",
+            "152f7eabd9735b5c:1",
+            "dcc196094d9a0e03:1",
+            "52480350fccf8031:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r03",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "dcc196094d9a0e03:1"
+          ],
+          "retrieved_chunk_ids": [
+            "dcc196094d9a0e03:1",
+            "152f7eabd9735b5c:1",
+            "52480350fccf8031:1",
+            "dcc196094d9a0e03:3",
+            "dcc196094d9a0e03:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r04",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "53d73c042ae92c8c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "53d73c042ae92c8c:2",
+            "53d73c042ae92c8c:4",
+            "788a04517bdb44fe:4",
+            "788a04517bdb44fe:3",
+            "770369b81515c927:4"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r05",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:2"
+          ],
+          "retrieved_chunk_ids": [
+            "fe0c6e28c883a70c:2",
+            "657e68c18ad40cc9:3",
+            "fe0c6e28c883a70c:1",
+            "657e68c18ad40cc9:1",
+            "a21531d338d520ab:4"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r06",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "2921328ecc41c662:1"
+          ],
+          "retrieved_chunk_ids": [
+            "2921328ecc41c662:1",
+            "2921328ecc41c662:4",
+            "e08dff7985a8c328:4",
+            "ac555fa879fb185a:4",
+            "e08dff7985a8c328:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r07",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "52480350fccf8031:4"
+          ],
+          "retrieved_chunk_ids": [
+            "52480350fccf8031:4",
+            "dcc196094d9a0e03:1",
+            "52480350fccf8031:1",
+            "152f7eabd9735b5c:1",
+            "52480350fccf8031:6"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r08",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "53d73c042ae92c8c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "53d73c042ae92c8c:2",
+            "53d73c042ae92c8c:4",
+            "770369b81515c927:4",
+            "788a04517bdb44fe:4",
+            "53d73c042ae92c8c:3"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r09",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:1"
+          ],
+          "retrieved_chunk_ids": [
+            "fe0c6e28c883a70c:1",
+            "fe0c6e28c883a70c:2",
+            "657e68c18ad40cc9:3",
+            "657e68c18ad40cc9:1",
+            "a21531d338d520ab:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r10",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "dcc196094d9a0e03:2"
+          ],
+          "retrieved_chunk_ids": [
+            "dcc196094d9a0e03:1",
+            "dcc196094d9a0e03:3",
+            "152f7eabd9735b5c:1",
+            "dcc196094d9a0e03:2",
+            "52480350fccf8031:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r11",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "52480350fccf8031:5"
+          ],
+          "retrieved_chunk_ids": [
+            "52480350fccf8031:5",
+            "dcc196094d9a0e03:1",
+            "52480350fccf8031:1",
+            "152f7eabd9735b5c:1",
+            "52480350fccf8031:6"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r12",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "152f7eabd9735b5c:4"
+          ],
+          "retrieved_chunk_ids": [
+            "152f7eabd9735b5c:4",
+            "152f7eabd9735b5c:2",
+            "152f7eabd9735b5c:3",
+            "dcc196094d9a0e03:3",
+            "dcc196094d9a0e03:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r13",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "52480350fccf8031:2"
+          ],
+          "retrieved_chunk_ids": [
+            "dcc196094d9a0e03:2",
+            "152f7eabd9735b5c:1",
+            "dcc196094d9a0e03:1",
+            "52480350fccf8031:6",
+            "52480350fccf8031:1"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r14",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "2921328ecc41c662:1"
+          ],
+          "retrieved_chunk_ids": [
+            "2921328ecc41c662:1",
+            "2921328ecc41c662:2",
+            "e08dff7985a8c328:4",
+            "2921328ecc41c662:4",
+            "e08dff7985a8c328:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r15",
+          "question_type": "distractor",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "da34af2862c9c2d9:1"
+          ],
+          "retrieved_chunk_ids": [
+            "da34af2862c9c2d9:1",
+            "da34af2862c9c2d9:2",
+            "da34af2862c9c2d9:4",
+            "dcc196094d9a0e03:1",
+            "152f7eabd9735b5c:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r16",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "788a04517bdb44fe:1"
+          ],
+          "retrieved_chunk_ids": [
+            "788a04517bdb44fe:1",
+            "53d73c042ae92c8c:4",
+            "788a04517bdb44fe:4",
+            "788a04517bdb44fe:3",
+            "53d73c042ae92c8c:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r17",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "a21531d338d520ab:1"
+          ],
+          "retrieved_chunk_ids": [
+            "a21531d338d520ab:3",
+            "a21531d338d520ab:1",
+            "fe0c6e28c883a70c:2",
+            "657e68c18ad40cc9:1",
+            "fe0c6e28c883a70c:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r18",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "ac555fa879fb185a:2"
+          ],
+          "retrieved_chunk_ids": [
+            "ac555fa879fb185a:2",
+            "ac555fa879fb185a:1",
+            "ac555fa879fb185a:3",
+            "ac555fa879fb185a:4",
+            "e08dff7985a8c328:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r19",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:3"
+          ],
+          "retrieved_chunk_ids": [
+            "fe0c6e28c883a70c:4",
+            "657e68c18ad40cc9:5",
+            "fe0c6e28c883a70c:2",
+            "657e68c18ad40cc9:3",
+            "53d73c042ae92c8c:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r20",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "152f7eabd9735b5c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "52480350fccf8031:6",
+            "152f7eabd9735b5c:1",
+            "152f7eabd9735b5c:2",
+            "52480350fccf8031:1",
+            "dcc196094d9a0e03:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r21",
+          "question_type": "paraphrase",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "152f7eabd9735b5c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "152f7eabd9735b5c:4",
+            "152f7eabd9735b5c:1",
+            "152f7eabd9735b5c:2",
+            "dcc196094d9a0e03:1",
+            "52480350fccf8031:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r22",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "152f7eabd9735b5c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "152f7eabd9735b5c:4",
+            "152f7eabd9735b5c:2",
+            "152f7eabd9735b5c:1",
+            "dcc196094d9a0e03:1",
+            "52480350fccf8031:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r23",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "da34af2862c9c2d9:1"
+          ],
+          "retrieved_chunk_ids": [
+            "da34af2862c9c2d9:1",
+            "da34af2862c9c2d9:2",
+            "da34af2862c9c2d9:4",
+            "dcc196094d9a0e03:2",
+            "e08dff7985a8c328:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r24",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "da34af2862c9c2d9:3"
+          ],
+          "retrieved_chunk_ids": [
+            "da34af2862c9c2d9:3",
+            "da34af2862c9c2d9:2",
+            "dcc196094d9a0e03:2",
+            "dcc196094d9a0e03:1",
+            "da34af2862c9c2d9:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r25",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "788a04517bdb44fe:1"
+          ],
+          "retrieved_chunk_ids": [
+            "788a04517bdb44fe:1",
+            "53d73c042ae92c8c:4",
+            "657e68c18ad40cc9:5",
+            "788a04517bdb44fe:3",
+            "53d73c042ae92c8c:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r26",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "788a04517bdb44fe:1"
+          ],
+          "retrieved_chunk_ids": [
+            "788a04517bdb44fe:1",
+            "53d73c042ae92c8c:4",
+            "53d73c042ae92c8c:2",
+            "657e68c18ad40cc9:5",
+            "788a04517bdb44fe:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r27",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "770369b81515c927:1"
+          ],
+          "retrieved_chunk_ids": [
+            "788a04517bdb44fe:2",
+            "770369b81515c927:2",
+            "770369b81515c927:1",
+            "53d73c042ae92c8c:4",
+            "770369b81515c927:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r28",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "53d73c042ae92c8c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "53d73c042ae92c8c:2",
+            "657e68c18ad40cc9:5",
+            "788a04517bdb44fe:3",
+            "53d73c042ae92c8c:4",
+            "788a04517bdb44fe:1"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r29",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:2"
+          ],
+          "retrieved_chunk_ids": [
+            "fe0c6e28c883a70c:2",
+            "657e68c18ad40cc9:5",
+            "657e68c18ad40cc9:3",
+            "657e68c18ad40cc9:2",
+            "657e68c18ad40cc9:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r30",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:5"
+          ],
+          "retrieved_chunk_ids": [
+            "657e68c18ad40cc9:5",
+            "657e68c18ad40cc9:3",
+            "fe0c6e28c883a70c:2",
+            "fe0c6e28c883a70c:4",
+            "fe0c6e28c883a70c:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r31",
+          "question_type": "cross_context",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "fe0c6e28c883a70c:4"
+          ],
+          "retrieved_chunk_ids": [
+            "fe0c6e28c883a70c:4",
+            "fe0c6e28c883a70c:2",
+            "657e68c18ad40cc9:3",
+            "dcc196094d9a0e03:3",
+            "657e68c18ad40cc9:5"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r32",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "a21531d338d520ab:1"
+          ],
+          "retrieved_chunk_ids": [
+            "a21531d338d520ab:1",
+            "a21531d338d520ab:3",
+            "a21531d338d520ab:4",
+            "a21531d338d520ab:2",
+            "657e68c18ad40cc9:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r33",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "a21531d338d520ab:2"
+          ],
+          "retrieved_chunk_ids": [
+            "a21531d338d520ab:2",
+            "a21531d338d520ab:1",
+            "a21531d338d520ab:3",
+            "fe0c6e28c883a70c:2",
+            "657e68c18ad40cc9:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r34",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "ac555fa879fb185a:2"
+          ],
+          "retrieved_chunk_ids": [
+            "ac555fa879fb185a:2",
+            "ac555fa879fb185a:1",
+            "ac555fa879fb185a:3",
+            "ac555fa879fb185a:4",
+            "e08dff7985a8c328:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r35",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "ac555fa879fb185a:3"
+          ],
+          "retrieved_chunk_ids": [
+            "ac555fa879fb185a:3",
+            "ac555fa879fb185a:2",
+            "ac555fa879fb185a:4",
+            "da34af2862c9c2d9:3",
+            "ac555fa879fb185a:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r36",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "e08dff7985a8c328:2"
+          ],
+          "retrieved_chunk_ids": [
+            "e08dff7985a8c328:4",
+            "2921328ecc41c662:1",
+            "e08dff7985a8c328:2",
+            "2921328ecc41c662:4",
+            "2921328ecc41c662:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r37",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "2921328ecc41c662:2"
+          ],
+          "retrieved_chunk_ids": [
+            "e08dff7985a8c328:2",
+            "2921328ecc41c662:1",
+            "2921328ecc41c662:2",
+            "e08dff7985a8c328:4",
+            "2921328ecc41c662:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r38",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "3c806778b02f59c2:1"
+          ],
+          "retrieved_chunk_ids": [
+            "3c806778b02f59c2:1",
+            "3c806778b02f59c2:2",
+            "3c806778b02f59c2:3",
+            "9034cdf33e5bd0ee:2",
+            "e13d7dbdbab5edc6:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r39",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "e13d7dbdbab5edc6:1"
+          ],
+          "retrieved_chunk_ids": [
+            "e13d7dbdbab5edc6:1",
+            "e13d7dbdbab5edc6:3",
+            "e13d7dbdbab5edc6:2",
+            "9034cdf33e5bd0ee:2",
+            "788a04517bdb44fe:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r40",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "9034cdf33e5bd0ee:1"
+          ],
+          "retrieved_chunk_ids": [
+            "9034cdf33e5bd0ee:3",
+            "9034cdf33e5bd0ee:1",
+            "9034cdf33e5bd0ee:2",
+            "e13d7dbdbab5edc6:2",
+            "3c806778b02f59c2:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r41",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "da34af2862c9c2d9:2"
+          ],
+          "retrieved_chunk_ids": [
+            "da34af2862c9c2d9:2",
+            "dcc196094d9a0e03:2",
+            "dcc196094d9a0e03:1",
+            "152f7eabd9735b5c:1",
+            "152f7eabd9735b5c:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r42",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "dcc196094d9a0e03:2"
+          ],
+          "retrieved_chunk_ids": [
+            "dcc196094d9a0e03:3",
+            "dcc196094d9a0e03:2",
+            "52480350fccf8031:6",
+            "dcc196094d9a0e03:4",
+            "da34af2862c9c2d9:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r43",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "52480350fccf8031:3"
+          ],
+          "retrieved_chunk_ids": [
+            "52480350fccf8031:3",
+            "dcc196094d9a0e03:2",
+            "52480350fccf8031:6",
+            "dcc196094d9a0e03:1",
+            "152f7eabd9735b5c:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r44",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:2"
+          ],
+          "retrieved_chunk_ids": [
+            "657e68c18ad40cc9:2",
+            "657e68c18ad40cc9:3",
+            "fe0c6e28c883a70c:2",
+            "fe0c6e28c883a70c:1",
+            "dcc196094d9a0e03:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r45",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:2"
+          ],
+          "retrieved_chunk_ids": [
+            "657e68c18ad40cc9:3",
+            "fe0c6e28c883a70c:2",
+            "657e68c18ad40cc9:2",
+            "fe0c6e28c883a70c:1",
+            "a21531d338d520ab:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r46",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "ac555fa879fb185a:3"
+          ],
+          "retrieved_chunk_ids": [
+            "ac555fa879fb185a:3",
+            "ac555fa879fb185a:1",
+            "ac555fa879fb185a:4",
+            "e08dff7985a8c328:4",
+            "2921328ecc41c662:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r47",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "3c806778b02f59c2:3"
+          ],
+          "retrieved_chunk_ids": [
+            "3c806778b02f59c2:3",
+            "3c806778b02f59c2:2",
+            "3c806778b02f59c2:1",
+            "e13d7dbdbab5edc6:2",
+            "fe0c6e28c883a70c:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r48",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "e13d7dbdbab5edc6:3"
+          ],
+          "retrieved_chunk_ids": [
+            "e13d7dbdbab5edc6:3",
+            "52480350fccf8031:6",
+            "52480350fccf8031:5",
+            "788a04517bdb44fe:3",
+            "152f7eabd9735b5c:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r49",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "dcc196094d9a0e03:1"
+          ],
+          "retrieved_chunk_ids": [
+            "dcc196094d9a0e03:1",
+            "52480350fccf8031:1",
+            "152f7eabd9735b5c:1",
+            "dcc196094d9a0e03:3",
+            "52480350fccf8031:6"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r50",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "152f7eabd9735b5c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "152f7eabd9735b5c:1",
+            "dcc196094d9a0e03:1",
+            "52480350fccf8031:1",
+            "152f7eabd9735b5c:4",
+            "152f7eabd9735b5c:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r51",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "788a04517bdb44fe:2"
+          ],
+          "retrieved_chunk_ids": [
+            "788a04517bdb44fe:2",
+            "770369b81515c927:1",
+            "53d73c042ae92c8c:4",
+            "770369b81515c927:2",
+            "770369b81515c927:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r52",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "770369b81515c927:2"
+          ],
+          "retrieved_chunk_ids": [
+            "770369b81515c927:2",
+            "788a04517bdb44fe:2",
+            "53d73c042ae92c8c:4",
+            "770369b81515c927:4",
+            "770369b81515c927:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r53",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "fe0c6e28c883a70c:2"
+          ],
+          "retrieved_chunk_ids": [
+            "657e68c18ad40cc9:3",
+            "fe0c6e28c883a70c:2",
+            "fe0c6e28c883a70c:1",
+            "fe0c6e28c883a70c:4",
+            "657e68c18ad40cc9:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r54",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "fe0c6e28c883a70c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "a21531d338d520ab:1",
+            "fe0c6e28c883a70c:1",
+            "657e68c18ad40cc9:3",
+            "fe0c6e28c883a70c:2",
+            "a21531d338d520ab:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r55",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "a21531d338d520ab:2"
+          ],
+          "retrieved_chunk_ids": [
+            "a21531d338d520ab:2",
+            "a21531d338d520ab:1",
+            "a21531d338d520ab:3",
+            "657e68c18ad40cc9:3",
+            "fe0c6e28c883a70c:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r56",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "ac555fa879fb185a:3"
+          ],
+          "retrieved_chunk_ids": [
+            "ac555fa879fb185a:3",
+            "ac555fa879fb185a:1",
+            "ac555fa879fb185a:2",
+            "e08dff7985a8c328:4",
+            "2921328ecc41c662:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r57",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "e08dff7985a8c328:1"
+          ],
+          "retrieved_chunk_ids": [
+            "e08dff7985a8c328:2",
+            "e08dff7985a8c328:4",
+            "2921328ecc41c662:1",
+            "ac555fa879fb185a:3",
+            "657e68c18ad40cc9:5"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r58",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "2921328ecc41c662:1"
+          ],
+          "retrieved_chunk_ids": [
+            "dcc196094d9a0e03:3",
+            "dcc196094d9a0e03:2",
+            "2921328ecc41c662:2",
+            "2921328ecc41c662:1",
+            "dcc196094d9a0e03:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r59",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "3c806778b02f59c2:3"
+          ],
+          "retrieved_chunk_ids": [
+            "3c806778b02f59c2:3",
+            "3c806778b02f59c2:2",
+            "dcc196094d9a0e03:3",
+            "788a04517bdb44fe:3",
+            "52480350fccf8031:6"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r60",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "9034cdf33e5bd0ee:3"
+          ],
+          "retrieved_chunk_ids": [
+            "9034cdf33e5bd0ee:3",
+            "9034cdf33e5bd0ee:1",
+            "9034cdf33e5bd0ee:2",
+            "e13d7dbdbab5edc6:2",
+            "3c806778b02f59c2:1"
+          ],
+          "recall_at_5": 1.0
+        }
+      ]
     },
     {
       "name": "hybrid",
-      "cases": 10,
-      "recall@1": 0.6,
-      "recall@3": 0.9,
-      "recall@5": 1.0,
-      "mrr": 0.758
+      "cases": 60,
+      "gold_chunk_recall@1": 0.75,
+      "gold_chunk_recall@3": 0.817,
+      "gold_chunk_recall@5": 0.817,
+      "mrr": 0.783,
+      "per_case": [
+        {
+          "case_id": "r01",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "152f7eabd9735b5c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "52480350fccf8031:1",
+            "152f7eabd9735b5c:4",
+            "dcc196094d9a0e03:1",
+            "da34af2862c9c2d9:2",
+            "2921328ecc41c662:4"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r02",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "52480350fccf8031:2"
+          ],
+          "retrieved_chunk_ids": [
+            "52480350fccf8031:2",
+            "152f7eabd9735b5c:1",
+            "dcc196094d9a0e03:1",
+            "da34af2862c9c2d9:4",
+            "ac555fa879fb185a:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r03",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "dcc196094d9a0e03:1"
+          ],
+          "retrieved_chunk_ids": [
+            "dcc196094d9a0e03:1",
+            "152f7eabd9735b5c:1",
+            "52480350fccf8031:1",
+            "da34af2862c9c2d9:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r04",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "53d73c042ae92c8c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "788a04517bdb44fe:4",
+            "53d73c042ae92c8c:2",
+            "fe0c6e28c883a70c:4",
+            "770369b81515c927:4"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r05",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:2"
+          ],
+          "retrieved_chunk_ids": [
+            "fe0c6e28c883a70c:2",
+            "a21531d338d520ab:4",
+            "657e68c18ad40cc9:1"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r06",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "2921328ecc41c662:1"
+          ],
+          "retrieved_chunk_ids": [
+            "2921328ecc41c662:1",
+            "ac555fa879fb185a:4",
+            "e08dff7985a8c328:1",
+            "da34af2862c9c2d9:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r07",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "52480350fccf8031:4"
+          ],
+          "retrieved_chunk_ids": [
+            "52480350fccf8031:4",
+            "152f7eabd9735b5c:1",
+            "dcc196094d9a0e03:1",
+            "770369b81515c927:4",
+            "2921328ecc41c662:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r08",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "53d73c042ae92c8c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "53d73c042ae92c8c:2",
+            "788a04517bdb44fe:4",
+            "770369b81515c927:4",
+            "fe0c6e28c883a70c:4",
+            "52480350fccf8031:1"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r09",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:1"
+          ],
+          "retrieved_chunk_ids": [
+            "fe0c6e28c883a70c:1",
+            "657e68c18ad40cc9:1",
+            "a21531d338d520ab:4",
+            "ac555fa879fb185a:4",
+            "52480350fccf8031:6"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r10",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "dcc196094d9a0e03:2"
+          ],
+          "retrieved_chunk_ids": [
+            "dcc196094d9a0e03:1",
+            "152f7eabd9735b5c:1",
+            "52480350fccf8031:1",
+            "da34af2862c9c2d9:4",
+            "53d73c042ae92c8c:4"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r11",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "52480350fccf8031:5"
+          ],
+          "retrieved_chunk_ids": [
+            "52480350fccf8031:5",
+            "152f7eabd9735b5c:1",
+            "dcc196094d9a0e03:1",
+            "da34af2862c9c2d9:4",
+            "fe0c6e28c883a70c:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r12",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "152f7eabd9735b5c:4"
+          ],
+          "retrieved_chunk_ids": [
+            "152f7eabd9735b5c:4",
+            "657e68c18ad40cc9:5",
+            "52480350fccf8031:1",
+            "dcc196094d9a0e03:3",
+            "ac555fa879fb185a:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r13",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "52480350fccf8031:2"
+          ],
+          "retrieved_chunk_ids": [
+            "152f7eabd9735b5c:1",
+            "52480350fccf8031:2",
+            "da34af2862c9c2d9:2",
+            "dcc196094d9a0e03:2",
+            "ac555fa879fb185a:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r14",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "2921328ecc41c662:1"
+          ],
+          "retrieved_chunk_ids": [
+            "2921328ecc41c662:1",
+            "e08dff7985a8c328:1",
+            "ac555fa879fb185a:3",
+            "53d73c042ae92c8c:1",
+            "52480350fccf8031:6"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r15",
+          "question_type": "distractor",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "da34af2862c9c2d9:1"
+          ],
+          "retrieved_chunk_ids": [
+            "da34af2862c9c2d9:1",
+            "e08dff7985a8c328:2",
+            "152f7eabd9735b5c:1",
+            "dcc196094d9a0e03:2",
+            "52480350fccf8031:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r16",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "788a04517bdb44fe:1"
+          ],
+          "retrieved_chunk_ids": [
+            "788a04517bdb44fe:1",
+            "53d73c042ae92c8c:4",
+            "770369b81515c927:4",
+            "fe0c6e28c883a70c:4",
+            "657e68c18ad40cc9:5"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r17",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "a21531d338d520ab:1"
+          ],
+          "retrieved_chunk_ids": [
+            "a21531d338d520ab:1",
+            "657e68c18ad40cc9:1",
+            "fe0c6e28c883a70c:2",
+            "9034cdf33e5bd0ee:1",
+            "2921328ecc41c662:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r18",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "ac555fa879fb185a:2"
+          ],
+          "retrieved_chunk_ids": [
+            "ac555fa879fb185a:2",
+            "e08dff7985a8c328:1",
+            "152f7eabd9735b5c:3",
+            "2921328ecc41c662:4",
+            "657e68c18ad40cc9:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r19",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:3"
+          ],
+          "retrieved_chunk_ids": [
+            "fe0c6e28c883a70c:4",
+            "657e68c18ad40cc9:5",
+            "770369b81515c927:1",
+            "2921328ecc41c662:1",
+            "53d73c042ae92c8c:2"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r20",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "152f7eabd9735b5c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "152f7eabd9735b5c:1",
+            "52480350fccf8031:6",
+            "dcc196094d9a0e03:1",
+            "2921328ecc41c662:1",
+            "ac555fa879fb185a:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r21",
+          "question_type": "paraphrase",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "152f7eabd9735b5c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "152f7eabd9735b5c:1",
+            "52480350fccf8031:1",
+            "dcc196094d9a0e03:1",
+            "da34af2862c9c2d9:4",
+            "e13d7dbdbab5edc6:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r22",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "152f7eabd9735b5c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "152f7eabd9735b5c:1",
+            "52480350fccf8031:1",
+            "9034cdf33e5bd0ee:2",
+            "3c806778b02f59c2:1",
+            "dcc196094d9a0e03:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r23",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "da34af2862c9c2d9:1"
+          ],
+          "retrieved_chunk_ids": [
+            "da34af2862c9c2d9:1",
+            "dcc196094d9a0e03:2",
+            "e08dff7985a8c328:4",
+            "152f7eabd9735b5c:1",
+            "ac555fa879fb185a:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r24",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "da34af2862c9c2d9:3"
+          ],
+          "retrieved_chunk_ids": [
+            "da34af2862c9c2d9:3",
+            "dcc196094d9a0e03:2",
+            "152f7eabd9735b5c:1",
+            "52480350fccf8031:4",
+            "2921328ecc41c662:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r25",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "788a04517bdb44fe:1"
+          ],
+          "retrieved_chunk_ids": [
+            "788a04517bdb44fe:1",
+            "53d73c042ae92c8c:4",
+            "fe0c6e28c883a70c:4",
+            "657e68c18ad40cc9:5",
+            "770369b81515c927:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r26",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "788a04517bdb44fe:1"
+          ],
+          "retrieved_chunk_ids": [
+            "788a04517bdb44fe:1",
+            "53d73c042ae92c8c:4",
+            "770369b81515c927:2",
+            "657e68c18ad40cc9:5",
+            "a21531d338d520ab:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r27",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "770369b81515c927:1"
+          ],
+          "retrieved_chunk_ids": [
+            "770369b81515c927:1",
+            "788a04517bdb44fe:2",
+            "53d73c042ae92c8c:4",
+            "52480350fccf8031:5",
+            "dcc196094d9a0e03:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r28",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "53d73c042ae92c8c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "53d73c042ae92c8c:1",
+            "788a04517bdb44fe:1",
+            "657e68c18ad40cc9:5",
+            "dcc196094d9a0e03:2",
+            "3c806778b02f59c2:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r29",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:2"
+          ],
+          "retrieved_chunk_ids": [
+            "fe0c6e28c883a70c:2",
+            "657e68c18ad40cc9:1",
+            "a21531d338d520ab:4",
+            "ac555fa879fb185a:3",
+            "788a04517bdb44fe:3"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r30",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:5"
+          ],
+          "retrieved_chunk_ids": [
+            "657e68c18ad40cc9:5",
+            "fe0c6e28c883a70c:2",
+            "53d73c042ae92c8c:4",
+            "770369b81515c927:1",
+            "dcc196094d9a0e03:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r31",
+          "question_type": "cross_context",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "fe0c6e28c883a70c:4"
+          ],
+          "retrieved_chunk_ids": [
+            "fe0c6e28c883a70c:4",
+            "657e68c18ad40cc9:3",
+            "770369b81515c927:4",
+            "788a04517bdb44fe:4",
+            "dcc196094d9a0e03:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r32",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "a21531d338d520ab:1"
+          ],
+          "retrieved_chunk_ids": [
+            "a21531d338d520ab:1",
+            "657e68c18ad40cc9:1",
+            "788a04517bdb44fe:4",
+            "fe0c6e28c883a70c:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r33",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "a21531d338d520ab:2"
+          ],
+          "retrieved_chunk_ids": [
+            "a21531d338d520ab:2",
+            "fe0c6e28c883a70c:1",
+            "657e68c18ad40cc9:1",
+            "788a04517bdb44fe:4",
+            "2921328ecc41c662:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r34",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "ac555fa879fb185a:2"
+          ],
+          "retrieved_chunk_ids": [
+            "ac555fa879fb185a:2",
+            "e08dff7985a8c328:1",
+            "2921328ecc41c662:1",
+            "da34af2862c9c2d9:2",
+            "fe0c6e28c883a70c:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r35",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "ac555fa879fb185a:3"
+          ],
+          "retrieved_chunk_ids": [
+            "ac555fa879fb185a:3",
+            "da34af2862c9c2d9:3",
+            "e08dff7985a8c328:2",
+            "2921328ecc41c662:2",
+            "fe0c6e28c883a70c:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r36",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "e08dff7985a8c328:2"
+          ],
+          "retrieved_chunk_ids": [
+            "e08dff7985a8c328:4",
+            "2921328ecc41c662:1",
+            "ac555fa879fb185a:3",
+            "dcc196094d9a0e03:2",
+            "152f7eabd9735b5c:3"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r37",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "2921328ecc41c662:2"
+          ],
+          "retrieved_chunk_ids": [
+            "e08dff7985a8c328:2",
+            "2921328ecc41c662:2",
+            "ac555fa879fb185a:4",
+            "da34af2862c9c2d9:2",
+            "788a04517bdb44fe:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r38",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "3c806778b02f59c2:1"
+          ],
+          "retrieved_chunk_ids": [
+            "3c806778b02f59c2:1",
+            "e13d7dbdbab5edc6:2",
+            "9034cdf33e5bd0ee:2",
+            "770369b81515c927:4",
+            "657e68c18ad40cc9:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r39",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "e13d7dbdbab5edc6:1"
+          ],
+          "retrieved_chunk_ids": [
+            "e13d7dbdbab5edc6:1",
+            "9034cdf33e5bd0ee:2",
+            "788a04517bdb44fe:3",
+            "a21531d338d520ab:3",
+            "53d73c042ae92c8c:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r40",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "9034cdf33e5bd0ee:1"
+          ],
+          "retrieved_chunk_ids": [
+            "9034cdf33e5bd0ee:1",
+            "e13d7dbdbab5edc6:2",
+            "a21531d338d520ab:3",
+            "3c806778b02f59c2:1",
+            "e08dff7985a8c328:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r41",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "da34af2862c9c2d9:2"
+          ],
+          "retrieved_chunk_ids": [
+            "da34af2862c9c2d9:2",
+            "52480350fccf8031:1",
+            "dcc196094d9a0e03:3",
+            "657e68c18ad40cc9:2",
+            "152f7eabd9735b5c:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r42",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "dcc196094d9a0e03:2"
+          ],
+          "retrieved_chunk_ids": [
+            "dcc196094d9a0e03:2",
+            "52480350fccf8031:3",
+            "da34af2862c9c2d9:1",
+            "3c806778b02f59c2:3",
+            "152f7eabd9735b5c:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r43",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "52480350fccf8031:3"
+          ],
+          "retrieved_chunk_ids": [
+            "52480350fccf8031:3",
+            "152f7eabd9735b5c:1",
+            "dcc196094d9a0e03:2",
+            "da34af2862c9c2d9:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r44",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:2"
+          ],
+          "retrieved_chunk_ids": [
+            "657e68c18ad40cc9:2",
+            "fe0c6e28c883a70c:2",
+            "dcc196094d9a0e03:3",
+            "152f7eabd9735b5c:2",
+            "da34af2862c9c2d9:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r45",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "657e68c18ad40cc9:2"
+          ],
+          "retrieved_chunk_ids": [
+            "657e68c18ad40cc9:3",
+            "fe0c6e28c883a70c:2",
+            "a21531d338d520ab:4",
+            "52480350fccf8031:1",
+            "dcc196094d9a0e03:2"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r46",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "ac555fa879fb185a:3"
+          ],
+          "retrieved_chunk_ids": [
+            "ac555fa879fb185a:3",
+            "e08dff7985a8c328:1",
+            "2921328ecc41c662:1",
+            "788a04517bdb44fe:3",
+            "152f7eabd9735b5c:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r47",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "3c806778b02f59c2:3"
+          ],
+          "retrieved_chunk_ids": [
+            "3c806778b02f59c2:3",
+            "fe0c6e28c883a70c:3",
+            "e13d7dbdbab5edc6:2",
+            "9034cdf33e5bd0ee:3",
+            "53d73c042ae92c8c:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r48",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "e13d7dbdbab5edc6:3"
+          ],
+          "retrieved_chunk_ids": [
+            "e13d7dbdbab5edc6:3",
+            "53d73c042ae92c8c:4",
+            "52480350fccf8031:6",
+            "657e68c18ad40cc9:5",
+            "788a04517bdb44fe:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r49",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "dcc196094d9a0e03:1"
+          ],
+          "retrieved_chunk_ids": [
+            "dcc196094d9a0e03:1",
+            "52480350fccf8031:1",
+            "152f7eabd9735b5c:1",
+            "da34af2862c9c2d9:4",
+            "a21531d338d520ab:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r50",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "152f7eabd9735b5c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "152f7eabd9735b5c:1",
+            "dcc196094d9a0e03:1",
+            "52480350fccf8031:1",
+            "da34af2862c9c2d9:2",
+            "2921328ecc41c662:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r51",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "788a04517bdb44fe:2"
+          ],
+          "retrieved_chunk_ids": [
+            "788a04517bdb44fe:2",
+            "770369b81515c927:1",
+            "53d73c042ae92c8c:4",
+            "fe0c6e28c883a70c:4",
+            "e13d7dbdbab5edc6:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r52",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "770369b81515c927:2"
+          ],
+          "retrieved_chunk_ids": [
+            "770369b81515c927:2",
+            "788a04517bdb44fe:2",
+            "53d73c042ae92c8c:4",
+            "dcc196094d9a0e03:3",
+            "2921328ecc41c662:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r53",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "fe0c6e28c883a70c:2"
+          ],
+          "retrieved_chunk_ids": [
+            "657e68c18ad40cc9:3",
+            "fe0c6e28c883a70c:2",
+            "a21531d338d520ab:4",
+            "770369b81515c927:4",
+            "dcc196094d9a0e03:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r54",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "fe0c6e28c883a70c:1"
+          ],
+          "retrieved_chunk_ids": [
+            "fe0c6e28c883a70c:1",
+            "a21531d338d520ab:1",
+            "657e68c18ad40cc9:1",
+            "e08dff7985a8c328:2",
+            "788a04517bdb44fe:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r55",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "a21531d338d520ab:2"
+          ],
+          "retrieved_chunk_ids": [
+            "a21531d338d520ab:2",
+            "657e68c18ad40cc9:1",
+            "fe0c6e28c883a70c:1",
+            "2921328ecc41c662:2",
+            "53d73c042ae92c8c:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r56",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "ac555fa879fb185a:3"
+          ],
+          "retrieved_chunk_ids": [
+            "ac555fa879fb185a:3",
+            "2921328ecc41c662:4",
+            "e08dff7985a8c328:2",
+            "788a04517bdb44fe:3",
+            "a21531d338d520ab:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r57",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "e08dff7985a8c328:1"
+          ],
+          "retrieved_chunk_ids": [
+            "e08dff7985a8c328:2",
+            "ac555fa879fb185a:3",
+            "2921328ecc41c662:1",
+            "657e68c18ad40cc9:5",
+            "fe0c6e28c883a70c:2"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r58",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "2921328ecc41c662:1"
+          ],
+          "retrieved_chunk_ids": [
+            "2921328ecc41c662:2",
+            "dcc196094d9a0e03:2",
+            "e08dff7985a8c328:2",
+            "52480350fccf8031:4",
+            "152f7eabd9735b5c:1"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r59",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "3c806778b02f59c2:3"
+          ],
+          "retrieved_chunk_ids": [
+            "3c806778b02f59c2:3",
+            "dcc196094d9a0e03:3",
+            "788a04517bdb44fe:3",
+            "fe0c6e28c883a70c:2",
+            "52480350fccf8031:6"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r60",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "9034cdf33e5bd0ee:3"
+          ],
+          "retrieved_chunk_ids": [
+            "9034cdf33e5bd0ee:3",
+            "a21531d338d520ab:2",
+            "e13d7dbdbab5edc6:2",
+            "3c806778b02f59c2:1",
+            "788a04517bdb44fe:4"
+          ],
+          "recall_at_5": 1.0
+        }
+      ]
     }
   ]
 }

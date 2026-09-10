@@ -11,6 +11,10 @@ def run(user_id: str, user_msg: str) -> dict:
     return graph.invoke({
         "messages": [{"role": "user", "content": user_msg}],
         "user_id": user_id,
+        "actor_id": user_id,
+        "tenant_id": 2 if user_id == "lisi" else 1,
+        "execution_source": "web_agent",
+        "operation_id": f"script-e2e:{user_id}",
         "trace": [],
     })
 

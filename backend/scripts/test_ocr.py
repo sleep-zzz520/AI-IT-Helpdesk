@@ -37,6 +37,10 @@ if __name__ == "__main__":
     out = graph.invoke({
         "messages": [{"role": "user", "content": "VPN连不上，设备是Windows 11", "image": shot}],
         "user_id": "zhangsan",
+        "actor_id": "zhangsan",
+        "tenant_id": 1,
+        "execution_source": "web_agent",
+        "operation_id": "script-ocr:zhangsan",
         "trace": [],
     })
     print(f"[全流程] error_code: {out.get('error_code') or '(空)'}")

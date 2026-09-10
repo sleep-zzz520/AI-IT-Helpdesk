@@ -11,6 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua
 
 # 再拷代码（代码变更才触发后续层）
 COPY app/ ./app/
+# 监控服务与主应用同属该镜像：compose 的 monitor 服务以此模块启动。
+COPY mock_monitor/ ./mock_monitor/
 
 EXPOSE 8000
 

@@ -4,6 +4,8 @@ engine: 连接池（管理到 MySQL 的连接）
 SessionLocal: 会话工厂（每个请求用它开一个会话）
 Base: ORM 模型基类（models.py 里的表都继承它）
 """
+import os
+
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
@@ -128,14 +130,20 @@ _SEED_TENANTS = [
     {"code": "acme", "name": "Acme 集团"},
     {"code": "globex", "name": "Globex 科技"},
 ]
-_SEED_USERS = [
-    {"username": "admin", "password": "Admin@2025", "display_name": "系统管理员",
-     "role": "admin", "tenant": "acme"},
-    {"username": "zhangsan", "password": "Zhangsan@2025", "display_name": "张三",
-     "role": "user", "tenant": "acme"},
-    {"username": "lisi", "password": "Lisi@2025", "display_name": "李四",
-     "role": "user", "tenant": "globex"},
-]
+def _seed_users() -> list[dict[str, str]]:
+    """返回首次启动的演示账号。
+
+    本地开发沿用原有密码，方便现有教学和离线测试；生产部署通过环境变量
+    注入一次性强密码，避免公开站点使用仓库中可见的固定账号密码。
+    """
+    return [
+        {"username": "admin", "password": os.getenv("SEED_ADMIN_PASSWORD", "Admin@2025"),
+         "display_name": "系统管理员", "role": "admin", "tenant": "acme"},
+        {"username": "zhangsan", "password": os.getenv("SEED_ZHANGSAN_PASSWORD", "Zhangsan@2025"),
+         "display_name": "张三", "role": "user", "tenant": "acme"},
+        {"username": "lisi", "password": os.getenv("SEED_LISI_PASSWORD", "Lisi@2025"),
+         "display_name": "李四", "role": "user", "tenant": "globex"},
+    ]
 
 
 def _seed() -> None:
@@ -155,7 +163,7 @@ def _seed() -> None:
             db.add(row)
             db.flush()  # 先拿到自增 id
             tenant_map[t["code"]] = row.id
-        for u in _SEED_USERS:
+        for u in _seed_users():
             db.add(User(
                 username=u["username"],
                 password_hash=hash_password(u["password"]),

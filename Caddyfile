@@ -1,0 +1,10 @@
+{
+	# 证书由数据分析项目的 Certbot 续期；本项目只加载该证书，不重复申请。
+	auto_https off
+	default_sni 121.43.124.98
+}
+
+https://121.43.124.98:8443 {
+	tls /etc/letsencrypt/live/121.43.124.98/fullchain.pem /etc/letsencrypt/live/121.43.124.98/privkey.pem
+	reverse_proxy frontend:80
+}

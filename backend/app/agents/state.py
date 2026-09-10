@@ -30,6 +30,11 @@ class HelpdeskState(TypedDict):
     username: str      # 用户名/账号（密码重置场景）
     # 会话身份：来自系统上下文（登录态/工单系统），不是问出来的
     user_id: str
+    # 写操作上下文：由可信入口注入，不从模型输出或用户文本取得。
+    actor_id: str
+    tenant_id: int
+    execution_source: str
+    operation_id: str
     # 运行时模型链（前端"速度/准确"切换，API 层注入，不落库；None = 默认能力链）
     model_chain: list[str]
     # 异常兜底：safe 包装器捕获的节点异常（非空时路由优先转人工）

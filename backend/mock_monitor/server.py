@@ -17,12 +17,15 @@
 用 SQLite 持久化（演示用，真实系统是 MySQL/PG）。
 账号初始化与原 MOCK_USERS 一致，保证现有 e2e 测试不破坏。
 """
+import json
+import os
+import random
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -49,9 +52,6 @@ app.add_middleware(
 
 
 # ---------- 模拟网络抖动（可选，演示真实网络的不可靠性）----------
-import os
-import random
-
 LATENCY_JITTER_MS = int(os.getenv("MONITOR_JITTER_MS", "0"))
 FAILURE_RATE = float(os.getenv("MONITOR_FAILURE_RATE", "0"))
 
@@ -89,6 +89,13 @@ def init_db():
                 username        TEXT PRIMARY KEY,
                 cert_valid_until TEXT NOT NULL,
                 expired         INTEGER NOT NULL
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS renewal_operations (
+                idempotency_key TEXT PRIMARY KEY,
+                username TEXT NOT NULL,
+                response_json TEXT NOT NULL
             )
         """)
         # 仅首次灌数据（已存在则跳过，保留续期后的状态）
@@ -142,10 +149,24 @@ def get_cert(username: str):
 
 
 @app.post("/api/v1/cert/{username}/renew", response_model=RenewResponse)
-def renew_cert(username: str, req: RenewRequest):
+def renew_cert(
+    username: str,
+    req: RenewRequest,
+    idempotency_key: str | None = Header(default=None),
+):
     """续期证书。error_user 演示续期失败（真实系统也会有权限/服务不可达等失败）。"""
     _maybe_sleep_and_fail()
     with get_conn() as conn:
+        if idempotency_key:
+            previous = conn.execute(
+                "SELECT username, response_json FROM renewal_operations WHERE idempotency_key = ?",
+                (idempotency_key,),
+            ).fetchone()
+            if previous is not None:
+                if previous["username"] != username:
+                    raise HTTPException(status_code=409, detail="操作编号已用于其他账号")
+                return RenewResponse(**json.loads(previous["response_json"]))
+
         row = conn.execute(
             "SELECT * FROM cert_status WHERE username = ?", (username,)
         ).fetchone()
@@ -161,11 +182,17 @@ def renew_cert(username: str, req: RenewRequest):
             "UPDATE cert_status SET cert_valid_until = ?, expired = 0 WHERE username = ?",
             (new_date, username),
         )
-    return RenewResponse(
-        status="ok",
-        message=f"已为用户 {username} 续期证书 {req.days} 天",
-        new_valid_until=new_date,
-    )
+        response = {
+            "status": "ok",
+            "message": f"已为用户 {username} 续期证书 {req.days} 天",
+            "new_valid_until": new_date,
+        }
+        if idempotency_key:
+            conn.execute(
+                "INSERT INTO renewal_operations (idempotency_key, username, response_json) VALUES (?, ?, ?)",
+                (idempotency_key, username, json.dumps(response, ensure_ascii=False)),
+            )
+    return RenewResponse(**response)
 
 
 @app.get("/health")
@@ -178,6 +205,7 @@ def reset_data():
     """重置为初始数据（测试用，避免续期后状态污染下一次测试）。"""
     with get_conn() as conn:
         conn.execute("DELETE FROM cert_status")
+        conn.execute("DELETE FROM renewal_operations")
         for u, info in INITIAL_USERS.items():
             conn.execute(
                 "INSERT INTO cert_status VALUES (?, ?, ?)",

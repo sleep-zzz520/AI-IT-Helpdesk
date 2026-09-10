@@ -128,3 +128,81 @@ def db_session():
     yield db
     db.close()
     engine.dispose()
+
+
+@pytest.fixture()
+def api_users(db_session):
+    """创建 API 测试需要的两个租户和三个用户。
+
+    这里不调用生产 init_db/_seed：init_db 包含 MySQL 专用迁移，
+    而 API 测试只需要明确、可读的最小身份数据。
+    """
+    from app.models import Tenant, User
+    from app.security import hash_password
+
+    acme = Tenant(code="acme-test", name="Acme 测试租户")
+    globex = Tenant(code="globex-test", name="Globex 测试租户")
+    db_session.add_all([acme, globex])
+    db_session.flush()
+
+    users = {
+        "admin": User(
+            username="admin",
+            password_hash=hash_password("Admin@Test123"),
+            display_name="测试管理员",
+            role="admin",
+            tenant_id=acme.id,
+            active=1,
+        ),
+        "zhangsan": User(
+            username="zhangsan",
+            password_hash=hash_password("Zhangsan@Test123"),
+            display_name="测试用户张三",
+            role="user",
+            tenant_id=acme.id,
+            active=1,
+        ),
+        "lisi": User(
+            username="lisi",
+            password_hash=hash_password("Lisi@Test123"),
+            display_name="测试用户李四",
+            role="user",
+            tenant_id=globex.id,
+            active=1,
+        ),
+    }
+    db_session.add_all(users.values())
+    db_session.commit()
+    return users
+
+
+@pytest.fixture()
+def api_client(db_session):
+    """离线 FastAPI TestClient：所有请求共用当前内存 SQLite Session。
+
+    不使用 ``with TestClient(...)``，避免触发真实 lifespan 中的 MySQL
+    迁移；HTTP 路由本身仍按真实应用装配运行。
+    """
+    from fastapi.testclient import TestClient
+
+    from app.api import audit, auth, conversations
+    from app.main import app
+    from app.security import get_db as security_get_db
+
+    def override_get_db():
+        yield db_session
+
+    # feedback/kb 复用 conversations.get_db 对象；这里覆盖原始依赖对象
+    # 即可同时覆盖它们。
+    for dependency in (
+        auth.get_db,
+        conversations.get_db,
+        audit.get_db,
+        security_get_db,
+    ):
+        app.dependency_overrides[dependency] = override_get_db
+
+    client = TestClient(app)
+    yield client
+    client.close()
+    app.dependency_overrides.clear()

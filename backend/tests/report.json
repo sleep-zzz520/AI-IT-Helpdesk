@@ -1,10 +1,40 @@
 {
   "metric": "intent_request_accuracy",
-  "total": 16,
-  "correct": 16,
-  "accuracy": 1.0,
-  "glm_calls": 17,
-  "wrong": [],
+  "total": 40,
+  "correct": 38,
+  "accuracy": 0.95,
+  "intent_accuracy": 0.975,
+  "request_type_accuracy": 0.975,
+  "multi_accuracy": 1.0,
+  "glm_calls": 40,
+  "wrong": [
+    {
+      "message": "邮箱收不到邮件，IMAP怎么配",
+      "expected": [
+        "email",
+        "consult"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "email",
+        "troubleshoot"
+      ],
+      "predicted_multi": null
+    },
+    {
+      "message": "怎么安装打印机驱动",
+      "expected": [
+        "other",
+        "consult"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "software",
+        "consult"
+      ],
+      "predicted_multi": null
+    }
+  ],
   "results": [
     {
       "message": "VPN连不上，报错Error 800",
@@ -12,10 +42,12 @@
         "vpn",
         "troubleshoot"
       ],
+      "expected_multi": null,
       "predicted": [
         "vpn",
         "troubleshoot"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -24,10 +56,12 @@
         "vpn",
         "troubleshoot"
       ],
+      "expected_multi": null,
       "predicted": [
         "vpn",
         "troubleshoot"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -36,10 +70,12 @@
         "vpn",
         "troubleshoot"
       ],
+      "expected_multi": null,
       "predicted": [
         "vpn",
         "troubleshoot"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -48,10 +84,12 @@
         "vpn",
         "troubleshoot"
       ],
+      "expected_multi": null,
       "predicted": [
         "vpn",
         "troubleshoot"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -60,10 +98,12 @@
         "vpn",
         "troubleshoot"
       ],
+      "expected_multi": null,
       "predicted": [
         "vpn",
         "troubleshoot"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -72,10 +112,12 @@
         "vpn",
         "consult"
       ],
+      "expected_multi": null,
       "predicted": [
         "vpn",
         "consult"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -84,10 +126,12 @@
         "vpn",
         "consult"
       ],
+      "expected_multi": null,
       "predicted": [
         "vpn",
         "consult"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -96,10 +140,12 @@
         "password",
         "consult"
       ],
+      "expected_multi": null,
       "predicted": [
         "password",
         "consult"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -108,10 +154,12 @@
         "password",
         "troubleshoot"
       ],
+      "expected_multi": null,
       "predicted": [
         "password",
         "troubleshoot"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -120,11 +168,13 @@
         "email",
         "consult"
       ],
+      "expected_multi": null,
       "predicted": [
         "email",
-        "consult"
+        "troubleshoot"
       ],
-      "ok": true
+      "predicted_multi": null,
+      "ok": false
     },
     {
       "message": "邮件发不出去，报错553",
@@ -132,10 +182,12 @@
         "email",
         "troubleshoot"
       ],
+      "expected_multi": null,
       "predicted": [
         "email",
         "troubleshoot"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -144,10 +196,12 @@
         "software",
         "consult"
       ],
+      "expected_multi": null,
       "predicted": [
         "software",
         "consult"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -156,10 +210,12 @@
         "software",
         "troubleshoot"
       ],
+      "expected_multi": null,
       "predicted": [
         "software",
         "troubleshoot"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -168,10 +224,12 @@
         "other",
         "troubleshoot"
       ],
+      "expected_multi": null,
       "predicted": [
         "other",
         "troubleshoot"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -180,10 +238,12 @@
         "other",
         "troubleshoot"
       ],
+      "expected_multi": null,
       "predicted": [
         "other",
         "troubleshoot"
       ],
+      "predicted_multi": null,
       "ok": true
     },
     {
@@ -192,10 +252,366 @@
         "other",
         "other"
       ],
+      "expected_multi": null,
       "predicted": [
         "other",
         "other"
       ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "bpn连不上，怎么解决",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "vpvn拨号失败代码720",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "vpn连不上报错8O0",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "vpn上不去了，怎么搞",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "我的vpn是不是挂了",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "vpn一直掉线，烦死了",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "公司vpn连不上，一整天了",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "咋连vpn啊",
+      "expected": [
+        "vpn",
+        "consult"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "consult"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "vpn怎么弄",
+      "expected": [
+        "vpn",
+        "consult"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "consult"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "VPN连不上😭😭",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "VPN連不上",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "vpn连接失败 error 800",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "VPN连接不稳定，总断",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "vpn能连上但是很慢",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "VPN证书快过期了，能续期吗",
+      "expected": [
+        "vpn",
+        "consult"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "consult"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "密码重置后vpn连不上",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": [
+        "password",
+        "vpn"
+      ],
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": [
+        "password",
+        "vpn"
+      ],
+      "ok": true
+    },
+    {
+      "message": "WiFi连不上",
+      "expected": [
+        "other",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "other",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "怎么安装打印机驱动",
+      "expected": [
+        "other",
+        "consult"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "software",
+        "consult"
+      ],
+      "predicted_multi": null,
+      "ok": false
+    },
+    {
+      "message": "电脑太卡了怎么办",
+      "expected": [
+        "other",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "other",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "帮我查一下明天的天气",
+      "expected": [
+        "other",
+        "consult"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "other",
+        "consult"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "在吗？",
+      "expected": [
+        "other",
+        "other"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "other",
+        "other"
+      ],
+      "predicted_multi": null,
+      "ok": true
+    },
+    {
+      "message": "vpn连不上，密码也忘了",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": [
+        "password",
+        "vpn"
+      ],
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": [
+        "password",
+        "vpn"
+      ],
+      "ok": true
+    },
+    {
+      "message": "邮箱收不到，软件也装不上",
+      "expected": [
+        "email",
+        "troubleshoot"
+      ],
+      "expected_multi": [
+        "email",
+        "software"
+      ],
+      "predicted": [
+        "email",
+        "troubleshoot"
+      ],
+      "predicted_multi": [
+        "email",
+        "software"
+      ],
+      "ok": true
+    },
+    {
+      "message": "电脑蓝屏，vpn还连不上",
+      "expected": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "expected_multi": null,
+      "predicted": [
+        "vpn",
+        "troubleshoot"
+      ],
+      "predicted_multi": null,
       "ok": true
     }
   ]

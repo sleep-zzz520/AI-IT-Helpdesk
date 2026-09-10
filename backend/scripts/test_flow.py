@@ -12,7 +12,15 @@ def run_turn(messages: list[dict], previous: dict | None = None) -> dict:
     previous: 上一轮的输出 state，作为【会话记忆】带进来
     （真实系统里从数据库读回，这里先用变量演示）。
     """
-    initial = {"messages": messages, "trace": []}
+    initial = {
+        "messages": messages,
+        "user_id": "zhangsan",
+        "actor_id": "zhangsan",
+        "tenant_id": 1,
+        "execution_source": "web_agent",
+        "operation_id": f"script-flow:{len(messages)}",
+        "trace": [],
+    }
     if previous:
         # 意图是会话级状态：已有就不重判
         initial["intent"] = previous.get("intent")

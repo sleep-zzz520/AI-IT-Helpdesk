@@ -69,7 +69,7 @@ jobs:
           ZHIPU_API_KEY="ci-placeholder" python -m pytest -v
 
   frontend:
-    name: Frontend (build + lint)
+    name: Frontend (test + build + lint)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -85,6 +85,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Unit tests
+        run: npm test
 
       - name: Lint
         run: npm run lint

@@ -196,6 +196,17 @@ def run_sync(kb_root: Path | None = None, store: VectorStore | None = None,
 
         db.commit()
 
+    # BM25 是进程内缓存，不能只靠 chunk 数量判断失效：文档修改/软删除
+    # 可能保持 chunk 数不变，但正文或 status metadata 已经变化。同步是所有
+    # 知识库写入的统一边界，变更完成后主动淘汰对应 collection 的缓存，
+    # 下一次检索再懒加载最新内容。
+    if report.added or report.updated or report.deleted:
+        collection_name = getattr(store, "collection_name", None)
+        if collection_name:
+            from app.rag import retriever
+
+            retriever._BM25_CACHE.pop(collection_name, None)
+
     return report
 
 

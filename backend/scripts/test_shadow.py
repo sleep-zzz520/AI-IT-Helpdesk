@@ -1,7 +1,7 @@
 """影子测试：新旧索引 Recall 对比（蓝绿切换的发布闸门）。
 
 思路（工程上线标准做法——shadow deployment）：
-- 同一批 query（复用 tests/rag_eval.py 的 10 条运维用例，带期望命中文档）
+- 同一批 query（复用 tests/rag_eval.py 的 60 条运维用例，带期望命中文档）
 - 分别检索【在岗库（active）】与【候选库（candidate）】
 - 对比 Recall@1/3/5 + MRR + top-5 文档重叠度
 - 结论：候选库指标「不劣于」在岗库 → 才建议切换（零中断发布）
@@ -20,6 +20,7 @@ from app.config import settings
 from app.rag.retriever import retrieve
 from app.rag.store import create_store
 from tests.rag_eval import CASES
+from tests.rag_eval_dataset import resolve_gold_chunk_ids
 
 
 def _hit_sources(hits) -> list[str]:
@@ -32,24 +33,25 @@ def _hit_sources(hits) -> list[str]:
     return out
 
 
-def _evaluate(store, top_k: int) -> tuple[dict, list[dict]]:
+def _evaluate(store, top_k: int, gold_ids_by_case: dict[str, frozenset[str]]) -> tuple[dict, list[dict]]:
     """跑全部用例，返回 (汇总指标, 逐条明细)。"""
     hits_at = {k: 0 for k in (1, 3, 5)}
     mrr_sum = 0.0
     rows = []
     for case in CASES:
-        hits = retrieve(case["query"], store=store, top_k=top_k)[:5]
-        expected = case["expected"]
+        hits = retrieve(case.query, store=store, top_k=top_k)[:5]
+        gold_ids = gold_ids_by_case[case.case_id]
         hit_idx = next((i for i, h in enumerate(hits)
-                        if (h.metadata or {}).get("source_url") == expected), None)
+                        if h.id in gold_ids), None)
         if hit_idx is not None:
             hits_at[1] += hit_idx == 0
             hits_at[3] += hit_idx < 3
             hits_at[5] += hit_idx < 5
             mrr_sum += 1.0 / (hit_idx + 1)
         rows.append({
-            "query": case["query"][:30],
-            "expected": expected.split("/")[-1],
+            "query": case.query[:30],
+            "expected": "/".join(f"{chunk.source_url.split('/')[-1]}#{chunk.section}"
+                                 for chunk in case.gold_chunks),
             "hit_pos": hit_idx + 1 if hit_idx is not None else None,
             "sources": _hit_sources(hits)[:3],
         })
@@ -76,9 +78,10 @@ def main() -> None:
         print("⚠️ 候选库为空：请先同步（POST /api/kb/sync 或 python -m app.rag.sync）")
         return
 
+    gold_ids_by_case = resolve_gold_chunk_ids(CASES, Path(settings.KB_ROOT))
     t0 = time.perf_counter()
-    active_metrics, active_rows = _evaluate(active, args.top_k)
-    cand_metrics, cand_rows = _evaluate(candidate, args.top_k)
+    active_metrics, active_rows = _evaluate(active, args.top_k, gold_ids_by_case)
+    cand_metrics, cand_rows = _evaluate(candidate, args.top_k, gold_ids_by_case)
     elapsed = round((time.perf_counter() - t0) * 1000)
 
     # ---- 逐条对比表 ----

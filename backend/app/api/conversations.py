@@ -9,6 +9,7 @@
 import json
 import logging
 import time
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -133,6 +134,14 @@ def send_message(
     audit(db, user, "send_message", {"conv_id": conv_id}, request=request)
     # 1. 从数据库恢复会话记忆
     state = session_service.load_state(db, conv_id)
+    # 写操作身份上下文只能由已认证的 API 入口填写，绝不从前端 body 或模型抽取。
+    # operation_id 会一路传到下游监控服务；当前请求内的重放会复用它。
+    state.update({
+        "actor_id": user.username,
+        "tenant_id": user.tenant_id,
+        "execution_source": "web_agent",
+        "operation_id": f"web-agent:{uuid4()}",
+    })
     # 2. 把新消息追加进历史（可选带截图 base64，OCR 用）
     msg = {"role": "user", "content": body.content}
     if body.image:

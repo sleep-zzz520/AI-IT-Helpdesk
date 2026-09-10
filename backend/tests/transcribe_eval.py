@@ -3,7 +3,9 @@
 为什么做转译 Eval（本项目"用数据说话"方法论）：
 - 转译降维是"有损"的：模型可能看错错误码、漏关键文字、无错误码时幻觉编一个
 - 不量化就不知道损失多大——错误码抽取准确率直接决定"截图→知识命中"的可靠性
-- 合成截图 10 张：5 种错误码 + 2 个无错误码负例（防幻觉）+ 4 种场景
+- 合成截图 15 张：5 种错误码 + 2 个无错误码负例（防幻觉）+ 4 种场景
+- 2026-08-12 加 5 张真实感退化图（模糊/低对比度/噪声/低分辨率）：
+  干净合成图 100% 不代表真实截图，退化用例的失败率才是真实数据
 
 指标：
 - error_code_acc：错误码抽取准确率（含负例：无错误码截图必须输出空）
@@ -19,10 +21,10 @@ import io
 import json
 import tempfile
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
 
 from app.rag.transcribe import transcribe_image
 
@@ -39,6 +41,10 @@ class ShotCase:
     expected_code: str   # 期望错误码（"" = 无错误码负例）
     expected_scene: str  # 期望场景分类（transcribe prompt 的值域）
     expected_keys: list[str]  # 期望被 key_texts 覆盖的关键文字
+    effects: list[str] = field(default_factory=list)
+    # 真实感特效（2026-08-12 加：干净合成图 100% 不代表真实截图）
+    # "blur:2" 高斯模糊 / "low_contrast" 降对比度 / "noise:0.06" 椒盐噪声
+    # "small" 缩小再放大模拟低分辨率——真实截图模糊/反光/压缩是常态
 
 
 # ===== 合成截图用例（10 条） =====
@@ -75,6 +81,26 @@ CASES = [
              ["Welcome to VPN Client", "Please log in"],
              "", "vpn_client_error",  # 这是 VPN 客户端登录窗口，首次跑模型判 vpn_client_error（标注修正）
              []),  # 负例：无错误码，模型必须不幻觉
+
+    # ===== 真实感特效用例（5 条，2026-08-12 加）=====
+    # 目标：干净合成图 100% 是"图太干净"的结果；真实截图有模糊/低对比度/
+    # 噪声/低分辨率。这些用例预期部分失败——失败率本身就是真实数据
+    ShotCase("vpn-error-800-blur.png", "VPN Client v4.2.1",
+             ["Error 800 - Connection failed", "Certificate is expired"],
+             "800", "vpn_client_error", ["Error 800"], ["blur:2"]),
+    ShotCase("vpn-error-720-lowcontrast.png", "VPN Client v4.2.1",
+             ["Error 720 - Device not registered", "请先注册设备"],
+             "720", "vpn_client_error", ["Error 720"], ["low_contrast"]),
+    ShotCase("email-error-553-noise.png", "Outlook",
+             ["SMTP Error 553 - Authentication failed", "Check your password"],
+             "553", "email_error", ["553"], ["noise:0.06"]),
+    ShotCase("vpn-error-1068-small.png", "VPN Client v4.2.1",
+             ["Error 1068 - Service not started", "Start the VPN service"],
+             "1068", "vpn_client_error", ["Error 1068"], ["small"]),
+    # 模糊负例：无错误码截图被模糊后仍不得幻觉出错误码
+    ShotCase("blank-client-blur.png", "VPN Client",
+             ["Welcome to VPN Client", "Please log in"],
+             "", "vpn_client_error", [], ["blur:1.5"]),
 ]
 
 
@@ -112,7 +138,27 @@ def make_shot(case: ShotCase, path: Path, style: str) -> None:
         for line in case.lines:
             d.text((90, y), line, fill=(255, 90, 90) if "Error" in line else (225, 230, 240))
             y += 30
+    img = apply_effects(img, case.effects)
     img.save(path, format="PNG")
+
+
+def apply_effects(img: Image.Image, effects: list[str]) -> Image.Image:
+    """按特效列表对合成截图做真实感退化（模糊/低对比度/噪声/低分辨率）。"""
+    for fx in effects:
+        if fx.startswith("blur:"):
+            radius = float(fx.split(":")[1])
+            img = img.filter(ImageFilter.GaussianBlur(radius))
+        elif fx == "low_contrast":
+            img = ImageEnhance.Contrast(img).enhance(0.35)
+            img = ImageEnhance.Brightness(img).enhance(1.25)
+        elif fx.startswith("noise:"):
+            sigma = float(fx.split(":")[1])
+            noise = Image.effect_noise(img.size, sigma * 255)
+            img = Image.blend(img.convert("RGB"), noise.convert("RGB"), 0.5)
+        elif fx == "small":
+            w, h = img.size
+            img = img.resize((w // 2, h // 2)).resize((w, h), Image.LANCZOS)
+    return img
 
 
 def _coverage(expected_keys: list[str], key_texts: list[str]) -> float:
@@ -153,6 +199,7 @@ def main() -> None:
 
         results.append({
             "file": case.name,
+            "effects": case.effects,
             "expected_error_code": case.expected_code,
             "got_error_code": got_code,
             "error_code_ok": code_ok,
@@ -163,7 +210,9 @@ def main() -> None:
             "summary_nonempty": bool(trans.summary),
         })
         flag = "✅" if code_ok else "❌"
-        print(f"[{i + 1}/10] {case.name}: 错误码 {got_code!r}(期望 {case.expected_code!r}) {flag} "
+        fx = f" [{'/'.join(case.effects)}]" if case.effects else ""
+        print(f"[{i + 1}/{len(CASES)}] {case.name}{fx}: "
+              f"错误码 {got_code!r}(期望 {case.expected_code!r}) {flag} "
               f"| 场景 {trans.scene}(期望 {case.expected_scene}) "
               f"{'✅' if scene_ok else '❌'} | 关键文字覆盖 {cov:.0%}")
         time.sleep(SLEEP_SECONDS)

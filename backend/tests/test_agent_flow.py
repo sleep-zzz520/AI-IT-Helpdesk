@@ -10,10 +10,22 @@
 from app.agents.graph import graph
 
 
-def _invoke(user_msg: str, user_id: str = "zhangsan") -> dict:
+def _invoke(
+    user_msg: str,
+    user_id: str = "zhangsan",
+    *,
+    actor_id: str | None = None,
+    tenant_id: int = 1,
+    operation_id: str = "agent-flow-test-op",
+) -> dict:
     return graph.invoke({
         "messages": [{"role": "user", "content": user_msg}],
         "user_id": user_id,
+        # 这四项模拟真实 API 从认证态注入的内容，不来自用户文本或 LLM。
+        "actor_id": actor_id or user_id,
+        "tenant_id": tenant_id,
+        "execution_source": "web_agent",
+        "operation_id": operation_id,
         "trace": [],
     })
 
@@ -22,7 +34,7 @@ def _nodes(out: dict) -> list[str]:
     return [t["node"] for t in out.get("trace", [])]
 
 
-def test_vpn_full_auto_close(mock_llm):
+def test_vpn_full_auto_close(mock_llm, db_session, api_users):
     """低风险（800）：全自动闭环，走到 close，含 execute。"""
     out = _invoke("VPN连不上，报错Error 800，设备是Windows 11")
     nodes = _nodes(out)
@@ -73,7 +85,7 @@ def test_cert_valid_no_execute(mock_llm):
     assert "finalize" in nodes, f"应走正常收尾: {nodes}"
 
 
-def test_reused_intent_saves_llm_call(mock_llm):
+def test_reused_intent_saves_llm_call(mock_llm, db_session, api_users):
     """多轮补全：第二轮意图复用（会话级），不重复判意图。"""
     out1 = _invoke("VPN连不上，报错800")
     assert "intent" in _nodes(out1)
@@ -84,6 +96,10 @@ def test_reused_intent_saves_llm_call(mock_llm):
         "intent": out1.get("intent"),
         "request_type": out1.get("request_type"),
         "user_id": "zhangsan",
+        "actor_id": "zhangsan",
+        "tenant_id": 1,
+        "execution_source": "web_agent",
+        "operation_id": "agent-flow-test-op",
         "trace": out1.get("trace", []),
     })
     intent_trace = [t for t in out2.get("trace", []) if t["node"] == "intent"]

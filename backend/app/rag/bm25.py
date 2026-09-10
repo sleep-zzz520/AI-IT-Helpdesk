@@ -9,8 +9,9 @@
 
 索引管理（双引擎一致性）：
 - BM25 索引是**内存结构**（从 Chroma 全量加载文本构建倒排）
-- 每次检索前对比 doc_count：库变了（sync 增删改）就重建——
-  从根上避免"向量库更新了、BM25 索引没跟上"的时序不一致
+- 正常检索时对比 doc_count：新增/删除导致数量变化就自动重建；
+  文档修改/软删除即使数量不变，也由 sync 写入边界主动淘汰缓存
+  （不能只依赖数量，否则 BM25 会继续返回旧正文/旧 metadata）
 - 10 万 chunk 构建秒级（分词 + 倒排），重建成本可忽略
 """
 import jieba
@@ -33,7 +34,7 @@ def tokenize(text: str) -> list[str]:
 
 
 class Bm25Index:
-    """内存 BM25 索引：从向量库全量构建，doc_count 变化自动失效重建。"""
+    """内存 BM25 索引：数量变化自动失效，sync 变更时显式淘汰。"""
 
     def __init__(self, store: VectorStore):
         self._store = store

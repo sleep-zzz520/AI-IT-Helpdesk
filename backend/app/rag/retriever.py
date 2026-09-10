@@ -65,9 +65,14 @@ def _build_where(scenario: str | None) -> dict:
 
     valid_to 用 $gte 今天（YYYYMMDD int）：过期的知识不检索（软删除/过期机制）。
     缺失 valid_to 的旧 chunk 不匹配 $gte（被过滤）——安全方向：宁缺毋滥。
+
+    父子块策略中，父块只负责为已命中的子块补齐生成上下文，不能参与召回
+    排名。否则一篇全文父块会与其子块竞争，RRF 按文档去重后还可能保留
+    不包含答案的父块或错误子块，掩盖细粒度命中问题。
     """
     today = int(date.today().strftime("%Y%m%d"))
     conditions: list[dict] = [{"status": "active"}]
+    conditions.append({"chunk_type": {"$ne": "parent"}})
     if scenario:
         conditions.append({"scenario": scenario})
     conditions.append({"valid_to": {"$gte": today}})
@@ -80,6 +85,10 @@ def _passes_filter(meta: dict, scenario: str | None) -> bool:
     BM25 索引是内存结构没有 where，召回后按 metadata 过滤。
     """
     if meta.get("status") not in (None, "active"):
+        return False
+    # 与向量路一致：父块仅用于 _attach_parents，不是可排序的召回证据。
+    # 兼容历史上没有 chunk_type 的旧数据；新同步数据均明确标为 child/parent。
+    if meta.get("chunk_type") == "parent":
         return False
     if scenario and meta.get("scenario") != scenario:
         return False
@@ -104,6 +113,13 @@ def _rrf_fuse(vector_hits: list[Hit], bm25_hits: list[Hit],
     融合时给保留的 hit 实例打检索路标（routes）——向量/BM25 双路命中
     合并为 both。路标不参与分数计算，只作证据强度的规则层信号
     （judge 缺席时 BM25 词法命中 = 确定性相关，见 rag_query）。
+
+    文档级去重（2026-08-12 加，Eval 真实化发现）：
+    同一篇文档的多个 chunk 在融合时分数叠加霸榜，挤占其他文档的
+    证据位置（实测：BM25 对泛词命中同一文档 2 个 chunk 排 #1#2，
+    把答案文档挤出 top-5）。候选已在双路召回阶段限定为子块，命中的
+    子块会由 _attach_parents 补上父块全文。故按 source_url 去重，每篇
+    文档只保留得分最高的一个子块。
     """
     fused: dict[str, dict] = {}
     for rank, hit in enumerate(vector_hits, start=1):
@@ -115,7 +131,18 @@ def _rrf_fuse(vector_hits: list[Hit], bm25_hits: list[Hit],
         e["hit"].routes.add("bm25")
         e["score"] += 1.0 / (k + rank)
     ranked = sorted(fused.values(), key=lambda e: e["score"], reverse=True)
-    return [e["hit"] for e in ranked[:top_k]]
+    deduped: list[Hit] = []
+    seen_docs: set[str] = set()
+    for e in ranked:
+        url = e["hit"].metadata.get("source_url")
+        key = url or e["hit"].id  # 无 source_url 的 chunk 退化为 id 级去重
+        if key in seen_docs:
+            continue
+        seen_docs.add(key)
+        deduped.append(e["hit"])
+        if len(deduped) >= top_k:
+            break
+    return deduped
 
 
 def _attach_parents(hits: list[Hit], store: VectorStore) -> None:

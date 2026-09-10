@@ -1,4 +1,4 @@
-"""ORM 数据模型：三张表（会话 / 消息 / Trace）。
+"""ORM 数据模型：身份、会话、审计、工单履历和执行台账。
 
 设计要点：
 - conversations 存会话级字段（intent 是会话级判断，必须落库）
@@ -73,6 +73,29 @@ class AuditLog(Base):
     detail: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class ExecutionOperation(Base):
+    """有副作用操作的幂等台账。
+
+    ``operation_id`` 全局唯一：同一个调用重试只能读取第一次的结果，不能再次
+    调用外部系统。它与 AuditLog 的关系是：台账回答“能否重放/当前状态”，审计
+    回答“谁做过什么”。
+    """
+    __tablename__ = "execution_operations"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    operation_id: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    action: Mapped[str] = mapped_column(String(64))
+    actor_id: Mapped[str] = mapped_column(String(64))
+    target_user_id: Mapped[str] = mapped_column(String(64))
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"))
+    source: Mapped[str] = mapped_column(String(32))
+    status: Mapped[str] = mapped_column(String(16))  # pending / succeeded / failed
+    result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now())
 
 
 class TicketStatusLog(Base):

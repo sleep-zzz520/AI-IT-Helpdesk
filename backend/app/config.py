@@ -121,6 +121,12 @@ class Settings:
     # 失败重试次数（5xx/超时才重试，4xx 不重试）
     MONITOR_MAX_RETRIES: int = int(os.getenv("MONITOR_MAX_RETRIES", "2"))
 
+    # ===== MCP 本地演示（Phase MCP-1）=====
+    # stdio Server 没有 HTTP 登录态；第一阶段只用一个显式的本地演示主体，
+    # 绝不把 user_id 开放为模型可任意填写的 Tool 参数。
+    # 远程 Streamable HTTP 阶段会改为从 OAuth AccessToken 读取调用者身份。
+    MCP_LOCAL_DEMO_USER_ID: str = os.getenv("MCP_LOCAL_DEMO_USER_ID", "zhangsan").strip()
+
     # ===== 音频/视频（Phase 4，GLM-ASR 付费接口）=====
     # real=真实调用（~0.02 元/分钟）；mock=占位转写（离线测试不烧钱）
     ASR_MODE: str = os.getenv("ASR_MODE", "real")

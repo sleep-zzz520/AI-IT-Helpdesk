@@ -65,11 +65,13 @@ def _mock_renew_cert(username: str) -> dict:
 
 
 # ===== real 实现（HTTP 调用，核心新增）=====
-def _http_headers() -> dict:
+def _http_headers(operation_id: str | None = None) -> dict:
     """构造请求头。真实系统会用 Bearer token / API key 认证。"""
     h = {"Content-Type": "application/json"}
     if MONITOR_API_TOKEN:
         h["Authorization"] = f"Bearer {MONITOR_API_TOKEN}"
+    if operation_id:
+        h["Idempotency-Key"] = operation_id
     return h
 
 
@@ -114,13 +116,13 @@ def _http_get_cert(username: str) -> dict:
     return {"status": "error", "reason": str(last_exc) if last_exc else "监控查询失败"}
 
 
-def _http_renew_cert(username: str) -> dict:
+def _http_renew_cert(username: str, operation_id: str | None = None) -> dict:
     """真实 HTTP 续期证书。"""
     url = f"{MONITOR_BASE_URL}/api/v1/cert/{username}/renew"
     last_exc = None
     for _attempt in range(1, MONITOR_MAX_RETRIES + 2):
         try:
-            resp = httpx.post(url, headers=_http_headers(),
+            resp = httpx.post(url, headers=_http_headers(operation_id),
                               json={"days": 180}, timeout=MONITOR_TIMEOUT)
             if resp.status_code == 404:
                 return {"status": "error", "reason": f"账号 {username} 不存在"}
@@ -151,15 +153,15 @@ def check_cert_status(username: str) -> dict:
     return _mock_check_cert(username)
 
 
-def renew_certificate(username: str) -> dict:
+def renew_certificate(username: str, operation_id: str | None = None) -> dict:
     """续期证书。供执行类工具注册表调用。
 
     原来续期逻辑写在 actions.py 里直接改 MOCK_USERS 字典，
     现在收敛到这里（real 模式走 HTTP POST）。
-    actions.py 通过 TOOL_REGISTRY 调本函数，保持注册表模式不变。
+    operation_id 会作为 Idempotency-Key 继续传给支持该契约的下游系统。
     """
     if MONITOR_MODE == "real":
-        return _http_renew_cert(username)
+        return _http_renew_cert(username, operation_id)
     return _mock_renew_cert(username)
 
 

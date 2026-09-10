@@ -13,6 +13,10 @@ def run(user_id: str) -> dict:
         "device": "Windows 11",
         "error_code": "800",
         "user_id": user_id,
+        "actor_id": user_id,
+        "tenant_id": 2 if user_id == "lisi" else 1,
+        "execution_source": "web_agent",
+        "operation_id": f"script-verify:{user_id}",
         "trace": [],
     })
 

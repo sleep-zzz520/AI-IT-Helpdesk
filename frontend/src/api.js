@@ -1,7 +1,9 @@
 // 后端 API 封装（fetch）。
 // BASE 用相对路径（同源）——本地开发由 vite proxy 转发，Docker 由 nginx 反代，
 // 代码零差异（生产标准做法：不用写死地址、无 CORS 问题）。
-const BASE = import.meta.env.VITE_API_BASE || '';
+// Node 内置测试运行器没有 Vite 注入的 import.meta.env；可选链让 API 封装
+// 在测试环境和 Vite 构建环境都保持同一行为。
+const BASE = import.meta.env?.VITE_API_BASE || '';
 const TOKEN_KEY = 'helpdesk_token';
 
 // ===== token 管理（登录态持久化：刷新页面不丢）=====
