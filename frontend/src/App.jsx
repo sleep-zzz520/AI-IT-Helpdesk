@@ -156,44 +156,70 @@ export default function App() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* 顶栏：标题 + 用户信息 + 视图切换 + 退出 */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b px-4 lg:px-6" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-        <div className="flex items-center gap-3">
-          <span className="h-2 w-2 rounded-full" style={{ background: 'var(--accent)' }} />
-          <h1 className="text-sm font-semibold tracking-tight">智能IT运维服务台</h1>
-          <span
-            className="mono rounded px-1.5 py-0.5 text-[10px] font-semibold"
-            style={{ background: 'var(--accent)', color: '#0a0e14' }}
-          >
-            SSE v2
-          </span>
-          {conv && (
-            <span className="mono hidden text-xs text-[var(--text-secondary)] sm:inline">
-              #{conv.id} · {conv.user_id}
-            </span>
-          )}
+      <header className="app-topbar">
+        <div className="app-topbar-brand">
+          <span className="app-brand-mark" aria-hidden="true" />
+          <h1 className="truncate text-sm font-semibold tracking-tight">智能IT运维服务台</h1>
+          <span className="app-runtime-badge mono">SSE v2</span>
         </div>
-        <div className="flex items-center gap-2">
-          {/* 默认 GLM 才显示速度/准确选择；自定义模型本身就是当前调用目标。 */}
+
+        <nav className="app-primary-nav" aria-label="主导航">
+          <button
+            onClick={() => setView('chat')}
+            className={`app-nav-item press ${view === 'chat' ? 'is-active' : ''}`}
+            aria-current={view === 'chat' ? 'page' : undefined}
+            title="返回对话工作台"
+          >
+            工作台
+          </button>
+          <button
+            onClick={() => setView('models')}
+            className={`app-nav-item press ${view === 'models' ? 'is-active' : ''}`}
+            aria-current={view === 'models' ? 'page' : undefined}
+            title="添加、测试或切换自己的 OpenAI 兼容模型"
+          >
+            <Cpu size={14} />
+            模型
+          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setView('kb')}
+              className={`app-nav-item press ${view === 'kb' ? 'is-active' : ''}`}
+              aria-current={view === 'kb' ? 'page' : undefined}
+              title="知识库台账、蓝绿切换、检索调试和反馈分析"
+            >
+              <Database size={13} />
+              知识库
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              onClick={() => setView('audit')}
+              className={`app-nav-item press ${view === 'audit' ? 'is-active' : ''}`}
+              aria-current={view === 'audit' ? 'page' : undefined}
+              title="查看安全可追溯的操作记录"
+            >
+              <ShieldCheck size={13} />
+              审计
+            </button>
+          )}
+        </nav>
+
+        <div className="app-topbar-actions">
           {selectedLlmConfig ? (
             <span
-              className="mono hidden max-w-36 truncate rounded-lg border px-2.5 py-1 text-[11px] sm:inline"
-              style={{ borderColor: 'var(--accent)', background: 'var(--accent-dim)', color: 'var(--accent)' }}
+              className="model-context mono max-w-36 truncate"
               title={`${selectedLlmConfig.model} · ${selectedLlmConfig.base_url}`}
             >
               {selectedLlmConfig.name}
             </span>
           ) : (
-            <div className="hidden rounded-[10px] border p-0.5 text-xs sm:flex" style={{ borderColor: 'var(--border-strong)' }}>
-              {[['fast', '⚡ 速度'], ['accurate', '🎯 准确']].map(([key, label]) => (
+            <div className="mode-control" aria-label="项目默认模型模式">
+              {[['fast', '速度'], ['accurate', '准确']].map(([key, label]) => (
                 <button
                   key={key}
                   onClick={() => switchMode(key)}
-                  className="press rounded-lg px-2.5 py-1 transition-colors"
-                  style={{
-                    background: mode === key ? 'var(--accent)' : 'transparent',
-                    color: mode === key ? '#0a0e14' : 'var(--text-secondary)',
-                  }}
+                  className={`press ${mode === key ? 'is-active' : ''}`}
                   title={key === 'fast' ? '速度优先：glm-4-flash 打头，快但能力弱' : '能力优先：glm-4.7-flash 打头，最准'}
                 >
                   {label}
@@ -202,86 +228,21 @@ export default function App() {
             </div>
           )}
 
-          <button
-            onClick={() => setView(view === 'models' ? 'chat' : 'models')}
-            className={`press flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors ${
-              view === 'models' ? 'font-medium' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-            style={{
-              borderColor: 'var(--border-strong)',
-              background: view === 'models' ? 'var(--accent-dim)' : 'transparent',
-              color: view === 'models' ? 'var(--accent)' : undefined,
-            }}
-            title="添加、测试或切换自己的 OpenAI 兼容模型"
-          >
-            <Cpu size={14} />
-            {view === 'models' ? '返回工作台' : '模型设置'}
-          </button>
-
-          {/* 用户信息：用户名 + 角色徽章（admin 高亮） */}
-          <span
-            className="mono hidden rounded-md border px-2 py-1 text-[11px] md:inline"
-            style={{
-              borderColor: isAdmin ? 'var(--accent)' : 'var(--border-strong)',
-              background: isAdmin ? 'var(--accent-dim)' : 'transparent',
-              color: isAdmin ? 'var(--accent)' : 'var(--text-secondary)',
-            }}
-            title={`租户 ${user.tenant_id}`}
-          >
+          <span className={`user-context mono ${isAdmin ? 'is-admin' : ''}`} title={`租户 ${user.tenant_id}`}>
             {user.display_name || user.username}
-            <span className="ml-1.5">{isAdmin ? '管理员' : '用户'}</span>
+            <span>{isAdmin ? '管理员' : '用户'}</span>
           </span>
 
-          {/* admin 专属：知识库管理 + 审计日志 */}
-          {isAdmin && (
-            <>
-              <button
-                onClick={() => setView(view === 'kb' ? 'chat' : 'kb')}
-                className={`press flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors ${
-                  view === 'kb' ? 'font-medium' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                }`}
-                style={{
-                  borderColor: 'var(--border-strong)',
-                  background: view === 'kb' ? 'var(--accent-dim)' : 'transparent',
-                  color: view === 'kb' ? 'var(--accent)' : undefined,
-                }}
-                title="知识库台账 / 蓝绿切换 / 检索调试 / 反馈分析"
-              >
-                <Database size={13} />
-                {view === 'kb' ? '返回工作台' : '知识库管理'}
-              </button>
-              <button
-                onClick={() => setView(view === 'audit' ? 'chat' : 'audit')}
-                className={`press flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors ${
-                  view === 'audit' ? 'font-medium' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                }`}
-                style={{
-                  borderColor: 'var(--border-strong)',
-                  background: view === 'audit' ? 'var(--accent-dim)' : 'transparent',
-                  color: view === 'audit' ? 'var(--accent)' : undefined,
-                }}
-                title="谁在什么时候做了什么（安全可追溯）"
-              >
-                <ShieldCheck size={13} />
-                {view === 'audit' ? '返回工作台' : '审计日志'}
-              </button>
-            </>
-          )}
-
-          <button
-            onClick={handleNew}
-            className="press rounded-lg border px-3 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
-            style={{ borderColor: 'var(--border-strong)' }}
-          >
+          <button onClick={() => { handleNew(); setView('chat') }} className="secondary-action press new-session-action">
             新会话
           </button>
           <button
             onClick={handleLogout}
-            className="press flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--error)]"
-            style={{ borderColor: 'var(--border-strong)' }}
+            className="app-icon-action press"
+            aria-label="退出登录"
             title="退出登录"
           >
-            <SignOut size={13} />
+            <SignOut size={17} />
           </button>
         </div>
       </header>
@@ -293,7 +254,6 @@ export default function App() {
           selectedId={selectedLlmConfigId}
           onSelect={setSelectedLlmConfigId}
           onChanged={refreshLlmConfigs}
-          onBack={() => setView('chat')}
         />
       ) : view === 'audit' ? (
         <main className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-6">

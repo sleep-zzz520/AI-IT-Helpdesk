@@ -2,19 +2,23 @@
 
 /* ===== 设计 token（白色主色调，黑色点缀，Page Theme Lock）===== */
 :root {
-  --bg: #f6f7f9;            /* 页面底色：冷白 */
+  --bg: #f4f6f7;            /* 页面底色：冷白 */
   --surface: #ffffff;       /* 面板底色：纯白 */
-  --surface-2: #f1f3f5;     /* 次级面板/输入区：浅灰 */
+  --surface-2: #f5f7f8;     /* 次级面板/输入区：浅灰 */
+  --surface-tint: #eef8f7;  /* 当前选择/状态块：淡青 */
   --border: rgba(15, 23, 42, 0.08);
   --border-strong: rgba(15, 23, 42, 0.16);
   --text-primary: #111827;  /* 主文字：近黑（黑色点缀主色） */
   --text-secondary: #64748b;
+  --text-muted: #94a3b8;
   --accent: #0d9488;        /* 单一强调色：teal-600（白底可读性优于原青绿） */
   --accent-dim: rgba(13, 148, 136, 0.1);
   --success: #16a34a;       /* 语义色：仅状态徽章用（白底加深保证对比度） */
   --warn: #d97706;
   --error: #dc2626;
   --radius: 12px;           /* 统一圆角系统 */
+  --radius-lg: 16px;
+  --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.045);
 }
 
 * { box-sizing: border-box; }
@@ -32,6 +36,423 @@ body {
 /* mono 字体只给数据/代码用 */
 .mono {
   font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+}
+
+/* ===== 顶栏：身份、上下文与主导航分层，避免堆叠同级的描边按钮 ===== */
+.app-topbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  min-height: 64px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+}
+
+.app-topbar-brand,
+.app-topbar-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-topbar-actions {
+  justify-self: end;
+}
+
+.app-brand-mark {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-dim);
+}
+
+.app-runtime-badge {
+  display: none;
+  border: 1px solid rgba(13, 148, 136, 0.22);
+  border-radius: 999px;
+  padding: 3px 7px;
+  background: var(--accent-dim);
+  color: #087b72;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.mode-control,
+.app-primary-nav {
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  background: var(--surface-2);
+}
+
+.app-primary-nav {
+  display: inline-flex;
+}
+
+.mode-control,
+.model-context,
+.user-context,
+.new-session-action {
+  display: none;
+}
+
+.mode-control button,
+.app-nav-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 7px;
+  padding: 6px 9px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.mode-control button:hover,
+.app-nav-item:hover {
+  color: var(--text-primary);
+}
+
+.mode-control button.is-active,
+.app-nav-item.is-active {
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+}
+
+.app-nav-item.is-active {
+  color: #087b72;
+}
+
+.model-context,
+.user-context {
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 7px 9px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.model-context {
+  border-color: rgba(13, 148, 136, 0.3);
+  background: var(--accent-dim);
+  color: #087b72;
+}
+
+.user-context.is-admin {
+  border-color: rgba(13, 148, 136, 0.22);
+}
+
+.user-context span {
+  color: var(--text-muted);
+}
+
+.secondary-action,
+.primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, opacity 180ms ease;
+}
+
+.secondary-action {
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-secondary);
+}
+
+.secondary-action:hover {
+  border-color: rgba(13, 148, 136, 0.45);
+  color: var(--text-primary);
+}
+
+.primary-action {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #f7fffe;
+}
+
+.primary-action:hover {
+  background: #0b8279;
+}
+
+.secondary-action:disabled,
+.primary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+/* 图标动作保持轻，不为单个图标增加悬停背景框。 */
+.app-icon-action,
+.model-delete-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: color 180ms ease, opacity 180ms ease;
+}
+
+.app-icon-action {
+  width: 34px;
+  height: 34px;
+}
+
+.app-icon-action:hover {
+  color: var(--error);
+}
+
+/* ===== 模型设置：左侧选择、右侧查看并添加，避免“列表占大半屏 + 表单挤在角落” ===== */
+.model-settings-workspace {
+  padding: 24px 16px 40px;
+}
+
+.model-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.7fr) minmax(0, 1.3fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.model-rail,
+.model-editor {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.model-rail {
+  min-width: 0;
+  overflow: hidden;
+  padding: 20px;
+}
+
+.model-rail-heading {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.model-section-heading {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.model-choice-list {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.model-choice {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 12px;
+  background: transparent;
+  text-align: left;
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+button.model-choice:hover,
+.model-choice-row:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+  transform: translateY(-1px);
+}
+
+.model-choice.is-active {
+  border-color: rgba(13, 148, 136, 0.55);
+  background: var(--surface-tint);
+}
+
+.model-choice-row > button:focus-visible {
+  outline: none;
+}
+
+.model-choice-row:focus-within:not(.is-active) {
+  border-color: rgba(13, 148, 136, 0.55);
+}
+
+.model-choice-copy {
+  display: block;
+  min-width: 0;
+  flex: 1;
+}
+
+.model-choice-title,
+.model-choice-detail {
+  display: block;
+}
+
+.model-choice-title {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.model-choice-detail {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
+.model-choice-check {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.model-delete-action {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.model-delete-action:hover {
+  color: var(--error);
+}
+
+.model-delete-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.model-editor {
+  padding: 24px;
+}
+
+.model-config-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.model-form-field {
+  min-width: 0;
+}
+
+.model-form-field-wide {
+  grid-column: 1 / -1;
+}
+
+.model-form-field > span {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.model-form-field input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 10px 11px;
+  outline: none;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-size: 13px;
+  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.model-form-field input::placeholder {
+  color: var(--text-muted);
+}
+
+.model-form-field input:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+}
+
+.model-json-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 11px;
+  cursor: pointer;
+}
+
+.model-json-option input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+}
+
+.model-json-option span {
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.model-security-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.form-message {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  border: 1px solid;
+  border-radius: 9px;
+  padding: 9px 10px;
+  font-size: 12px;
+}
+
+.form-message-error {
+  border-color: rgba(220, 38, 38, 0.28);
+  background: rgba(220, 38, 38, 0.06);
+  color: var(--error);
+}
+
+.form-message-success {
+  border-color: rgba(22, 163, 74, 0.28);
+  background: rgba(22, 163, 74, 0.06);
+  color: var(--success);
+}
+
+.model-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* 新消息进入：克制单次过渡 */
@@ -58,4 +479,43 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .rise-in, .typing-dot { animation: none; }
   .press:active { transform: none; }
+  .model-choice { transition: none; }
+  button.model-choice:hover, .model-choice-row:hover { transform: none; }
+}
+
+@media (min-width: 1024px) {
+  .app-topbar { padding: 0 24px; }
+  .mode-control,
+  .model-context {
+    display: inline-flex;
+  }
+  .model-settings-workspace { padding: 36px 24px 48px; }
+}
+
+@media (min-width: 768px) {
+  .app-runtime-badge,
+  .new-session-action {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 1280px) {
+  .user-context { display: inline-flex; }
+}
+
+@media (max-width: 860px) {
+  .model-workspace-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+  .app-topbar { padding: 0 12px; }
+  .app-topbar { gap: 8px; }
+  .app-primary-nav { gap: 0; padding: 2px; }
+  .app-nav-item { padding: 5px 6px; }
+  .model-settings-workspace { padding: 20px 12px 32px; }
+  .model-rail, .model-editor { padding: 16px; }
+  .model-config-form { grid-template-columns: 1fr; }
+  .model-form-field-wide { grid-column: auto; }
+  .model-form-actions { justify-content: stretch; }
+  .model-form-actions > button { flex: 1; }
 }
