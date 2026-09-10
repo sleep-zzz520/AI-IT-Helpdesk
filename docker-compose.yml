@@ -65,7 +65,9 @@ services:
       LOG_DIR: ${LOG_DIR:-/app/logs}
     volumes:
       - backend_logs:/app/logs   # 日志持久化（排障可查，容器重建不丢）
-      - rag_data:/app/.rag       # Chroma 索引、蓝绿指针和转译缓存持久化
+      # app.config 在容器内将索引根目录解析为 /.rag；卷必须挂在同一路径，
+      # 否则容器重建会清掉实际使用的索引。
+      - rag_data:/.rag           # Chroma 索引、蓝绿指针和转译缓存持久化
       - ./docs/knowledge:/app/docs/knowledge:ro  # 知识库源文档随代码更新，容器内只读
     depends_on:
       mysql:
