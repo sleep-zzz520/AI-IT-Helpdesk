@@ -61,7 +61,7 @@ export const createConversation = () =>
 
 // SSE 流式发消息：Agent 每完成一个节点就通过 onNode 回调推送（执行链路实时跳动），
 // 全部完成返回 done 事件（完整消息 + trace + 总耗时）。
-export async function sendMessageStream(convId, content, image, mode, onNode, signal) {
+export async function sendMessageStream(convId, content, image, mode, llmConfigId, onNode, signal) {
   let resp;
   try {
     resp = await fetch(`${BASE}/api/conversations/${convId}/messages`, {
@@ -70,7 +70,12 @@ export async function sendMessageStream(convId, content, image, mode, onNode, si
         'Content-Type': 'application/json',
         ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
       },
-      body: JSON.stringify({ content, image: image ?? null, mode }),
+      body: JSON.stringify({
+        content,
+        image: image ?? null,
+        mode,
+        llm_config_id: llmConfigId ?? null,
+      }),
       signal,  // 可取消：开新会话时 abort，旧请求立即断开
     });
   } catch {
@@ -137,6 +142,16 @@ export async function sendMessageStream(convId, content, image, mode, onNode, si
 
 export const fetchConversation = (convId) =>
   request(`/api/conversations/${convId}`);
+
+// ===== 用户自定义模型（OpenAI 兼容接口）=====
+export const fetchLlmConfigs = () => request('/api/llm-configs');
+export const createLlmConfig = (body) =>
+  request('/api/llm-configs', { method: 'POST', body: JSON.stringify(body) });
+// 连接测试会发出一条极短的真实模型请求；调用方负责在界面中提示潜在费用。
+export const testLlmConfig = (body) =>
+  request('/api/llm-configs/test', { method: 'POST', body: JSON.stringify(body) });
+export const deleteLlmConfig = (configId) =>
+  request(`/api/llm-configs/${configId}`, { method: 'DELETE' });
 
 export const fetchTraces = (convId) =>
   request(`/api/conversations/${convId}/traces`);

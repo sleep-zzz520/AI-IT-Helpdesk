@@ -9,6 +9,7 @@ from app.api.auth import router as auth_router
 from app.api.conversations import router as conversations_router
 from app.api.feedback import router as feedback_router
 from app.api.kb import router as kb_router
+from app.api.llm_configs import router as llm_configs_router
 from app.config import settings
 from app.db import init_db
 from app.logging_config import setup_logging
@@ -38,6 +39,7 @@ app.include_router(audit_router)         # 审计日志（admin only）
 app.include_router(conversations_router)
 app.include_router(feedback_router)
 app.include_router(kb_router)
+app.include_router(llm_configs_router)
 
 
 @app.get("/health")

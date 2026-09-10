@@ -4,7 +4,9 @@
 """
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
+
+from app.services.llm_config_service import normalize_base_url
 
 
 # ===== 请求 =====
@@ -23,6 +25,54 @@ class MessageCreate(BaseModel):
     image: str | None = None  # 可选：报错截图的完整 data URL（自带 MIME，OCR 用）
     # 模型链模式：fast（速度优先，glm-4-flash 打头）/ accurate（能力优先，默认）
     mode: Literal["fast", "accurate"] = "accurate"
+    # 空值 = 项目默认 GLM 模型链；非空值必须属于当前登录用户。
+    llm_config_id: int | None = Field(default=None, ge=1)
+
+
+class LLMConfigBase(BaseModel):
+    """用户配置模型时可见的非敏感字段。"""
+    name: str = Field(min_length=1, max_length=64)
+    base_url: str = Field(min_length=1, max_length=512)
+    model: str = Field(min_length=1, max_length=128)
+    json_mode: bool = True
+
+    @field_validator("name", "model")
+    @classmethod
+    def strip_required_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("不能为空")
+        return value
+
+    @field_validator("base_url")
+    @classmethod
+    def validate_base_url(cls, value: str) -> str:
+        return normalize_base_url(value)
+
+
+class LLMConfigCreate(LLMConfigBase):
+    # 只允许在创建/测试请求中出现，任何响应模型都不含它。
+    api_key: str = Field(min_length=1, max_length=4096)
+
+    @field_validator("api_key")
+    @classmethod
+    def validate_api_key(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("不能为空")
+        return value
+
+
+class LLMConfigOut(LLMConfigBase):
+    id: int
+    has_api_key: bool
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+class LLMConnectionTestOut(BaseModel):
+    ok: bool
+    latency_ms: int
 
 
 class FeedbackCreate(BaseModel):

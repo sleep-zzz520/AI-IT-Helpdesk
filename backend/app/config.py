@@ -47,6 +47,18 @@ class Settings:
         m.strip() for m in os.getenv("GLM_VISION_MODELS", "glm-4v-flash").split(",") if m.strip()
     ]
 
+    # ===== 用户自定义 LLM（OpenAI 兼容接口）=====
+    # 用户填写的 API Key 只以 Fernet 密文保存在数据库；该密钥必须独立于
+    # SECRET_KEY，避免 Token 签名密钥轮换或泄露时同时影响模型密钥。
+    # 留空时，默认 GLM 链路仍可使用；创建自定义模型配置会返回明确的配置提示。
+    LLM_CONFIG_ENCRYPTION_KEY: str = os.getenv("LLM_CONFIG_ENCRYPTION_KEY", "")
+    # 自定义模型请求的上限。模型服务无响应时要能回到 Agent 的安全兜底，不能无限挂起。
+    LLM_REQUEST_TIMEOUT: float = float(os.getenv("LLM_REQUEST_TIMEOUT", "60"))
+    # 默认只接受 HTTPS 公网端点；本地 Ollama/vLLM 演示需要显式打开该开关。
+    LLM_ALLOW_PRIVATE_ENDPOINTS: bool = (
+        os.getenv("LLM_ALLOW_PRIVATE_ENDPOINTS", "false").lower() == "true"
+    )
+
     # ===== MySQL =====
     MYSQL_HOST: str = os.getenv("MYSQL_HOST", "127.0.0.1")
     MYSQL_PORT: int = int(os.getenv("MYSQL_PORT", "3306"))

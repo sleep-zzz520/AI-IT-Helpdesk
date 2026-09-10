@@ -19,12 +19,14 @@ from openai import (
 )
 
 from app.config import settings
+from app.services.llm_config_service import LLMProfile
 
 logger = logging.getLogger(__name__)
 
 client = OpenAI(
     api_key=settings.ZHIPU_API_KEY,
     base_url=settings.GLM_BASE_URL,
+    timeout=settings.LLM_REQUEST_TIMEOUT,
 )
 
 # 进程级调用计数器（Eval 报告/审计用）
@@ -115,8 +117,43 @@ def _create(model_chain: list[str], **kwargs) -> tuple[object, str]:
     raise last_error or RuntimeError("模型链为空，无法调用 LLM")
 
 
-def chat(messages: list[dict], temperature: float = 0.3) -> str:
+def _create_with_profile(profile: LLMProfile, **kwargs) -> tuple[object, str]:
+    """调用用户选定的单个模型。
+
+    默认 GLM 链有项目级的限流游标和故障转移；用户配置代表明确选择，
+    这里不静默切回免费模型，失败会由 Agent 的 safe 节点转人工。每次调用
+    单独创建 SDK client，避免不同用户的 API Key 在全局 client 中串用。
+    """
+    global CALL_COUNT, LAST_MODEL
+    scoped_client = OpenAI(
+        api_key=profile.api_key,
+        base_url=profile.base_url,
+        timeout=settings.LLM_REQUEST_TIMEOUT,
+    )
+    resp = scoped_client.chat.completions.create(model=profile.model, **kwargs)
+    with _LLM_LOCK:
+        CALL_COUNT += 1
+        LAST_MODEL = profile.model
+    return resp, profile.model
+
+
+def chat_with_profile(profile: LLMProfile, messages: list[dict],
+                      temperature: float = 0.3, **kwargs) -> str:
+    """供连接测试和 Agent 复用的用户模型对话入口。"""
+    resp, _ = _create_with_profile(
+        profile,
+        messages=messages,
+        temperature=temperature,
+        **kwargs,
+    )
+    return resp.choices[0].message.content or ""
+
+
+def chat(messages: list[dict], temperature: float = 0.3,
+         llm_profile: LLMProfile | None = None) -> str:
     """最简对话封装。后续 LangGraph Agent 会基于它扩展。"""
+    if llm_profile is not None:
+        return chat_with_profile(llm_profile, messages, temperature)
     resp, _ = _create(
         settings.GLM_MODELS,
         messages=messages,
@@ -125,7 +162,9 @@ def chat(messages: list[dict], temperature: float = 0.3) -> str:
     return resp.choices[0].message.content
 
 
-def chat_json(messages: list[dict], temperature: float = 0.1, model_chain: list[str] | None = None) -> dict:
+def chat_json(messages: list[dict], temperature: float = 0.1,
+              model_chain: list[str] | None = None,
+              llm_profile: LLMProfile | None = None) -> dict:
     """让模型输出 JSON 并解析（带容错 + 空内容重试）。
 
     用 response_format 强制 JSON 模式，再兜底清洗：
@@ -147,13 +186,18 @@ def chat_json(messages: list[dict], temperature: float = 0.1, model_chain: list[
 
     def _call() -> tuple[object, str]:
         """调用一次，返回 (resp, used_model)——used_model 是本次实际用的模型。"""
-        return _create(
-            chain,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=1024,
-            response_format={"type": "json_object"},
-        )
+        kwargs = {
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": 1024,
+        }
+        # 有些 OpenAI 兼容服务不实现 response_format。用户可在配置页关闭，
+        # 此时仍保留下方的代码块剥离/JSON 解析兜底。
+        if llm_profile is None or llm_profile.json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+        if llm_profile is not None:
+            return _create_with_profile(llm_profile, **kwargs)
+        return _create(chain, **kwargs)
 
     def _parse(raw: str) -> dict | None:
         """解析 JSON；失败时剥离 markdown 代码块再试。返回 None = 无法解析。"""
@@ -177,10 +221,14 @@ def chat_json(messages: list[dict], temperature: float = 0.1, model_chain: list[
     # HTTP 200 成功返回但内容异常 → 该模型没被 API 层拉黑，游标仍在它身上。
     # 这里用【本次实际使用的模型】短拉黑 60s，重试时 _pick_chain 才会真正跳过它。
     # （不能用全局 LAST_MODEL：并发下可能读到别的请求刚用的模型，拉黑打偏）
-    with _LLM_LOCK:
-        _BLACKLISTED[used_model] = time.time() + _RATE_TTL
-    logger.warning("模型 %s 返回异常内容(%r)，短拉黑并重试（换下一个模型）",
-                   used_model, raw[:40])
+    if llm_profile is None:
+        with _LLM_LOCK:
+            _BLACKLISTED[used_model] = time.time() + _RATE_TTL
+        logger.warning("模型 %s 返回异常内容(%r)，短拉黑并重试（换下一个模型）",
+                       used_model, raw[:40])
+    else:
+        logger.warning("用户模型 %s 返回异常 JSON 内容(%r)，重试一次",
+                       used_model, raw[:40])
     resp, used_model = _call()
     raw = (resp.choices[0].message.content or "").strip()
     parsed = _parse(raw)

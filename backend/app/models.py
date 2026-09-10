@@ -56,6 +56,31 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
 
+class LLMConfig(Base):
+    """用户自己的 OpenAI 兼容模型配置。
+
+    密钥字段只保存 Fernet 密文。配置按 ``owner_user_id`` 隔离，而不是按
+    tenant 共享：同一企业的另一个登录用户也不能读取或借用该用户的 API Key。
+    """
+    __tablename__ = "llm_configs"
+    __table_args__ = (
+        UniqueConstraint("owner_user_id", "name", name="uq_llm_config_owner_name"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    name: Mapped[str] = mapped_column(String(64))
+    base_url: Mapped[str] = mapped_column(String(512))
+    model: Mapped[str] = mapped_column(String(128))
+    # 禁止把 API Key 明文入库；解密只发生在发起当前模型请求前。
+    api_key_ciphertext: Mapped[str] = mapped_column(Text)
+    # 不支持 response_format 的 OpenAI 兼容服务可关闭；仍会尝试解析 JSON 文本。
+    json_mode: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now())
+
+
 class AuditLog(Base):
     """审计日志：谁在什么时候做了什么（安全可追溯）。
 

@@ -13,7 +13,7 @@ import jieba
 
 from app.agents.scenarios import SCENARIOS
 from app.agents.state import HelpdeskState
-from app.llm import chat, chat_json
+from app.llm import LLMProfile, chat, chat_json
 from app.rag.retriever import retrieve
 from app.rag.transcribe import transcribe_data_url
 
@@ -113,7 +113,8 @@ def _shares_evidence_terms(next_query: str, evidence: list[dict]) -> bool:
     return any(t in blob for t in tokens)
 
 
-def judge_evidence(query: str, evidence: list[dict]) -> dict:
+def judge_evidence(query: str, evidence: list[dict],
+                   llm_profile: LLMProfile | None = None) -> dict:
     """运维域 judge：证据能否回答用户问题 + 方案能否执行；不足时给 next_query。
 
     与通用 RAG judge 的区别：判断标准是运维域的业务语义——
@@ -141,10 +142,11 @@ def judge_evidence(query: str, evidence: list[dict]) -> dict:
     return chat_json([
         {"role": "system", "content": prompt},
         {"role": "user", "content": "请判断。"},
-    ])
+    ], llm_profile=llm_profile)
 
 
-def generate_answer(query: str, evidence: list[dict], judge: dict) -> str:
+def generate_answer(query: str, evidence: list[dict], judge: dict,
+                    llm_profile: LLMProfile | None = None) -> str:
     """基于证据生成回答（faithful 约束：只依据证据，不足则明说）。"""
     prompt = f"""你是 IT 运维服务台的知识问答助手。基于以下知识库内容回答用户问题。
 
@@ -162,11 +164,12 @@ def generate_answer(query: str, evidence: list[dict], judge: dict) -> str:
     return chat([
         {"role": "system", "content": prompt},
         {"role": "user", "content": query},
-    ], temperature=0.2)
+    ], temperature=0.2, llm_profile=llm_profile)
 
 
 def answer_question(question: str, scenario: str | None = None,
-                    search_query: str | None = None) -> dict:
+                    search_query: str | None = None,
+                    llm_profile: LLMProfile | None = None) -> dict:
     """核心问答逻辑（节点与 RAGAS 评估共用）：多跳检索 → judge → 生成。
 
     为什么 question 与 search_query 分离（Phase 4 截图转译增强）：
@@ -222,7 +225,13 @@ def answer_question(question: str, scenario: str | None = None,
                     "preview": h.text[:60], "routes": sorted(h.routes)}
 
         try:
-            judge = judge_evidence(question, evidence)  # judge 用原始问题（非增强检索词）
+            # 默认调用保留两参契约，既有 Eval/测试替身无需了解自定义模型。
+            # 只有用户真的选了模型时才传入运行时 profile。
+            judge = (
+                judge_evidence(question, evidence, llm_profile)
+                if llm_profile is not None
+                else judge_evidence(question, evidence)
+            )  # judge 用原始问题（非增强检索词）
         except Exception as e:
             hops.append({"hop": hop, "query": current_query,
                          "hits": [_hit_out(h) for h in hits],
@@ -257,7 +266,11 @@ def answer_question(question: str, scenario: str | None = None,
         hops[-1]["judge"]["fallback"] = "strong" if strong else "weak"
         if strong:
             try:
-                answer = generate_answer(question, evidence, {})
+                answer = (
+                    generate_answer(question, evidence, {}, llm_profile)
+                    if llm_profile is not None
+                    else generate_answer(question, evidence, {})
+                )
             except Exception:
                 # generate 也失败 = 模型全挂，退保守"暂无"（诚实而非报错）
                 answer = _EMPTY_ANSWER
@@ -265,7 +278,11 @@ def answer_question(question: str, scenario: str | None = None,
             answer = _EMPTY_ANSWER
         return {"answer": answer, "evidence": evidence, "hops": hops}
 
-    answer = generate_answer(question, evidence, hops[-1].get("judge", {}))
+    answer = (
+        generate_answer(question, evidence, hops[-1].get("judge", {}), llm_profile)
+        if llm_profile is not None
+        else generate_answer(question, evidence, hops[-1].get("judge", {}))
+    )
     return {"answer": answer, "evidence": evidence, "hops": hops}
 
 
@@ -280,8 +297,12 @@ def rag_query_node(state: HelpdeskState) -> dict:
     # 截图转译增强检索（截图→知识资产）；judge/answer 仍用原始 query
     enriched = _enrich_query_with_image(query, image) if image else query
     try:
-        result = answer_question(query, state.get("intent"),
-                                 search_query=enriched if enriched != query else None)
+        result = answer_question(
+            query,
+            state.get("intent"),
+            search_query=enriched if enriched != query else None,
+            llm_profile=state.get("llm_profile"),
+        )
     except Exception as e:
         reply = f"⚠️ 知识库查询失败（{type(e).__name__}），请稍后重试，或转人工客服处理。"
         return {

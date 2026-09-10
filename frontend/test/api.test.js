@@ -115,7 +115,7 @@ test('SSE parser emits node events and returns done payload', async () => {
   }
 
   const result = await sendMessageStream(
-    7, 'VPN 连不上', null, 'accurate', (payload) => nodes.push(payload),
+    7, 'VPN 连不上', null, 'accurate', null, (payload) => nodes.push(payload),
   )
 
   assert.deepEqual(result, done)
@@ -123,7 +123,7 @@ test('SSE parser emits node events and returns done payload', async () => {
   assert.equal(calls[0].url, '/api/conversations/7/messages')
   assert.equal(calls[0].options.headers.Authorization, 'Bearer valid-token')
   assert.deepEqual(JSON.parse(calls[0].options.body), {
-    content: 'VPN 连不上', image: null, mode: 'accurate',
+    content: 'VPN 连不上', image: null, mode: 'accurate', llm_config_id: null,
   })
 })
 
@@ -133,7 +133,7 @@ test('SSE error event is surfaced to the caller', async () => {
   ])
 
   await assert.rejects(
-    sendMessageStream(7, '失败用例', null, 'accurate', () => {}),
+    sendMessageStream(7, '失败用例', null, 'accurate', null, () => {}),
     /Agent 执行失败，消息已保存/,
   )
 })

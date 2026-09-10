@@ -10,6 +10,8 @@
 from operator import add
 from typing import Annotated, TypedDict
 
+from app.services.llm_config_service import LLMProfile
+
 
 class HelpdeskState(TypedDict):
     # 对话历史（[{role: user/assistant, content: str}]）
@@ -37,6 +39,8 @@ class HelpdeskState(TypedDict):
     operation_id: str
     # 运行时模型链（前端"速度/准确"切换，API 层注入，不落库；None = 默认能力链）
     model_chain: list[str]
+    # 用户选择的自定义模型（含仅内存中的 API Key），不进入持久化会话状态。
+    llm_profile: LLMProfile
     # 异常兜底：safe 包装器捕获的节点异常（非空时路由优先转人工）
     error: str
     # 查证结果：证书状态（mock 或真实 API）

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Database, ShieldCheck, SignOut } from '@phosphor-icons/react'
-import { createConversation, sendMessageStream, clearToken, fetchMe, getToken } from './api'
+import { Cpu, Database, ShieldCheck, SignOut } from '@phosphor-icons/react'
+import { createConversation, sendMessageStream, clearToken, fetchLlmConfigs, fetchMe, getToken } from './api'
 import ChatPanel from './components/ChatPanel'
 import KbManager from './components/KbManager'
 import SidePanel from './components/SidePanel'
 import Login from './components/Login'
 import AuditLogPanel from './components/AuditLogPanel'
+import ModelConfigPanel from './components/ModelConfigPanel'
 
 export default function App() {
   const [user, setUser] = useState(null)       // 当前登录用户（null = 未登录）
@@ -17,6 +18,8 @@ export default function App() {
   const [lastElapsed, setLastElapsed] = useState(null)  // 本轮 Agent 总耗时（链路区顶部展示）
   const [tab, setTab] = useState('chat')      // 移动端：对话 / 面板切换
   const [view, setView] = useState('chat')    // 视图：chat 工作台 / kb 知识库管理 / audit 审计
+  const [llmConfigs, setLlmConfigs] = useState([])
+  const [selectedLlmConfigId, setSelectedLlmConfigId] = useState(null)
   // 会话代际：开新会话 +1，旧会话进行中的 SSE 请求完成后检测到代际过期就丢弃结果，
   // 避免旧回复污染新会话（异步竞态：用户回复期间开新会话）
   const genRef = useRef(0)
@@ -30,6 +33,29 @@ export default function App() {
   }, [])
 
   useEffect(() => { if (user) handleNew() }, [user])  // 登录成功后自动开新会话
+
+  // 模型配置属于当前用户，登录后再读；退出时清空，避免切账号后沿用旧选择。
+  useEffect(() => {
+    if (!user) {
+      setLlmConfigs([])
+      setSelectedLlmConfigId(null)
+      return
+    }
+    refreshLlmConfigs()
+  }, [user])
+
+  async function refreshLlmConfigs() {
+    try {
+      const configs = await fetchLlmConfigs()
+      setLlmConfigs(configs)
+      setSelectedLlmConfigId((current) => configs.some((item) => item.id === current) ? current : null)
+      return configs
+    } catch {
+      // 配置读取失败不妨碍默认 GLM 模式继续工作；设置页会在用户操作时显示具体错误。
+      setLlmConfigs([])
+      return []
+    }
+  }
 
   async function handleNew() {
     genRef.current += 1           // 旧会话的进行中请求从此失效
@@ -53,6 +79,8 @@ export default function App() {
     setMessages([])
     setTraces([])
     setView('chat')
+    setLlmConfigs([])
+    setSelectedLlmConfigId(null)
   }
 
   // 模型链模式：fast（速度）/ accurate（能力优先，默认），localStorage 记住选择
@@ -88,7 +116,7 @@ export default function App() {
     abortRef.current = controller
     try {
       // SSE 流式：Agent 每完成一个节点，右侧执行链路实时点亮（可观测性核心卖点）
-      const payload = await sendMessageStream(conv.id, content, image, mode, (ev) => {
+      const payload = await sendMessageStream(conv.id, content, image, mode, selectedLlmConfigId, (ev) => {
         if (genRef.current !== myGen) return  // 已开新会话：丢弃旧节点的实时更新
         setTraces((prev) => {
           // 真实节点替换同名的 pending 占位，其余保留追加
@@ -124,6 +152,8 @@ export default function App() {
     return <Login onLogin={setUser} />
   }
 
+  const selectedLlmConfig = llmConfigs.find((item) => item.id === selectedLlmConfigId) || null
+
   return (
     <div className="flex h-full flex-col">
       {/* 顶栏：标题 + 用户信息 + 视图切换 + 退出 */}
@@ -144,23 +174,49 @@ export default function App() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {/* 模型模式切换：速度（glm-4-flash 快）/ 准确（能力优先） */}
-          <div className="hidden rounded-[10px] border p-0.5 text-xs sm:flex" style={{ borderColor: 'var(--border-strong)' }}>
-            {[['fast', '⚡ 速度'], ['accurate', '🎯 准确']].map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => switchMode(key)}
-                className="press rounded-lg px-2.5 py-1 transition-colors"
-                style={{
-                  background: mode === key ? 'var(--accent)' : 'transparent',
-                  color: mode === key ? '#0a0e14' : 'var(--text-secondary)',
-                }}
-                title={key === 'fast' ? '速度优先：glm-4-flash 打头，快但能力弱' : '能力优先：glm-4.7-flash 打头，最准'}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          {/* 默认 GLM 才显示速度/准确选择；自定义模型本身就是当前调用目标。 */}
+          {selectedLlmConfig ? (
+            <span
+              className="mono hidden max-w-36 truncate rounded-lg border px-2.5 py-1 text-[11px] sm:inline"
+              style={{ borderColor: 'var(--accent)', background: 'var(--accent-dim)', color: 'var(--accent)' }}
+              title={`${selectedLlmConfig.model} · ${selectedLlmConfig.base_url}`}
+            >
+              {selectedLlmConfig.name}
+            </span>
+          ) : (
+            <div className="hidden rounded-[10px] border p-0.5 text-xs sm:flex" style={{ borderColor: 'var(--border-strong)' }}>
+              {[['fast', '⚡ 速度'], ['accurate', '🎯 准确']].map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => switchMode(key)}
+                  className="press rounded-lg px-2.5 py-1 transition-colors"
+                  style={{
+                    background: mode === key ? 'var(--accent)' : 'transparent',
+                    color: mode === key ? '#0a0e14' : 'var(--text-secondary)',
+                  }}
+                  title={key === 'fast' ? '速度优先：glm-4-flash 打头，快但能力弱' : '能力优先：glm-4.7-flash 打头，最准'}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <button
+            onClick={() => setView(view === 'models' ? 'chat' : 'models')}
+            className={`press flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors ${
+              view === 'models' ? 'font-medium' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+            style={{
+              borderColor: 'var(--border-strong)',
+              background: view === 'models' ? 'var(--accent-dim)' : 'transparent',
+              color: view === 'models' ? 'var(--accent)' : undefined,
+            }}
+            title="添加、测试或切换自己的 OpenAI 兼容模型"
+          >
+            <Cpu size={14} />
+            {view === 'models' ? '返回工作台' : '模型设置'}
+          </button>
 
           {/* 用户信息：用户名 + 角色徽章（admin 高亮） */}
           <span
@@ -230,8 +286,16 @@ export default function App() {
         </div>
       </header>
 
-      {/* 审计日志视图（admin 全屏独立页） */}
-      {view === 'audit' ? (
+      {/* 模型设置与管理员页面都使用独立工作区，避免挤压对话布局。 */}
+      {view === 'models' ? (
+        <ModelConfigPanel
+          configs={llmConfigs}
+          selectedId={selectedLlmConfigId}
+          onSelect={setSelectedLlmConfigId}
+          onChanged={refreshLlmConfigs}
+          onBack={() => setView('chat')}
+        />
+      ) : view === 'audit' ? (
         <main className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-6">
           <AuditLogPanel />
         </main>
