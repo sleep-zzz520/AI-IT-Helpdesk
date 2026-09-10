@@ -60,6 +60,16 @@ services:
       MONITOR_MAX_RETRIES: ${MONITOR_MAX_RETRIES:-2}
       # 安全：Token 签名密钥（生产务必在 .env 配置强随机值）
       SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me-in-production}
+      # 用户自定义模型的 API Key 加密密钥；必须与 SECRET_KEY 分离。
+      LLM_CONFIG_ENCRYPTION_KEY: ${LLM_CONFIG_ENCRYPTION_KEY:-}
+      LLM_REQUEST_TIMEOUT: ${LLM_REQUEST_TIMEOUT:-60}
+      LLM_ALLOW_PRIVATE_ENDPOINTS: ${LLM_ALLOW_PRIVATE_ENDPOINTS:-false}
+      # RAG：镜像内 app/ 被扁平复制到 /app/app，显式固定源文档与向量索引路径，
+      # 避免 BASE_DIR 在容器内解析为 / 后读到错误目录。
+      KB_ROOT: /app/docs/knowledge
+      KB_VECTOR_DIR: /.rag/kb_chroma
+      # 独立规模库（如 kb_docs_scale）只在部署者显式配置时参加联合检索。
+      KB_EXTRA_COLLECTIONS: ${KB_EXTRA_COLLECTIONS:-}
       # 日志：级别可配（生产可调 WARNING 减噪）+ 文件轮转落盘
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_DIR: ${LOG_DIR:-/app/logs}
