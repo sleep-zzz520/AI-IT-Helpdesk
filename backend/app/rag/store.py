@@ -48,6 +48,15 @@ class VectorStore(ABC):
     def delete_by_doc_id(self, doc_id: str) -> int:
         """删除一篇文档的全部 chunk（定点修正/删除用）。返回删除条数。"""
 
+    def delete_ids(self, ids: list[str]) -> None:
+        """仅删除已被新版本替代的块；实现必须支持精确 ID 删除。"""
+        raise NotImplementedError("store does not support precise chunk deletion")
+
+    def get_chunks(self, ids: list[str]) -> dict[str, dict]:
+        """写后校验所需的正文和版本；非 Chroma 实现可覆盖为定点读取。"""
+        wanted = set(ids)
+        return {key: value for key, value in self.get_all_meta().items() if key in wanted}
+
     @abstractmethod
     def get_doc_ids(self, doc_id: str) -> list[str]:
         """按 doc_id 取全部 chunk id（目标库存在性判断/幂等补写用）。"""
@@ -81,9 +90,12 @@ class VectorStore(ABC):
 class ChromaStore(VectorStore):
     """ChromaDB 实现：本地文件持久化 + HNSW 索引。"""
 
-    def __init__(self, persist_dir: str, collection_name: str = "kb_docs"):
+    def __init__(self, persist_dir: str, collection_name: str = "kb_docs", *, must_exist: bool = False):
         self._client = chromadb.PersistentClient(path=persist_dir)
         self.collection_name = collection_name  # BM25 索引缓存的稳定 key
+        if must_exist:
+            self._col = self._client.get_collection(collection_name)
+            return
         self._col = self._client.get_or_create_collection(
             name=collection_name,
             metadata={"hnsw:space": "cosine"},   # 余弦相似度空间（检索默认）
@@ -105,10 +117,37 @@ class ChromaStore(VectorStore):
             self._col.delete(ids=ids)
         return len(ids)
 
+    def delete_ids(self, ids: list[str]) -> None:
+        if ids:
+            self._col.delete(ids=ids)
+
+    def set_build_ready(self, ready: bool) -> None:
+        meta = {key: value for key, value in (self._col.metadata or {}).items()
+                if not key.startswith("hnsw:")}
+        meta["build_ready"] = ready
+        self._col.modify(metadata=meta)
+
+    def is_build_ready(self) -> bool:
+        return (self._col.metadata or {}).get("build_ready") is True
+
     def get_doc_ids(self, doc_id: str) -> list[str]:
         # where 只支持等于匹配：按 doc_id 查（幂等补写/删除共用）
         got = self._col.get(where={"doc_id": doc_id})
         return got.get("ids") or []
+
+    def get_chunks(self, ids: list[str]) -> dict[str, dict]:
+        if not ids:
+            return {}
+        got = self._col.get(ids=ids, include=["documents", "metadatas"])
+        return {cid: {"text": text, "metadata": meta or {}}
+                for cid, text, meta in zip(got["ids"], got["documents"], got["metadatas"], strict=True)}
+
+    def get_vectors(self, ids: list[str]) -> dict[str, list[float]]:
+        if not ids:
+            return {}
+        got = self._col.get(ids=ids, include=["embeddings"])
+        return {cid: vector.tolist() if hasattr(vector, "tolist") else list(vector)
+                for cid, vector in zip(got["ids"], got["embeddings"], strict=True)}
 
     def query(self, vector: list[float], top_k: int,
               where: dict | None = None) -> list[Hit]:
@@ -178,6 +217,9 @@ def create_store(collection_name: str | None = None) -> VectorStore:
     - 传候选 collection（蓝绿切换）→ sync 写入目标，线上零感知
     - 传独立库名（如 kb_docs_scale）→ 千级压测库等独立语料
     """
+    if settings.KB_SYNC_MODE == "git":
+        from app.rag.generations import resolve_store
+        return resolve_store(collection_name)
     return ChromaStore(persist_dir=settings.KB_VECTOR_DIR,
                        collection_name=collection_name or settings.active_collection)
 

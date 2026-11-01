@@ -1,0 +1,18 @@
+{
+  "email/config-guide.md": "af961553-311d-51a7-8e53-2067b3c35551",
+  "email/mailbox-quota.md": "65193386-786b-5c33-a2e2-b44713409994",
+  "email/troubleshoot.md": "24207e25-ef64-5432-867b-1678fdda834e",
+  "finance/expense-reimbursement.md": "4d4ad049-7ee7-5135-9b9f-7662a02da9d5",
+  "general/vacation-policy.md": "0108ddf6-f34c-542b-bb9b-fce268d605cd",
+  "hr/onboarding-guide.md": "dc0a99d8-5f0b-5c0a-b514-0bf568131ae6",
+  "password/account-lock.md": "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926",
+  "password/password-policy.md": "44c477be-47aa-52bc-ae42-6e68087f0e28",
+  "password/reset-sop.md": "85a50e54-9a82-587d-a691-76c70599ed10",
+  "software/install-guide.md": "f54a7d21-a05b-5e65-a7b5-caaa69b4641a",
+  "software/license-activation.md": "c2899ed7-4afa-5387-b98c-564965d47184",
+  "software/software-update.md": "28500f7c-640a-5587-958b-25003b2010ad",
+  "vpn/cert-renewal.md": "c29b5087-23a6-500b-aabf-5cafc0c1399e",
+  "vpn/client-config.md": "08096cab-84ba-5fec-9f82-25d00e1ebef4",
+  "vpn/error-codes.md": "43a26783-bedb-52ec-9f0d-2e906dcabbc3",
+  "vpn/vpn-install-guide.md": "8c26b8be-5869-514b-aeca-767b1bd06a7e"
+}

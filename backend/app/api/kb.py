@@ -11,6 +11,7 @@ from contextlib import suppress
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -19,7 +20,7 @@ from app.config import settings
 from app.models import KbDocument, User
 from app.rag.retriever import RetrievalStats, retrieve
 from app.rag.store import Hit, create_store, list_collections
-from app.rag.sync import run_sync
+from app.rag.sync import build_candidate, publication_lock
 from app.security import require_admin
 from app.services.audit_service import audit
 
@@ -64,6 +65,12 @@ def list_documents(
     expiring_days：距过期剩余天数（valid_to 距今 <= 30 天预警；负数=已过期；
     None=未设有效期）。预警判断放后端（日期口径统一），前端只负责展示。
     """
+    if settings.KB_SYNC_MODE == "git" and kb_name == "default":
+        from app.rag.generations import state
+        docs = state()["docs"]
+        if status:
+            docs = [doc for doc in docs if doc["status"] == status]
+        return {"docs": docs, "total": len(docs)}
     q = db.query(KbDocument).filter_by(kb_name=kb_name)
     if status:
         q = q.filter_by(status=status)
@@ -97,6 +104,9 @@ def kb_stats(
     db: Session = Depends(get_db),
 ):
     """库统计 + 蓝绿状态（管理页顶部卡片 / 切换按钮的状态依据）。"""
+    if settings.KB_SYNC_MODE == "git":
+        from app.rag.generations import state
+        return {key: value for key, value in state().items() if key != "docs"}
     active = create_store()               # 在岗库
     candidate = create_store(collection_name=settings.candidate_collection)
     # 统计口径按实例隔离：doc_count 是运维知识库（default）的文档数；
@@ -132,13 +142,25 @@ def kb_sync(
     流程：清空候选 → reconcile（增/改/删/跳过）→ 返回报告。
     同步完成后【不自动切换】——先看报告/跑影子测试，再手动切换。
     """
+    if settings.KB_SYNC_MODE == "git":
+        from app.rag.generations import enqueue
+        try:
+            job = enqueue()
+        except ValueError as exc:
+            raise HTTPException(422, detail=str(exc)) from exc
+        from app.db import SessionLocal
+        with SessionLocal() as db:
+            audit(db, user, "kb_sync_queued", {"job_id": job["id"], "commit": job["source_commit"]}, request=request)
+        return JSONResponse(status_code=202, content=job)
     t0 = time.perf_counter()
     # 全量替换语义：候选库清空重建（失败则候选为空，active 零影响，
     # 下次 sync 自动重试——蓝绿的核心：发布失败不影响线上）
-    candidate = create_store(collection_name=settings.candidate_collection)
-    candidate.clear()
     try:
-        report = run_sync(store=candidate, kb_name="default")
+        with publication_lock():
+            candidate = create_store(collection_name=settings.candidate_collection)
+            report = build_candidate(candidate, kb_name="default")
+    except RuntimeError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"同步失败：{e}") from e
     elapsed = round((time.perf_counter() - t0) * 1000)
@@ -176,10 +198,30 @@ def kb_switch(
     安全校验：候选库为空禁止切换（切到空库 = 全站检索瘫痪）。
     切换只写一个落盘文件（.rag/kb_active.txt）——秒级生效、重启保持。
     """
-    candidate = create_store(collection_name=settings.candidate_collection)
-    if candidate.count() == 0:
-        raise HTTPException(status_code=409, detail="候选库为空，禁止切换（请先同步）")
-    new_active = settings.switch_active()
+    if settings.KB_SYNC_MODE == "git":
+        from app.rag.generations import publish, state
+        try:
+            current = state()
+            if not current["candidate_ready"]:
+                raise ValueError("没有可发布的完整候选任务")
+            result = publish(current["latest_job"]["id"])
+        except (ValueError, RuntimeError) as exc:
+            raise HTTPException(409, detail=str(exc)) from exc
+        from app.db import SessionLocal
+        with SessionLocal() as db:
+            audit(db, user, "kb_publish", {"job_id": result["id"]}, request=request)
+        return {"switched_to": result["collection"], "active_chunks": state()["active_chunks"],
+                "candidate_chunks": 0, "generation": result["id"]}
+    try:
+        with publication_lock():
+            candidate = create_store(collection_name=settings.candidate_collection)
+            if candidate.count() == 0 or not candidate.is_build_ready():
+                raise HTTPException(status_code=409, detail="候选库未通过完整同步，禁止切换（请先同步）")
+            # 旧在岗库可作为下一次回滚目标；它本轮未被覆盖。
+            create_store().set_build_ready(True)
+            new_active = settings.switch_active()
+    except RuntimeError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
     from app.db import SessionLocal
     with SessionLocal() as db:
         audit(db, user, "kb_switch", {"switched_to": new_active}, request=request)
@@ -190,6 +232,30 @@ def kb_switch(
             collection_name=settings.candidate_collection).count(),
         "note": "回滚：再次调用本接口即可切回旧库（旧库未被覆盖前有效）",
     }
+
+
+@router.get("/jobs/{job_id}")
+def kb_job(job_id: str, user: User = Depends(require_admin)):
+    from app.rag.generations import get_job
+    try:
+        return get_job(job_id)
+    except ValueError as exc:
+        raise HTTPException(404, detail=str(exc)) from exc
+
+
+@router.post("/rollback")
+def kb_rollback(request: Request, user: User = Depends(require_admin)):
+    if settings.KB_SYNC_MODE != "git":
+        raise HTTPException(409, detail="旧模式请使用蓝绿切换")
+    from app.rag.generations import rollback
+    try:
+        result = rollback()
+    except (ValueError, RuntimeError) as exc:
+        raise HTTPException(409, detail=str(exc)) from exc
+    from app.db import SessionLocal
+    with SessionLocal() as db:
+        audit(db, user, "kb_rollback", {"job_id": result["id"]}, request=request)
+    return {"switched_to": result["collection"], "generation": result["id"]}
 
 
 @router.post("/debug")
@@ -227,5 +293,6 @@ def kb_debug(
         },
         "vector_hits": [_hit_out(h) for h in (stats.debug_vector_hits or [])],
         "bm25_hits": [_hit_out(h) for h in (stats.debug_bm25_hits or [])],
+        "fused_hits": [_hit_out(h) for h in (stats.debug_fused_hits or [])],
         "final": [_hit_out(h) for h in hits],
     }

@@ -21,9 +21,11 @@ class ConversationCreate(BaseModel):
 
 
 class MessageCreate(BaseModel):
-    content: str
+    content: str = Field(min_length=1, max_length=16000)
+    # 重试同一轮时复用此 ID；同 ID 不同请求体会拒绝，防重复执行工具。
+    request_id: str | None = Field(default=None, min_length=8, max_length=128, pattern=r"^[A-Za-z0-9_.:-]+$")
     image: str | None = None  # 可选：报错截图的完整 data URL（自带 MIME，OCR 用）
-    # 模型链模式：fast（速度优先，glm-4-flash 打头）/ accurate（能力优先，默认）
+    # 兼容旧客户端字段；项目默认文本模型固定为 glm-5.3-flash，mode 不再改变模型。
     mode: Literal["fast", "accurate"] = "accurate"
     # 空值 = 项目默认 GLM 模型链；非空值必须属于当前登录用户。
     llm_config_id: int | None = Field(default=None, ge=1)

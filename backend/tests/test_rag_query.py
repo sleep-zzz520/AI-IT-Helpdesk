@@ -73,3 +73,68 @@ def test_multihop_loop_uses_valid_next_query_and_merges_evidence():
     assert result["hops"][1]["query"] == "密码 客户端"
     assert len(result["evidence"]) == 2
     assert result["answer"] == "合成回答"
+
+
+def test_answer_question_keeps_one_parent_context_for_same_source():
+    """检索可返回同文档两个子段，但 LLM 证据不能重复塞同一父文档。"""
+    from types import SimpleNamespace
+
+    from app.agents.nodes import rag_query as module
+
+    same_source_hits = [
+        SimpleNamespace(
+            id="vpn:1", text="症状子段", parent_text="完整 VPN 文档",
+            score=0.9, metadata={"source_url": "docs/knowledge/vpn/a.md"},
+            routes={"vector"},
+        ),
+        SimpleNamespace(
+            id="vpn:2", text="操作子段", parent_text="完整 VPN 文档",
+            score=0.8, metadata={"source_url": "docs/knowledge/vpn/a.md"},
+            routes={"bm25"},
+        ),
+        SimpleNamespace(
+            id="mail:1", text="邮箱子段", parent_text="完整邮箱文档",
+            score=0.7, metadata={"source_url": "docs/knowledge/email/b.md"},
+            routes={"vector"},
+        ),
+    ]
+
+    with (
+        mock.patch.object(module, "retrieve", return_value=same_source_hits),
+        mock.patch.object(module, "judge_evidence", return_value={
+            "enough": True, "answerable": True, "next_query": "",
+            "executable": False, "missing_info": [],
+        }),
+        mock.patch.object(module, "generate_answer", return_value="合成回答"),
+    ):
+        result = module.answer_question("VPN 怎么处理", "vpn")
+
+    assert [item["source"] for item in result["evidence"]] == [
+        "docs/knowledge/vpn/a.md", "docs/knowledge/email/b.md",
+    ]
+
+
+def test_answer_question_can_pin_an_existing_store_for_offline_evaluation():
+    """离线评测可读候选库，不修改 active 指针或线上默认检索。"""
+    from types import SimpleNamespace
+
+    from app.agents.nodes import rag_query as module
+
+    pinned_store = object()
+    hit = SimpleNamespace(
+        id="vpn:1", text="证据子段", parent_text="完整 VPN 文档", score=0.9,
+        metadata={"source_url": "docs/knowledge/vpn/a.md"}, routes={"vector"},
+    )
+
+    with (
+        mock.patch.object(module, "retrieve", return_value=[hit]) as mocked_retrieve,
+        mock.patch.object(module, "judge_evidence", return_value={
+            "enough": True, "answerable": True, "next_query": "",
+            "executable": False, "missing_info": [],
+        }),
+        mock.patch.object(module, "generate_answer", return_value="合成回答"),
+    ):
+        result = module.answer_question("VPN 怎么处理", "vpn", retrieval_store=pinned_store)
+
+    assert result["answer"] == "合成回答"
+    assert mocked_retrieve.call_args.kwargs["store"] is pinned_store

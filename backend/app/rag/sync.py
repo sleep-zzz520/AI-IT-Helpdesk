@@ -5,16 +5,16 @@
 2. 读 MySQL 台账 kb_documents（path → doc_id / doc_hash / status）
 3. 逐篇对比：
    - path 不在台账 → 【新增】建台账行 → 切分 → 嵌入 → 入库
-   - doc_hash 变了  → 【修改】删该 doc_id 全部旧 chunk → 重切重嵌 → 入库
+   - doc_hash 变了  → 【修改】重切重嵌 → 覆盖入库 → 清理多余旧块
    - 台账有但文件消失 → 【删除】删 chunk + 台账置 removed（保留审计痕迹）
    - 未变            → 【跳过】（幂等核心：连续跑两次，第二次全跳过）
 4. 失败自愈：单文档任一步异常 → 该文档整体不提交、台账 hash 不更新，
-   下次 sync 自动重试。绝不产生"半新半旧"。
+   下次 sync 自动重试；候选构建失败不可发布。
 
-事务性（为什么不会新旧混答）：
-- 修改 = 先 delete_by_doc_id（旧 chunks 全移除）再 upsert_chunks（新 chunks 写入）
-- 中间态最多"该文档短暂检索不到"（best-effort 可接受）；
-  绝不出现旧 chunk 与新 chunk 同时被召回（信息污染不可接受）
+写入策略：
+- 先完成嵌入并 upsert、核对全部预期 ID，再清理多余旧块。
+- 嵌入失败不删除旧知识；Chroma 不支持跨 SQL/向量库事务，upsert 部分失败
+  仍可能留中间态，靠幂等重试修复。线上使用候选构建及发布门禁隔离中间态。
 
 语义去重（轻量版）：新增文档时，抽样首个 chunk 去库中检索，
 相似度 ≥ 0.95 且来自其他文档 → 报告标 duplicate（人工确认），不阻止入库。
@@ -22,6 +22,7 @@
 """
 import hashlib
 import json
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -69,6 +70,12 @@ def _inject_hash(chunks, doc_hash: str):
     return chunks
 
 
+def _chunks_match(store, chunks, doc_hash):
+    got = store.get_chunks([chunk.id for chunk in chunks])
+    return all(chunk.id in got and got[chunk.id]["text"] == chunk.text
+               and got[chunk.id]["metadata"].get("doc_hash") == doc_hash for chunk in chunks)
+
+
 def _sync_doc(doc: KnowledgeDoc, doc_hash: str, store: VectorStore,
               report: SyncReport) -> None:
     """新增或更新一篇文档（切分 → 嵌入 → 入库）。任一异常向上抛（由调用方兜底）。"""
@@ -86,13 +93,20 @@ def _sync_doc(doc: KnowledgeDoc, doc_hash: str, store: VectorStore,
                                      f"{similar[0].metadata.get('source_url')} 重复 "
                                      f"(score={similar[0].score})")
 
-    # 修改场景：先删旧（调用方已保证只有"修改/新增"走到这里；新增无旧可删）
-    store.delete_by_doc_id(doc.doc_id)
+    old_ids = set(store.get_doc_ids(doc.doc_id))
 
     # 嵌入（子块+父块一起，一次批量调用；文档多时分批由 embed_texts 处理）
     texts = [c.text for c in chunks]
     vectors = embed_texts(texts)
+    if len(vectors) != len(chunks):
+        raise ValueError("嵌入数量与分块数量不一致")
     store.upsert_chunks(chunks, vectors)
+    expected = {c.id for c in chunks}
+    if not _chunks_match(store, chunks, doc_hash):
+        raise RuntimeError("向量写入不完整，保留旧块并等待重试")
+    obsolete = old_ids - expected
+    if obsolete:
+        store.delete_ids(sorted(obsolete))
 
 
 def run_sync(kb_root: Path | None = None, store: VectorStore | None = None,
@@ -113,6 +127,7 @@ def run_sync(kb_root: Path | None = None, store: VectorStore | None = None,
 
     scanned = scan_docs(kb_root)
     docs_by_path = {d.rel_path: d for d in scanned.docs}
+    report.failed.extend((path, "源文件解析或转译失败，保留旧知识") for path in scanned.skipped)
 
     # 读台账（只读当前 kb_name 的记录）
     with SessionLocal() as db:
@@ -141,7 +156,7 @@ def run_sync(kb_root: Path | None = None, store: VectorStore | None = None,
                     target = existing
                     report.added.append(rel_path)
                 elif existing.doc_hash != doc_hash:
-                    # ---- 修改：先删旧 chunk 再重建（_sync_doc 内部做） ----
+                    # ---- 修改：新块成功入库后清理多余旧块 ----
                     _sync_doc(doc, doc_hash, store, report)
                     existing.doc_hash = doc_hash
                     target = existing
@@ -151,7 +166,10 @@ def run_sync(kb_root: Path | None = None, store: VectorStore | None = None,
                     # 幂等补写（蓝绿候选模式的关键）：台账说"在库"，但【目标库】
                     # 可能没有这篇（候选库 clear 后全量重建时，所有文档都会走这里）。
                     # 只对"目标库缺这篇"才补写——正常增量模式库里有 → 零成本跳过。
-                    if not store.get_doc_ids(doc.doc_id):
+                    split = split_all([doc])[0]
+                    expected_ids = {c.id for c in [split.parent, *split.children]}
+                    chunks = [split.parent, *split.children]
+                    if set(store.get_doc_ids(doc.doc_id)) != expected_ids or not _chunks_match(store, chunks, doc_hash):
                         _sync_doc(doc, doc_hash, store, report)
                     # 轻量回填：老库可能没存 valid_to（迁移前入库的文档），
                     # 这里只补台账列、不重建 chunk（hash 没变 = 内容没变）
@@ -184,14 +202,16 @@ def run_sync(kb_root: Path | None = None, store: VectorStore | None = None,
         # 条件用 status != "removed"：active（物理删除）和 inactive（软删后文件最终消失）
         # 都应置 removed；只有已 removed 的跳过（幂等）
         for path, row in list(ledger.items()):
-            if path not in docs_by_path and row.status != "removed" and row.kb_name == kb_name:
+            if path not in docs_by_path and not (kb_root / path).exists() and row.status != "removed" and row.kb_name == kb_name:
+                delete_sp = db.begin_nested()
                 try:
                     store.delete_by_doc_id(row.doc_id)
                     row.status = "removed"
                     row.changelog = "source file removed"
+                    delete_sp.commit()
                     report.deleted.append(path)
                 except Exception as e:
-                    db.rollback()
+                    delete_sp.rollback()
                     report.failed.append((path, f"delete: {e}"))
 
         db.commit()
@@ -209,6 +229,40 @@ def run_sync(kb_root: Path | None = None, store: VectorStore | None = None,
 
     return report
 
+
+
+
+
+@contextmanager
+def publication_lock():
+    """同主机进程间互斥，覆盖候选构建及指针切换。"""
+    import fcntl
+    lock_path = Path(settings.KB_VECTOR_DIR) / ".publication.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a") as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise RuntimeError("知识库正在同步或切换，请稍后重试") from exc
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
+
+
+def build_candidate(target, kb_root=None, kb_name="default"):
+    """在持有 publication_lock 时调用；失败构建不可发布，标记随 Chroma 持久化。"""
+    if target.collection_name.startswith("kb_gen_"):
+        raise ValueError("不可用旧全量同步覆盖版本化索引")
+    target.set_build_ready(False)
+    from app.rag import retriever
+
+    retriever._BM25_CACHE.pop(target.collection_name, None)
+    target.clear()
+    target.set_build_ready(False)
+    report = run_sync(kb_root, store=target, kb_name=kb_name)
+    target.set_build_ready(not report.failed and target.count() > 0)
+    return report
 
 def main() -> None:
     """CLI 入口：python -m app.rag.sync [--kb-root path] [--kb-name name]
@@ -231,11 +285,10 @@ def main() -> None:
 
     init_db()  # 确保 kb_documents 台账表存在（幂等）
     # 全量替换语义：先清空目标库再写入（失败则目标为空，active 不受影响）
-    target = create_store(collection_name=args.collection
-                          or settings.candidate_collection)
-    target.clear()
-    report = run_sync(Path(args.kb_root) if args.kb_root else None,
-                      store=target, kb_name=args.kb_name)
+    with publication_lock():
+        target = create_store(collection_name=args.collection or settings.candidate_collection)
+        report = build_candidate(target, Path(args.kb_root) if args.kb_root else None,
+                                 kb_name=args.kb_name)
     print(f"=== 知识库同步报告（kb_name={args.kb_name}）===")
     print(report.summary)
     for path in report.added:

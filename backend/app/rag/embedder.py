@@ -25,7 +25,8 @@ EMBED_MAX_CHARS = 1800   # 留余量（tokens ≈ 字数的 1~1.3 倍，1800 字
 # 需剥离的控制字符：模型输出的异常内容可能夹带（实测崩过）
 _CTRL_RE = None  # 惰性编译，避免 import 成本
 
-_client = OpenAI(api_key=settings.ZHIPU_API_KEY, base_url=settings.GLM_BASE_URL)
+_client = OpenAI(api_key=settings.ZHIPU_API_KEY, base_url=settings.GLM_BASE_URL,
+                 timeout=settings.LLM_REQUEST_TIMEOUT, max_retries=0)
 
 
 def _clean_text(text: str) -> str:

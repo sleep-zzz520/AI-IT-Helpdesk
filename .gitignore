@@ -53,3 +53,6 @@ backups/
 
 # ===== HF Spaces 部署打包目录（build_hf_space.sh 生成，含副本）=====
 .hf_space/
+
+# 固定Git提交的部署产物，CI生成，不重复提交源文档副本。
+/knowledge-source.json

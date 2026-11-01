@@ -26,7 +26,7 @@ from docx.text.paragraph import Paragraph as DocxParagraph
 from openpyxl import load_workbook
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 
-# 扫描型 PDF 分诊阈值：平均每页非空字符数低于此值 → 判定为扫描件（图片页）
+# PDF 页面分诊阈值：单页非空字符数低于此值 → 渲染该页供视觉转译
 # （文本型 PDF 每页至少几十上百字符；纯扫描页 pdfplumber 抽不出字）
 _SCANNED_MIN_CHARS_PER_PAGE = 30
 
@@ -88,16 +88,18 @@ def parse_pdf(path: Path) -> ParsedDoc:
                 text = page.extract_text() or ""
                 page_texts.append(text.strip())
 
-        total_chars = sum(len(t) for t in page_texts)
         if doc.page_count == 0:
             return doc
-        # 分诊：平均每页字符数低于阈值 → 扫描型（文字是图片，抽不出来）
-        if total_chars / doc.page_count < _SCANNED_MIN_CHARS_PER_PAGE:
-            doc.scanned = True
-            return doc
-        doc.sections = [(f"第 {i + 1} 页", t) for i, t in enumerate(page_texts) if t]
+        # 每页独立分诊；有文字的截图页也必须渲染，避免图中知识被漏掉。
+        doc.sections = [(f"第 {i + 1} 页", t) for i, t in enumerate(page_texts)]
+        with fitz.open(path) as pdf:
+            for i, page in enumerate(pdf):
+                if len(page_texts[i]) < _SCANNED_MIN_CHARS_PER_PAGE or page.get_images():
+                    pix = page.get_pixmap(dpi=150)
+                    doc.images.append(ImageRef(f"page-{i + 1}.png", pix.tobytes("png"), i + 1))
+        doc.scanned = bool(doc.images) and not any(page_texts)
     except Exception:
-        return doc
+        return ParsedDoc()  # 解析中途失败不能把部分内容当作完整版本发布
     return doc
 
 
@@ -157,7 +159,6 @@ def parse_docx(path: Path) -> ParsedDoc:
     try:
         d = DocxDocument(str(path))
         section_title, section_body = "", []
-        images: list[ImageRef] = []
 
         for block in _iter_docx_blocks(d):
             if isinstance(block, DocxTable):
@@ -169,29 +170,22 @@ def parse_docx(path: Path) -> ParsedDoc:
             style = (block.style.name or "") if block.style else ""
             if style.startswith("Heading"):
                 # 段落收尾：上一个章节完整时提交
-                if section_title and section_body:
-                    doc.sections.append((section_title, "\n".join(section_body)))
+                if section_body:
+                    doc.sections.append((section_title or "文档正文", "\n".join(section_body)))
                 section_title = text
                 section_body = []
             elif style.startswith("Title"):
-                if section_title and section_body:
-                    doc.sections.append((section_title, "\n".join(section_body)))
+                if section_body:
+                    doc.sections.append((section_title or "文档正文", "\n".join(section_body)))
                 section_title = text  # Title 样式也当章节标题
                 section_body = []
             else:
                 section_body.append(text)
-        if section_title and section_body:
-            doc.sections.append((section_title, "\n".join(section_body)))
-        if not doc.sections and not images:
-            # 整篇无标题：退化为单章节（正文全文，splitter 会整篇作单子块）
-            body = [b.text.strip() for b in _iter_docx_blocks(d)
-                    if isinstance(b, DocxParagraph) and b.text.strip()]
-            if body:
-                doc.sections = [("文档正文", "\n".join(body))]
-
+        if section_body:
+            doc.sections.append((section_title or "文档正文", "\n".join(section_body)))
         doc.images = _extract_zip_media(path, "word/media/")
     except Exception:
-        return doc
+        return ParsedDoc()  # 解析中途失败不能把部分内容当作完整版本发布
     return doc
 
 
@@ -231,11 +225,10 @@ def parse_pptx(path: Path) -> ParsedDoc:
                         parts.append("\n".join(lines))
             heading = title or f"第 {i} 页"
             body = "\n".join(parts)
-            if body:
-                doc.sections.append((heading, body))
+            doc.sections.append((heading, body))
         doc.page_count = len(prs.slides)
     except Exception:
-        return doc
+        return ParsedDoc()  # 解析中途失败不能把部分内容当作完整版本发布
     return doc
 
 
@@ -268,5 +261,5 @@ def parse_xlsx(path: Path) -> ParsedDoc:
         wb.close()
         doc.page_count = len(doc.sections)
     except Exception:
-        return doc
+        return ParsedDoc()  # 解析中途失败不能把部分内容当作完整版本发布
     return doc

@@ -33,7 +33,6 @@ from app.rag.parsers import (
     parse_pdf,
     parse_pptx,
     parse_xlsx,
-    render_pdf_pages,
 )
 from app.rag.transcribe import to_inline_text, to_knowledge_text, transcribe_image
 
@@ -201,13 +200,15 @@ def _compose_media_doc(rel: str, media_type: str, sections: list[tuple[str, str]
         parts.append(f"## {title}\n\n{body}")
         for img in images_by_page.get(idx, []):
             trans_text = _transcribe_image_ref(img, media_ref=f"{rel}#{img.name}")
-            if trans_text:
-                parts.append(trans_text)
+            if not trans_text:
+                return None
+            parts.append(trans_text)
     for img in tail_images:
         trans_text = _transcribe_image_ref(img, media_ref=f"{rel}#{img.name}")
-        if trans_text:
-            parts.append(trans_text)
-    if not parts:
+        if not trans_text:
+            return None
+        parts.append(trans_text)
+    if not any(body.strip() for _, body in sections) and not images:
         return None
     meta = {
         "scenario": path.parent.name,   # 与 .md 按场景分目录的组织方式一致
@@ -223,10 +224,7 @@ def load_pdf_doc(path: Path, kb_root: Path) -> KnowledgeDoc | None:
     """加载 PDF：文本型抽文本；扫描型（分诊判定）每页渲染 → GLM-4V 转译。"""
     rel = path.resolve().relative_to(kb_root.resolve()).as_posix()
     parsed = parse_pdf(path)
-    if parsed.scanned:
-        pages = render_pdf_pages(path)   # 扫描件：每页变图片，走转译
-        return _compose_media_doc(rel, "pdf", [], pages, path)
-    return _compose_media_doc(rel, "pdf", parsed.sections, [], path)
+    return _compose_media_doc(rel, "pdf", parsed.sections, parsed.images, path)
 
 
 def load_docx_doc(path: Path, kb_root: Path) -> KnowledgeDoc | None:
@@ -278,31 +276,36 @@ def load_video_doc(path: Path, kb_root: Path) -> KnowledgeDoc | None:
 
 def scan_docs(kb_root: Path) -> LoadResult:
     """递归扫描 kb_root 下所有文档：md / 图片 / 文档格式 / 音频 / 视频。"""
+    if not kb_root.is_dir():
+        raise FileNotFoundError(f"知识库目录不存在：{kb_root}")
     result = LoadResult()
     for path in sorted(kb_root.rglob("*")):
         if not path.is_file():
             continue
         suffix = path.suffix.lower()
-        if suffix == ".md":
-            doc = load_doc(path, kb_root)
-        elif suffix in _IMAGE_EXTS:
-            doc = load_image_doc(path, kb_root)
-        elif suffix == ".pdf":
-            doc = load_pdf_doc(path, kb_root)
-        elif suffix == ".docx":
-            doc = load_docx_doc(path, kb_root)
-        elif suffix == ".pptx":
-            doc = load_pptx_doc(path, kb_root)
-        elif suffix == ".xlsx":
-            doc = load_xlsx_doc(path, kb_root)
-        elif suffix in _AUDIO_EXTS:
-            doc = load_audio_doc(path, kb_root)
-        elif suffix in _VIDEO_EXTS:
-            doc = load_video_doc(path, kb_root)
-        else:
-            continue  # 未知格式跳过
+        try:
+            if suffix == ".md":
+                doc = load_doc(path, kb_root)
+            elif suffix in _IMAGE_EXTS:
+                doc = load_image_doc(path, kb_root)
+            elif suffix == ".pdf":
+                doc = load_pdf_doc(path, kb_root)
+            elif suffix == ".docx":
+                doc = load_docx_doc(path, kb_root)
+            elif suffix == ".pptx":
+                doc = load_pptx_doc(path, kb_root)
+            elif suffix == ".xlsx":
+                doc = load_xlsx_doc(path, kb_root)
+            elif suffix in _AUDIO_EXTS:
+                doc = load_audio_doc(path, kb_root)
+            elif suffix in _VIDEO_EXTS:
+                doc = load_video_doc(path, kb_root)
+            else:
+                continue  # 未知格式跳过
+        except Exception:
+            doc = None
         if doc is None:
-            result.skipped.append(path.as_posix())
+            result.skipped.append(path.relative_to(kb_root).as_posix())
         else:
             result.docs.append(doc)
     return result

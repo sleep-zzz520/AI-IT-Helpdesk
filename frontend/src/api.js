@@ -24,7 +24,8 @@ async function request(path, options = {}, authorized = true) {
   let resp;
   try {
     resp = await fetch(`${BASE}${path}`, { ...options, headers });
-  } catch {
+  } catch (error) {
+    if (options.signal?.aborted) throw options.signal.reason || error;
     throw new Error(
       `无法连接后端服务（${BASE}）。请确认后端已启动：cd backend && source ../.venv/bin/activate && uvicorn app.main:app --reload`,
     );
@@ -61,7 +62,7 @@ export const createConversation = () =>
 
 // SSE 流式发消息：Agent 每完成一个节点就通过 onNode 回调推送（执行链路实时跳动），
 // 全部完成返回 done 事件（完整消息 + trace + 总耗时）。
-export async function sendMessageStream(convId, content, image, mode, llmConfigId, onNode, signal) {
+export async function sendMessageStream(convId, content, image, mode, llmConfigId, onNode, signal, requestId = crypto.randomUUID()) {
   let resp;
   try {
     resp = await fetch(`${BASE}/api/conversations/${convId}/messages`, {
@@ -75,6 +76,7 @@ export async function sendMessageStream(convId, content, image, mode, llmConfigI
         image: image ?? null,
         mode,
         llm_config_id: llmConfigId ?? null,
+        request_id: requestId,
       }),
       signal,  // 可取消：开新会话时 abort，旧请求立即断开
     });
@@ -175,6 +177,40 @@ export const fetchKbDocuments = () => request('/api/kb/documents');
 export const fetchKbStats = () => request('/api/kb/stats');
 export const syncKb = () => request('/api/kb/sync', { method: 'POST' });
 export const switchKb = () => request('/api/kb/switch', { method: 'POST' });
+export const rollbackKb = () => request('/api/kb/rollback', { method: 'POST' });
+export const isKbJobRunning = (job) => ['queued', 'running'].includes(job?.status);
+
+export async function fetchKbJob(jobId, { signal, timeoutMs = 15000 } = {}) {
+  const timeout = new AbortController();
+  const timer = setTimeout(() => timeout.abort(new Error('任务状态查询超时，后台任务可能仍在继续，请刷新状态。')), timeoutMs);
+  try {
+    return await request(`/api/kb/jobs/${encodeURIComponent(jobId)}`, {
+      signal: signal ? AbortSignal.any([signal, timeout.signal]) : timeout.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// 只跟踪后台任务，不重新提交同步；卸载组件时取消请求及下一轮等待。
+export async function pollKbJob(jobId, { signal, onUpdate, intervalMs = 1000, timeoutMs = 15000 } = {}) {
+  while (true) {
+    signal?.throwIfAborted();
+    const job = await fetchKbJob(jobId, { signal, timeoutMs });
+    signal?.throwIfAborted();
+    if (!['queued', 'running', 'prepared', 'published', 'failed', 'superseded'].includes(job.status)) {
+      throw new Error(`无法识别同步任务状态：${job.status || '缺失'}，请刷新状态。`);
+    }
+    onUpdate?.(job);
+    if (!isKbJobRunning(job)) return job;
+    await new Promise((resolve, reject) => {
+      const finish = () => { signal?.removeEventListener('abort', abort); resolve(); };
+      const timer = setTimeout(finish, intervalMs);
+      const abort = () => { clearTimeout(timer); reject(signal.reason); };
+      signal?.addEventListener('abort', abort, { once: true });
+    });
+  }
+}
 export const debugKbQuery = (body) =>
   request('/api/kb/debug', { method: 'POST', body: JSON.stringify(body) });
 

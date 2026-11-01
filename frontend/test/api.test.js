@@ -115,7 +115,7 @@ test('SSE parser emits node events and returns done payload', async () => {
   }
 
   const result = await sendMessageStream(
-    7, 'VPN 连不上', null, 'accurate', null, (payload) => nodes.push(payload),
+    7, 'VPN 连不上', null, 'accurate', null, (payload) => nodes.push(payload), undefined, 'retry-key-123',
   )
 
   assert.deepEqual(result, done)
@@ -123,7 +123,7 @@ test('SSE parser emits node events and returns done payload', async () => {
   assert.equal(calls[0].url, '/api/conversations/7/messages')
   assert.equal(calls[0].options.headers.Authorization, 'Bearer valid-token')
   assert.deepEqual(JSON.parse(calls[0].options.body), {
-    content: 'VPN 连不上', image: null, mode: 'accurate', llm_config_id: null,
+    content: 'VPN 连不上', image: null, mode: 'accurate', llm_config_id: null, request_id: 'retry-key-123',
   })
 })
 
@@ -136,4 +136,17 @@ test('SSE error event is surfaced to the caller', async () => {
     sendMessageStream(7, '失败用例', null, 'accurate', null, () => {}),
     /Agent 执行失败，消息已保存/,
   )
+})
+
+test('retrying with the same request id preserves the logical turn key', async () => {
+  const bodies = []
+  globalThis.fetch = async (_url, options) => {
+    bodies.push(JSON.parse(options.body))
+    return sseResponse(['event: done\ndata: {"reply":"ok"}\n\n'])
+  }
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await sendMessageStream(7, '续期', null, 'accurate', null, () => {}, undefined, 'same-retry-key')
+  }
+  assert.deepEqual(bodies[0], bodies[1])
+  assert.equal(bodies[0].request_id, 'same-retry-key')
 })

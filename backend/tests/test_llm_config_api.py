@@ -119,6 +119,36 @@ def test_selected_model_profile_reaches_agent_without_persisting_secret(
     assert "sk-test-private-key" not in stored.api_key_ciphertext
 
 
+def test_fast_mode_cannot_switch_the_project_default_model(
+    api_client, api_users, monkeypatch
+):
+    """旧客户端即使发送 fast，默认 Agent 也只能使用 glm-5.3-flash。"""
+    import app.api.conversations as conversations_api
+
+    conversation = api_client.post("/api/conversations", headers=_auth(api_client), json={})
+    assert conversation.status_code == 200
+    received = {}
+
+    def fake_stream(state):
+        received["model_chain"] = state["model_chain"]
+        final = {
+            **state,
+            "messages": state["messages"] + [{"role": "assistant", "content": "已处理"}],
+            "trace": [],
+        }
+        yield "done", final, 1
+
+    monkeypatch.setattr(conversations_api, "_run_agent_stream", fake_stream)
+    response = api_client.post(
+        f"/api/conversations/{conversation.json()['id']}/messages",
+        headers=_auth(api_client),
+        json={"content": "VPN 连不上", "mode": "fast"},
+    )
+
+    assert response.status_code == 200
+    assert received["model_chain"] == ["glm-5.3-flash"]
+
+
 def test_connection_test_does_not_persist_key_or_return_it(
     api_client, api_users, db_session, llm_encryption_key, monkeypatch
 ):
@@ -172,7 +202,8 @@ def test_agent_llm_nodes_forward_selected_profile(monkeypatch):
 
     def fake_judge(_query, _evidence, incoming_profile):
         seen_profiles.append(incoming_profile)
-        return {"enough": True, "answerable": True, "next_query": ""}
+        return {"enough": True, "answerable": True, "next_query": "",
+                "executable": False, "missing_info": []}
 
     def fake_answer(_query, _evidence, _judge, incoming_profile):
         seen_profiles.append(incoming_profile)

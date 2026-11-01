@@ -17,6 +17,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
+from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -121,6 +122,22 @@ class ExecutionOperation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class AgentRequest(Base):
+    """HTTP 轮次去重：记录终态 SSE，重放不能再次运行 Agent。"""
+    __tablename__ = "agent_requests"
+    __table_args__ = (
+        UniqueConstraint("conversation_id", "actor_id", "request_id", name="uq_agent_request"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"))
+    actor_id: Mapped[str] = mapped_column(String(64))
+    request_id: Mapped[str] = mapped_column(String(128))
+    fingerprint: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(16), default="pending")
+    terminal_event: Mapped[str | None] = mapped_column(Text().with_variant(LONGTEXT(), "mysql"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
 
 class TicketStatusLog(Base):
@@ -237,3 +254,38 @@ class KbDocument(Base):
     changelog: Mapped[str | None] = mapped_column(Text, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class KbSource(Base):
+    """单个受控来源的发布意图、在岗版本与独立删除限制。"""
+    __tablename__ = "kb_sources"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    desired_seq: Mapped[int] = mapped_column(default=0)
+    active_job: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    previous_job: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    denied_json: Mapped[str] = mapped_column(Text().with_variant(LONGTEXT(), "mysql"), default="[]")
+    known_json: Mapped[str] = mapped_column(Text().with_variant(LONGTEXT(), "mysql"), default="{}")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class KbSyncJob(Base):
+    """持久同步任务；任务目标不可改写，重试只增加fence和attempts。"""
+    __tablename__ = "kb_sync_jobs"
+    __table_args__ = (UniqueConstraint("source_id", "seq", name="uq_kb_source_seq"),)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    source_id: Mapped[str] = mapped_column(String(64), index=True)
+    seq: Mapped[int] = mapped_column()
+    commit_sha: Mapped[str] = mapped_column(String(64))
+    snapshot_hash: Mapped[str] = mapped_column(String(64))
+    profile: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(16), default="queued", index=True)
+    fence: Mapped[int] = mapped_column(default=0)
+    attempts: Mapped[int] = mapped_column(default=0)
+    lease_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    collection: Mapped[str] = mapped_column(String(64), unique=True)
+    snapshot_path: Mapped[str] = mapped_column(String(255))
+    manifest_json: Mapped[str | None] = mapped_column(Text().with_variant(LONGTEXT(), "mysql"), nullable=True)
+    report_json: Mapped[str | None] = mapped_column(Text().with_variant(LONGTEXT(), "mysql"), nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())

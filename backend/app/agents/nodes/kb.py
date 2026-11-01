@@ -49,6 +49,9 @@ def _to_kb_match(hit) -> dict:
         "risk": hit.metadata.get("risk", "high"),
         "source": hit.metadata.get("source_url", ""),
         "score": hit.score,
+        "document_id": hit.metadata.get("doc_id"),
+        "source_id": hit.metadata.get("source_id"),
+        "generation_collection": getattr(hit, "source_collection", ""),
     }
 
 

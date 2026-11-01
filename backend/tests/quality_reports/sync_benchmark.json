@@ -1,0 +1,54 @@
+{
+  "kind": "synthetic_offline",
+  "docs": 100,
+  "embedding": "fake constant vectors; no network calls",
+  "storage": "temporary SQLite and Chroma; removed after run",
+  "measure": "embedding input count, including duplicate probe; elapsed local observation",
+  "initial": {
+    "label": "initial",
+    "embedded_texts": 300,
+    "elapsed_seconds": 1.122499,
+    "chunks": 200,
+    "added": 100,
+    "updated": 0,
+    "deleted": 0,
+    "failed": []
+  },
+  "incremental": {
+    "label": "one_changed_document",
+    "embedded_texts": 3,
+    "elapsed_seconds": 0.059113,
+    "chunks": 200,
+    "added": 0,
+    "updated": 1,
+    "deleted": 0,
+    "failed": []
+  },
+  "candidate_rebuild": {
+    "label": "empty_candidate_full_rebuild",
+    "embedded_texts": 300,
+    "elapsed_seconds": 0.495639,
+    "chunks": 200,
+    "added": 0,
+    "updated": 0,
+    "deleted": 0,
+    "failed": []
+  },
+  "incremental_embedding_saving_percent": 99.0,
+  "corrupt_existing_source": {
+    "label": "existing_document_parse_failure",
+    "embedded_texts": 0,
+    "elapsed_seconds": 0.052715,
+    "chunks": 200,
+    "added": 0,
+    "updated": 0,
+    "deleted": 0,
+    "failed": [
+      [
+        "0.md",
+        "源文件解析或转译失败，保留旧知识"
+      ]
+    ],
+    "preserved_document_chunks": 2
+  }
+}

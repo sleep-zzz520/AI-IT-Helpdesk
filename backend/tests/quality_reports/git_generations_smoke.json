@@ -1,0 +1,76 @@
+{
+  "scope": "isolated source, real MySQL and Chroma, temporary vectors; no production pointer changes",
+  "mysql_version": "8.0.43",
+  "real_embedding": false,
+  "source_commit": "07305a027bca38a6db4ebfc98384a5cf73df7661",
+  "documents": 16,
+  "phases": {
+    "full_rebuild_reference": {
+      "embedding_inputs": 96,
+      "chunks": 80,
+      "elapsed_ms": 267.53
+    },
+    "initial_generation": {
+      "added": [
+        "email/config-guide.md",
+        "email/mailbox-quota.md",
+        "email/troubleshoot.md",
+        "finance/expense-reimbursement.md",
+        "general/vacation-policy.md",
+        "hr/onboarding-guide.md",
+        "password/account-lock.md",
+        "password/password-policy.md",
+        "password/reset-sop.md",
+        "software/install-guide.md",
+        "software/license-activation.md",
+        "software/software-update.md",
+        "vpn/cert-renewal.md",
+        "vpn/client-config.md",
+        "vpn/error-codes.md",
+        "vpn/vpn-install-guide.md"
+      ],
+      "deleted": [],
+      "elapsed_ms": 378.96,
+      "embedding_inputs": 64,
+      "reused_vectors": 0,
+      "skipped_count": 0,
+      "updated": [],
+      "measured_embedding_inputs": 64
+    },
+    "ten_duplicate_deliveries": {
+      "jobs": 1,
+      "embedding_inputs": 0
+    },
+    "one_document_body_change": {
+      "added": [],
+      "deleted": [],
+      "elapsed_ms": 310.84,
+      "embedding_inputs": 1,
+      "reused_vectors": 64,
+      "skipped_count": 15,
+      "updated": [
+        "vpn/cert-renewal.md"
+      ],
+      "measured_embedding_inputs": 1
+    },
+    "metadata_only_change": {
+      "added": [],
+      "deleted": [],
+      "elapsed_ms": 302.75,
+      "embedding_inputs": 0,
+      "reused_vectors": 65,
+      "skipped_count": 15,
+      "updated": [
+        "vpn/cert-renewal.md"
+      ],
+      "measured_embedding_inputs": 0
+    }
+  },
+  "fault_injection": {
+    "failed_build_kept_active": true,
+    "confirmed_delete_hidden_on_failed_build": true,
+    "rollback_did_not_restore_deleted": true
+  },
+  "retained_generations": 3,
+  "storage_bytes": 7484412
+}

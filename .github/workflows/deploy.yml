@@ -46,6 +46,52 @@ jobs:
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/known_hosts"
 
+      - name: Reject a superseded deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tested_sha="$(git rev-parse HEAD)"
+          current_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)"
+          if [ "$tested_sha" != "$current_sha" ]; then
+            echo "A newer main revision exists; this deployment is superseded." >&2
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Export the tested Git knowledge snapshot
+        run: |
+          python -m pip install PyYAML==6.0.2
+          PYTHONPATH=backend python - <<'PY'
+          from pathlib import Path
+          from app.rag.git_source import read_snapshot, write_export
+          snapshot = read_snapshot(Path.cwd(), "HEAD", "docs/knowledge")
+          write_export(snapshot, Path("knowledge-source.json"))
+          print(f"Knowledge source: {snapshot.commit}, {len(snapshot.docs)} documents, {snapshot.snapshot_hash}")
+          PY
+
+      - name: Back up production database and knowledge volume
+        run: |
+          ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_PATH" <<'REMOTE'
+          set -euo pipefail
+          cd "$1"
+          mkdir -p backups
+          stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+          if docker compose ps --status running --services | grep -qx backend; then
+            docker compose stop backend
+            trap 'docker compose start backend >/dev/null || true' EXIT
+          fi
+          if docker compose ps --status running --services | grep -qx mysql; then
+            docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysqldump -uroot --single-transaction --routines --triggers "$MYSQL_DATABASE"' > "backups/pre-sync-$stamp.sql"
+          fi
+          if docker compose ps --all --services | grep -qx backend; then
+            docker compose run --rm --no-deps -T backend python -c 'import sys,tarfile; t=tarfile.open(fileobj=sys.stdout.buffer, mode="w|gz"); t.add("/.rag", arcname="rag"); t.close()' > "backups/pre-sync-$stamp-rag.tar.gz"
+          fi
+          REMOTE
+
       - name: Synchronize application source
         run: |
           set -euo pipefail
@@ -72,7 +118,47 @@ jobs:
         run: |
           set -euo pipefail
           ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_PATH' && docker compose --profile public config --quiet && docker compose --profile public up -d --build --force-recreate && docker compose ps"
+            "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_PATH" <<'REMOTE'
+          set -euo pipefail
+          cd "$1"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          path = Path(".env")
+          updates = {"GLM_MODELS": "glm-5.3-flash", "GLM_MODELS_FAST": "glm-5.3-flash",
+                     "GLM_JSON_MODELS": "glm-5.3-flash", "KB_SYNC_MODE": "git"}
+          lines = path.read_text().splitlines()
+          output, seen = [], set()
+          for line in lines:
+              key = line.split("=", 1)[0].strip()
+              if key in updates:
+                  output.append(f"{key}={updates[key]}")
+                  seen.add(key)
+              else:
+                  output.append(line)
+          output.extend(f"{key}={value}" for key, value in updates.items() if key not in seen)
+          temporary = path.with_name(".env.release-next")
+          descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+          with os.fdopen(descriptor, "w") as handle:
+              handle.write("\n".join(output) + "\n")
+              handle.flush()
+              os.fsync(handle.fileno())
+          os.replace(temporary, path)
+          PY
+          docker compose --profile public config --quiet
+          docker compose --profile public up -d --build --force-recreate
+          docker compose ps
+          REMOTE
+
+      - name: Build, verify and publish the Git knowledge generation
+        run: |
+          ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_PATH' && docker compose exec -T backend python -m app.rag.generations --publish --timeout 900"
+
+      - name: Check the published hybrid retrieval path
+        run: |
+          ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_PATH' && docker compose exec -T backend python -m app.rag.release_check"
 
       - name: Check the public service
         run: |

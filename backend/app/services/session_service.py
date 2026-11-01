@@ -36,9 +36,9 @@ def save_turn(db: Session, conv: Conversation, state: dict, elapsed_ms: int | No
     已存 N 条，state 里第 N 条之后的才是本轮新增。
     elapsed_ms：本轮 Agent 总耗时，挂在本轮新增的 assistant 消息上。
 
-    约束：**同一会话需串行调用**（前端 sending 状态已挡单页连点）。
-    并发多请求下长度对比基于各自 Session 快照，可能重复追加（罕见场景，
-    演示项目不引入行锁；生产可换 SELECT ... FOR UPDATE 串行化）。
+    约束：**同一会话需串行调用**。HTTP 入口用同机跨进程会话锁强制执行，
+    并用 AgentRequest 台账阻止同轮重放；本函数的长度比较本身不提供请求幂等。
+    多主机调用需集中式锁或数据库版本控制，不能只依赖前端 sending 状态。
     """
     new_msgs = state.get("messages", [])[len(conv.messages):]
     for m in new_msgs:

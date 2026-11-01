@@ -24,6 +24,7 @@ export default function App() {
   // 避免旧回复污染新会话（异步竞态：用户回复期间开新会话）
   const genRef = useRef(0)
   const abortRef = useRef(null)  // 当前进行中 SSE 请求的 AbortController
+  const retryTurnRef = useRef(null) // 同一轮断线重发复用 request_id，成功后再生成新键
   const isAdmin = user?.role === 'admin'
 
   // 启动时恢复登录态：有 token 就拉一次 /me 验证有效性（过期则回到登录页）
@@ -83,32 +84,17 @@ export default function App() {
     setSelectedLlmConfigId(null)
   }
 
-  // 模型链模式：fast（速度）/ accurate（能力优先，默认），localStorage 记住选择
-  const [mode, setMode] = useState(() => {
-    try {
-      const saved = localStorage.getItem('glm_mode')
-      return saved === 'fast' || saved === 'accurate' ? saved : 'accurate'  // 脏值兜底
-    } catch {
-      return 'accurate'  // 隐私模式/存储被禁时兜底
-    }
-  })
-
-  function switchMode(m) {
-    setMode(m)
-    try {
-      localStorage.setItem('glm_mode', m)
-    } catch {
-      /* 隐私模式/存储被禁：切换本次会话内生效即可，不持久化 */
-    }
-  }
-
   async function handleSend(content, image) {
     if (!conv || sending) return
+    const signature = JSON.stringify([conv.id, content, image ?? null, selectedLlmConfigId])
+    const retrying = retryTurnRef.current?.signature === signature
+    const requestId = retrying ? retryTurnRef.current.requestId : crypto.randomUUID()
+    retryTurnRef.current = { signature, requestId }
     const myGen = genRef.current   // 记录本次请求所属的会话代际
     setSending(true)
     setError(null)
     // 乐观更新：用户气泡【立即】显示（含截图），不等 Agent 跑完
-    setMessages((prev) => [...prev, { role: 'user', content, image }])
+    if (!retrying) setMessages((prev) => [...prev, { role: 'user', content, image }])
     // 预置"执行中"占位节点：首轮必经 intent∥extract，立即给用户"正在干活"的反馈
     setTraces((prev) => [...prev, { node: 'intent', pending: true }, { node: 'extract', pending: true }])
     // 可取消的 SSE 请求：开新会话时 abort（释放连接，旧数据不落地到 UI）
@@ -116,7 +102,8 @@ export default function App() {
     abortRef.current = controller
     try {
       // SSE 流式：Agent 每完成一个节点，右侧执行链路实时点亮（可观测性核心卖点）
-      const payload = await sendMessageStream(conv.id, content, image, mode, selectedLlmConfigId, (ev) => {
+      const payload = await sendMessageStream(
+        conv.id, content, image, 'accurate', selectedLlmConfigId, (ev) => {
         if (genRef.current !== myGen) return  // 已开新会话：丢弃旧节点的实时更新
         setTraces((prev) => {
           // 真实节点替换同名的 pending 占位，其余保留追加
@@ -124,9 +111,10 @@ export default function App() {
           const rest = prev.filter((t) => !(t.pending && incoming.has(t.node)))
           return [...rest, ...ev.traces]
         })
-      }, controller.signal)
+      }, controller.signal, requestId)
       // done 后检查：期间是否开了新会话（异步竞态核心防护）
       if (genRef.current !== myGen) return
+      retryTurnRef.current = null
       // 追加 assistant 回复（保留本地图片气泡）+ 全量 trace 覆盖 + 工单状态
       setMessages((prev) => {
         const fresh = payload.messages.slice(prev.length)
@@ -214,18 +202,12 @@ export default function App() {
               {selectedLlmConfig.name}
             </span>
           ) : (
-            <div className="mode-control" aria-label="项目默认模型模式">
-              {[['fast', '速度'], ['accurate', '准确']].map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => switchMode(key)}
-                  className={`press ${mode === key ? 'is-active' : ''}`}
-                  title={key === 'fast' ? '速度优先：glm-4-flash 打头，快但能力弱' : '能力优先：glm-4.7-flash 打头，最准'}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <span
+              className="model-context mono max-w-36 truncate"
+              title="项目默认回答模型：glm-5.3-flash"
+            >
+              GLM-5.3-Flash
+            </span>
           )}
 
           <span className={`user-context mono ${isAdmin ? 'is-admin' : ''}`} title={`租户 ${user.tenant_id}`}>

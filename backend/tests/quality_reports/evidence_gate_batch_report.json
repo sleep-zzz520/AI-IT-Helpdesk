@@ -1,0 +1,1196 @@
+{
+  "scope": "合成控制流门禁测评，不测真实检索正确率、幻觉率或LLM忠实度",
+  "cases": 84,
+  "results": [
+    {
+      "case": "deny",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "deny",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "deny",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "deny",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "deny",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "deny",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "unanswerable",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "unanswerable",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "unanswerable",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "unanswerable",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "unanswerable",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "unanswerable",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "empty",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "empty",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "empty",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "empty",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "empty",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "empty",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "string_true",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "string_true",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "string_true",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "string_true",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "string_true",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "string_true",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "string_false",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "string_false",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "string_false",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "string_false",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "string_false",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "string_false",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "integer_true",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "integer_true",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "integer_true",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "integer_true",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "integer_true",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "integer_true",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "integer_false",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "integer_false",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "integer_false",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "integer_false",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "integer_false",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "integer_false",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "missing_schema",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "missing_schema",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "missing_schema",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "missing_schema",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "missing_schema",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "missing_schema",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "bad_next_query",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "bad_next_query",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "bad_next_query",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "bad_next_query",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "bad_next_query",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "bad_next_query",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "bad_missing_info",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "bad_missing_info",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "bad_missing_info",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "bad_missing_info",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "bad_missing_info",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "bad_missing_info",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "non_object",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 0,
+        "error": "AttributeError"
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "non_object",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 0,
+        "error": "AttributeError"
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "non_object",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 0,
+        "error": "AttributeError"
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "non_object",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 0,
+        "error": "AttributeError"
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "non_object",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 0,
+        "error": "AttributeError"
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "non_object",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 0,
+        "error": "AttributeError"
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "invalid_json",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 0,
+        "refused": true
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "invalid_json",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "invalid_json",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "invalid_json",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "invalid_json",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "invalid_json",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "rate_limit",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 0,
+        "refused": true
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "rate_limit",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "rate_limit",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "rate_limit",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "rate_limit",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "rate_limit",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": false,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 0,
+        "refused": true
+      }
+    },
+    {
+      "case": "valid_answer",
+      "score": 0.01,
+      "route": "vector",
+      "expected_generate": true,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 1,
+        "refused": false
+      }
+    },
+    {
+      "case": "valid_answer",
+      "score": 0.01,
+      "route": "bm25",
+      "expected_generate": true,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 1,
+        "refused": false
+      }
+    },
+    {
+      "case": "valid_answer",
+      "score": 0.55,
+      "route": "vector",
+      "expected_generate": true,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 1,
+        "refused": false
+      }
+    },
+    {
+      "case": "valid_answer",
+      "score": 0.55,
+      "route": "bm25",
+      "expected_generate": true,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 1,
+        "refused": false
+      }
+    },
+    {
+      "case": "valid_answer",
+      "score": 0.99,
+      "route": "vector",
+      "expected_generate": true,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 1,
+        "refused": false
+      }
+    },
+    {
+      "case": "valid_answer",
+      "score": 0.99,
+      "route": "bm25",
+      "expected_generate": true,
+      "before": {
+        "generate_calls": 1,
+        "refused": false
+      },
+      "after": {
+        "generate_calls": 1,
+        "refused": false
+      }
+    }
+  ],
+  "before": {
+    "unsafe_cases": 78,
+    "unauthorized_generate": 70,
+    "normal_controls": 6,
+    "normal_generated": 6,
+    "errors": 6
+  },
+  "after": {
+    "unsafe_cases": 78,
+    "unauthorized_generate": 0,
+    "normal_controls": 6,
+    "normal_generated": 6,
+    "errors": 0
+  }
+}

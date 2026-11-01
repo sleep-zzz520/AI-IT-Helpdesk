@@ -18,28 +18,24 @@ class Settings:
     # ===== GLM（智谱）=====
     ZHIPU_API_KEY: str = os.getenv("ZHIPU_API_KEY", "")
     GLM_BASE_URL: str = os.getenv("GLM_BASE_URL", "https://open.bigmodel.cn/api/paas/v4")
-    # 模型链：按优先级排列，限流/不可用时自动切下一个（故障转移）
-    # 注意：glm-4.6-flash 部分账号 403 无权访问（实测），已从默认链移除；
-    # 4.7/4.5 是深度思考模型，对话路径 OK，JSON 任务走 GLM_JSON_MODELS。
+    # 项目默认文本模型统一锁定 glm-5.3-flash。发生限流或异常时由 Agent 的
+    # 安全/转人工路径处理，不能悄悄换到能力、输出风格或成本不同的模型。
     GLM_MODELS: list[str] = [
         m.strip() for m in os.getenv(
-            "GLM_MODELS", "glm-4.7-flash,glm-4.5-flash,glm-4-flash"
+            "GLM_MODELS", "glm-5.3-flash"
         ).split(",") if m.strip()
     ]
-    # 速度优先链（前端可切换）：glm-4-flash 最快但能力最弱，放最前；
-    # 4.7 可用时仍能兜底（游标机制：成功后记住位置，会稳定在最快的模型上）
+    # 保留旧字段以兼容已有客户端传入的 fast 模式，但仍固定同一个项目模型。
     GLM_MODELS_FAST: list[str] = [
         m.strip() for m in os.getenv(
-            "GLM_MODELS_FAST", "glm-4-flash,glm-4.7-flash,glm-4.5-flash"
+            "GLM_MODELS_FAST", "glm-5.3-flash"
         ).split(",") if m.strip()
     ]
-    # JSON 结构化任务专用链（chat_json：intent/extract/judge 等）：
-    # GLM-4.7/4.5 是「深度思考」模型——max_tokens 受限时把配额全花在
-    # reasoning_content 上，content 返回空串，JSON 解析必失败（实测踩坑）。
-    # glm-4-flash 非思考模型，直接输出 JSON，快且稳——JSON 任务必须优先。
+    # intent / extract / judge 等结构化文本任务也使用同一个项目模型。
+    # chat_json 保留 JSON 解析与一次重试，处理服务偶发空内容或格式异常。
     GLM_JSON_MODELS: list[str] = [
         m.strip() for m in os.getenv(
-            "GLM_JSON_MODELS", "glm-4-flash,glm-4.7-flash"
+            "GLM_JSON_MODELS", "glm-5.3-flash"
         ).split(",") if m.strip()
     ]
     # 视觉模型链（OCR 用）
@@ -54,6 +50,10 @@ class Settings:
     LLM_CONFIG_ENCRYPTION_KEY: str = os.getenv("LLM_CONFIG_ENCRYPTION_KEY", "")
     # 自定义模型请求的上限。模型服务无响应时要能回到 Agent 的安全兜底，不能无限挂起。
     LLM_REQUEST_TIMEOUT: float = float(os.getenv("LLM_REQUEST_TIMEOUT", "60"))
+    # ponytail: 单机/共享本地卷上的 worker 共用文件锁预算；多主机需改为集中式准入。
+    AGENT_MAX_CONCURRENT: int = max(1, int(os.getenv("AGENT_MAX_CONCURRENT", "8")))
+    AGENT_MAX_INFLIGHT_HTTP: int = max(1, int(os.getenv("AGENT_MAX_INFLIGHT_HTTP", "16")))
+    AGENT_LOCK_DIR: str = os.getenv("AGENT_LOCK_DIR", str(BASE_DIR / ".rag" / "agent_locks"))
     # 默认只接受 HTTPS 公网端点；本地 Ollama/vLLM 演示需要显式打开该开关。
     LLM_ALLOW_PRIVATE_ENDPOINTS: bool = (
         os.getenv("LLM_ALLOW_PRIVATE_ENDPOINTS", "false").lower() == "true"
@@ -65,6 +65,8 @@ class Settings:
     MYSQL_USER: str = os.getenv("MYSQL_USER", "helpdesk")
     MYSQL_PASSWORD: str = os.getenv("MYSQL_PASSWORD", "")
     MYSQL_DB: str = os.getenv("MYSQL_DB", "it_helpdesk")
+    DB_POOL_SIZE: int = max(1, int(os.getenv("DB_POOL_SIZE", "16")))
+    DB_POOL_TIMEOUT: float = float(os.getenv("DB_POOL_TIMEOUT", "2"))
     # TiDB Cloud Serverless 等托管 MySQL 强制 TLS：云端置 true，
     # 本地 MySQL 保持 false（零开销）。CA 路径仅 Linux 容器默认有效
     # （Debian/Ubuntu 的 ca-certificates 包；macOS 本地不用开）。
@@ -84,6 +86,15 @@ class Settings:
     # ChromaDB 持久化目录（Docker 挂卷落盘；切 Milvus 时此项失效）
     KB_VECTOR_DIR: str = os.getenv("KB_VECTOR_DIR", str(BASE_DIR / ".rag" / "kb_chroma"))
     KB_COLLECTION: str = os.getenv("KB_COLLECTION", "kb_docs")  # Chroma 要求 ≥3 字符
+    # 新流程通过Compose显式启用；本地旧同步命令保留以便教学/独立语料兼容。
+    KB_SYNC_MODE: str = os.getenv("KB_SYNC_MODE", "legacy")
+    KB_SOURCE_ID: str = os.getenv("KB_SOURCE_ID", "shared-it-knowledge")
+    KB_GIT_REPO: str = os.getenv("KB_GIT_REPO", str(BASE_DIR))
+    KB_GIT_REF: str = os.getenv("KB_GIT_REF", "HEAD")
+    KB_GIT_SUBDIR: str = os.getenv("KB_GIT_SUBDIR", "docs/knowledge")
+    KB_GIT_EXPORT: str = os.getenv("KB_GIT_EXPORT", "")
+    KB_SYNC_STATE_DIR: str = os.getenv("KB_SYNC_STATE_DIR", str(BASE_DIR / ".rag" / "sync"))
+    KB_PIPELINE_EPOCH: str = os.getenv("KB_PIPELINE_EPOCH", "1")
 
     # ===== 蓝绿切换（Phase 5）=====
     # 两套 Chroma collection 交替承载索引，任何时刻只有一套"在岗"（active）：
@@ -99,11 +110,26 @@ class Settings:
     # ===== 混合检索（Phase 2）=====
     # RRF 融合参数：score = Σ weight / (rrf_k + rank)；k 越大越平滑
     RRF_K: float = float(os.getenv("RRF_K", "60"))
+    # 两条召回路默认等权。保留独立权重，便于基于固定 Gold Chunk 评测
+    # 调整词法/语义信号的相对影响；1.0 / 1.0 与历史行为逐位一致。
+    RRF_VECTOR_WEIGHT: float = float(os.getenv("RRF_VECTOR_WEIGHT", "1.0"))
+    RRF_BM25_WEIGHT: float = float(os.getenv("RRF_BM25_WEIGHT", "1.0"))
     # 双路召回数（BM25 / 向量各召回多少条再融合）
     RRF_RECALL_N: int = int(os.getenv("RRF_RECALL_N", "10"))
-    # 智谱 Rerank 二次精排开关（付费模型，按需开启）
+    # RRF 融合后、来源上限前保留多少原始 Chunk。0 表示沿用历史动态值
+    # ``top_k * 2``（线上 top_k=5 时为 10）；大于 0 时只会扩大候选池，
+    # 仍由来源上限和最终 Top-K 约束返回内容。
+    RRF_FUSION_CANDIDATE_N: int = int(os.getenv("RRF_FUSION_CANDIDATE_N", "0"))
+    # Top-K 中同一来源文档最多保留的子 Chunk 数。保留两个相邻/互补段落，
+    # 可避免“文档命中但答案段被同文档另一段挤掉”；回答上下文仍按来源去重。
+    RAG_MAX_CHUNKS_PER_SOURCE: int = int(os.getenv("RAG_MAX_CHUNKS_PER_SOURCE", "2"))
+    # 智谱 Rerank 二次精排开关。当前固定 Gold Chunk 对照出现明显退化，
+    # 默认保持关闭；只有新的隔离实验有收益时才允许显式开启。
     RERANK_ENABLED: bool = os.getenv("RERANK_ENABLED", "false").lower() == "true"
-    # 精排后保留条数（召回 10 条精排取 5）
+    # Rerank 接收的原始子 Chunk 数。它必须大于最终 Top-K，才能在来源上限
+    # 之前判断同一文档里究竟哪一段更贴近问题；16 覆盖当前最多 20 条双路候选。
+    RERANK_CANDIDATE_N: int = int(os.getenv("RERANK_CANDIDATE_N", "16"))
+    # 保留旧环境变量的兼容声明；最终返回条数以 retrieve(top_k=...) 为准。
     RERANK_TOP_N: int = int(os.getenv("RERANK_TOP_N", "5"))
 
     # ===== 联合检索（多库，Phase 5）=====

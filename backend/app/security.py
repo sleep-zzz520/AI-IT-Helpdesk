@@ -127,6 +127,10 @@ def get_current_user(
     user = db.get(User, uid)
     if user is None or not user.active:
         raise HTTPException(status_code=401, detail="账号不存在或已被禁用")
+    # 身份快照已读完，尽早归还连接，不能在整段 SSE 期间占着认证连接。
+    # 路由会再开业务 Session；并发认证若占满连接池，会让所有业务查询互相等待。
+    db.expunge(user)
+    db.rollback()
     return user
 
 

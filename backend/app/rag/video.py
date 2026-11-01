@@ -21,33 +21,40 @@ from app.rag.parsers import ImageRef
 
 
 def extract_frames(video_path: Path, max_frames: int | None = None) -> list[ImageRef]:
-    """等间隔抽帧（每 3 秒一帧，上限 max_frames，默认配置值）。
+    """覆盖全片均匀抽样（约每 3 秒一个名额，上限 max_frames）。
 
-    抽帧间隔固定 3 秒而非按视频长度换算：知识视频通常十几秒~几分钟，
-    3 秒一帧能覆盖画面变化；超长视频由 max_frames 兜底截断。
-    返回 ImageRef 列表（loader 统一走图片转译链路，media_ref 带 #frame-N 定位）。
+    帧名包含真实时间戳，便于回到视频原位；超过预算时仍覆盖最后一帧。
     """
-    max_frames = max_frames or settings.VIDEO_MAX_FRAMES
+    max_frames = settings.VIDEO_MAX_FRAMES if max_frames is None else max_frames
+    if max_frames <= 0:
+        return []
     frames: list[ImageRef] = []
     try:
+        # ponytail: 两遍解码换取可变帧率/缺失时长元数据下的全片覆盖，内存仅存 N 帧。
+        # 大视频后续可用时间戳 seek 优化，不能再退化为仅取开头。
         with av.open(str(video_path)) as container:
             stream = container.streams.video[0]
+            total = sum(1 for _ in container.decode(stream))
             fps = float(stream.average_rate or 30)
-            step = max(1, int(fps * 3))  # 3 秒 = 3*fps 帧取 1
+        if not total:
+            return []
+        count = min(max_frames, max(1, int((total - 1) / (fps * 3)) + 1))
+        indices = ({0} if count == 1 else
+                   {round(i * (total - 1) / (count - 1)) for i in range(count)})
+        with av.open(str(video_path)) as container:
+            stream = container.streams.video[0]
             for i, frame in enumerate(container.decode(stream)):
-                if len(frames) >= max_frames:
-                    break
-                if i % step != 0:
+                if i not in indices:
                     continue
                 buf = io.BytesIO()
                 frame.to_image().save(buf, format="PNG")
+                timestamp = float(frame.time) if frame.time is not None else i / fps
                 frames.append(ImageRef(
-                    name=f"frame-{len(frames) + 1}.png",
-                    data=buf.getvalue(),
-                    page=0,  # 视频帧统一放文档末尾（帧间无章节语义）
+                    name=f"frame-{len(frames) + 1}-at-{timestamp:.3f}s.png",
+                    data=buf.getvalue(), page=0,
                 ))
     except Exception:
-        return frames
+        return []  # 部分解码失败不能冒充完整视频
     return frames
 
 

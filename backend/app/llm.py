@@ -56,8 +56,8 @@ _LLM_LOCK = threading.Lock()
 def _pick_chain(model_chain: list[str], now: float) -> list[str]:
     """生成本次尝试顺序：游标避让 + 黑名单过滤 + TTL 到期回链头探测。
 
-    游标按链独立：前端切换「速度/准确」时链变了，应回到新链的链头
-    （fast 链永远是 glm-4-flash 优先），而不是继承另一条链的游标位置。
+    游标按链独立：调用方显式传入不同模型链时，应回到新链的链头，
+    而不是继承另一条链的游标位置。
     """
     global _TRY_MODEL, _TRY_CHAIN
     with _LLM_LOCK:
@@ -169,19 +169,17 @@ def chat_json(messages: list[dict], temperature: float = 0.1,
 
     用 response_format 强制 JSON 模式，再兜底清洗：
     即使模型偶尔返回 ```json {...} ``` 或夹带废话，也能解析出字典。
-    max_tokens=1024：JSON 本体虽小，但深度思考模型（GLM-4.7/4.5）会先写长
-    reasoning_content——256 会被思考吃光，content 返回空（实测：4.7 在
-    json_object 模式下 1024 仍可能空，所以 JSON 任务用非思考模型链）。
+    max_tokens=1024：结构化输出本体虽小，也为模型的推理与最终 JSON 预留
+    足够空间；空内容或非法 JSON 会走一次确定性重试。
 
-    model_chain：可选覆盖（前端"速度/准确"切换传 GLM_MODELS_FAST）；
-    None = GLM_JSON_MODELS（glm-4-flash 优先：非思考、直接输出 JSON，实测稳）。
+    model_chain：可选覆盖（旧客户端的 fast/accurate 请求仍可传入）；
+    None = GLM_JSON_MODELS，项目默认同样固定为 glm-5.3-flash。
 
     重试：免费模型高峰会【间歇性返回空内容】（实测遇到），此时 JSON 解析必失败。
     与其直接兜底转人工，不如重试一次——游标已前进，下次会换到下一个模型，
     大概率拿到正常结果。最多 2 次调用，成本可控。
     """
-    # 结构化任务专用链：避免 4.7/4.5 思考模型 content 空导致解析失败；
-    # 显式传入 model_chain（前端速度/准确切换）时尊重调用方
+    # 结构化任务默认走 GLM_JSON_MODELS；显式传入的链仅供兼容调用方覆盖。
     chain = model_chain if model_chain is not None else settings.GLM_JSON_MODELS
 
     def _call() -> tuple[object, str]:

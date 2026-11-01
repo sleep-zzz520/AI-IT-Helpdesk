@@ -1,0 +1,24 @@
+{
+  "scope": "two short real API compatibility probes; not a quality benchmark",
+  "configured_models": [
+    "glm-5.3-flash"
+  ],
+  "results": [
+    {
+      "kind": "chat",
+      "status": "success",
+      "model": "glm-5.3-flash",
+      "elapsed_seconds": 3.53,
+      "response": "OK"
+    },
+    {
+      "kind": "chat_json",
+      "status": "success",
+      "model": "glm-5.3-flash",
+      "elapsed_seconds": 1.82,
+      "response": {
+        "ok": true
+      }
+    }
+  ]
+}

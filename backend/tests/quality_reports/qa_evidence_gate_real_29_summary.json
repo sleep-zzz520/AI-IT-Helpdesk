@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "duration_seconds": 218.2,
+  "hard_budget_seconds": 600,
+  "scope": "真实检索+judge+生成；已完成题缓存复用，跳过指标留空，故障不算行为通过",
+  "quality_metrics_requested": false,
+  "stage": {
+    "stage": "real_29_question_evaluation",
+    "status": "completed",
+    "cases_completed": 29
+  },
+  "cases_completed": 29,
+  "cases_requested": 29,
+  "report": "qa_evidence_gate_real_29.json"
+}

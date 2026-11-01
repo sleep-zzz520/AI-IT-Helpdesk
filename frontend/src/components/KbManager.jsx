@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   ArrowClockwise, CaretDown, CaretRight, MagnifyingGlass, Swap,
 } from '@phosphor-icons/react'
 import {
   debugKbQuery, fetchFeedbackAnalysis, fetchKbDocuments, fetchKbStats,
-  switchKb, syncKb,
+  isKbJobRunning, pollKbJob, rollbackKb, switchKb, syncKb,
 } from '../api'
 
 // 过期预警：≤0 已过期（红）/ ≤30 天（黄）/ 其余（正常）
@@ -23,18 +23,22 @@ const STATUS_LABEL = { active: '在库', removed: '已删除', inactive: '停用
 const CATEGORY_LABEL = { missing: '文档缺失', stale: '文档过时', other: '其他' }
 
 // ===== 库状态卡：蓝绿状态 + 同步 + 切换 =====
-function StatsCard({ stats, busy, onSync, onSwitch }) {
+function StatsCard({ stats, busy, onSync, onSwitch, onRollback }) {
   if (!stats) return null
   // 独立库（蓝绿之外，如 kb_docs_scale 千级压测语料）→ 展示规模
+  const gitMode = stats.mode === 'git'
   const extras = Object.entries(stats.extra_collections || {})
   return (
     <div className="rounded-[12px] border p-4" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
           <Stat k="在岗库" v={<span className="mono">{stats.active_collection}</span>} />
-          <Stat k="候选库" v={<span className="mono">{stats.candidate_collection}</span>} />
+          {gitMode ? <>
+            <Stat k="在岗版本" v={stats.active_generation || '尚未发布'} />
+            <Stat k="来源提交" v={<span className="mono" title={stats.source_commit}>{stats.source_commit?.slice(0, 12) || '—'}</span>} />
+          </> : <Stat k="候选库" v={<span className="mono">{stats.candidate_collection}</span>} />}
           <Stat k="在岗 chunks" v={stats.active_chunks} />
-          <Stat k="候选 chunks" v={stats.candidate_chunks} />
+          {!gitMode && <Stat k="候选 chunks" v={stats.candidate_chunks} />}
           {extras.map(([name, n]) => (
             <Stat key={name} k="独立库" v={<span className="mono">{name}（{n} chunks）</span>} />
           ))}
@@ -47,25 +51,33 @@ function StatsCard({ stats, busy, onSync, onSwitch }) {
             disabled={busy}
             className="press flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs disabled:opacity-50"
             style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}
-            title="全量写入候选库，不影响线上检索"
+            title={gitMode ? '创建固定 Git 快照的同步任务，完成后需发布生效' : '全量写入候选库，不影响线上检索'}
           >
             <ArrowClockwise size={13} className={busy ? 'animate-spin' : ''} />
-            {busy ? '同步中…' : '同步到候选库'}
+            {busy ? '处理中…' : gitMode ? '增量同步' : '同步到候选库'}
           </button>
           <button
             onClick={onSwitch}
-            disabled={busy || !stats.candidate_chunks}
+            disabled={busy || (gitMode ? !stats.candidate_ready : !stats.candidate_chunks)}
             className="press flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-40"
             style={{ background: 'var(--accent)', color: '#0a0e14' }}
-            title="切换后线上检索立即用候选库；旧库保留，可再点一次回滚"
+            title={gitMode ? '发布已验证的最新候选版本' : '切换后线上检索立即用候选库；旧库保留，可再点一次回滚'}
           >
             <Swap size={13} />
-            切换生效
+            {gitMode ? '发布生效' : '切换生效'}
           </button>
+          {gitMode && <button
+            onClick={onRollback}
+            disabled={busy || !stats.previous_generation}
+            className="press rounded-lg border px-3 py-1.5 text-xs disabled:opacity-40"
+            style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}
+          >回滚上一版</button>}
         </div>
       </div>
       <p className="mt-3 text-[10px] leading-relaxed text-[var(--text-secondary)]">
-        ℹ️ 蓝绿发布：同步只写候选库（线上零中断）→ 验证 → 点「切换生效」（秒级，回滚 = 再点一次）
+        {gitMode
+          ? 'Git 同步：任务完成并验证后，点「发布生效」。回滚使用独立按钮；最新删除和停用限制继续生效。'
+          : 'ℹ️ 蓝绿发布：同步只写候选库（线上零中断）→ 验证 → 点「切换生效」（秒级，回滚 = 再点一次）'}
       </p>
     </div>
   )
@@ -101,6 +113,38 @@ function SyncResult({ report }) {
         已写入候选库（{report.candidate_collection}），在岗仍为（{report.active_collection}）——
         验证后点「切换生效」
       </p>
+    </div>
+  )
+}
+
+const JOB_LABEL = {
+  queued: '排队中', running: '构建中', prepared: '已验证，待发布',
+  published: '已发布', failed: '失败', superseded: '已被新任务替代',
+}
+
+function SyncJob({ job, onRefresh }) {
+  if (!job) return null
+  const report = job.report
+  return (
+    <div className="rounded-[12px] border p-4 text-xs leading-relaxed" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }} aria-live="polite">
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-medium" style={{ color: job.status === 'failed' ? 'var(--error)' : 'var(--text-primary)' }}>
+          同步任务 #{job.id} · {JOB_LABEL[job.status] || job.status}
+        </p>
+        <button onClick={onRefresh} className="press rounded p-1 text-[var(--text-secondary)]" title="刷新任务状态" aria-label="刷新任务状态"><ArrowClockwise size={13} /></button>
+      </div>
+      {isKbJobRunning(job) && <p className="mt-1 text-[var(--text-secondary)]">后台正在处理，完成前不会发布新版本。刷新页面后可继续查看进度。</p>}
+      {job.status === 'prepared' && <p className="mt-1 text-[var(--text-secondary)]">候选版本已通过验证，等待发布。</p>}
+      {job.status === 'superseded' && <p className="mt-1 text-[var(--text-secondary)]">已有更新的同步任务，请刷新查看最新状态。</p>}
+      {(job.error || job.status === 'failed') && <p className="mt-1 text-[var(--error)]">{job.error || '同步失败，旧版本继续服务。请检查任务记录后重试。'}</p>}
+      {report && <>
+        <p className="mt-2 text-[var(--text-secondary)]">
+          新增 {report.added?.length || 0} · 更新 {report.updated?.length || 0} · 删除 {report.deleted?.length || 0} · 跳过 {report.skipped_count ?? 0}
+        </p>
+        <p className="mt-1 text-[var(--text-secondary)]">
+          嵌入输入 {report.embedding_inputs ?? '—'} · 复用向量 {report.reused_vectors ?? '—'} · 耗时 {report.elapsed_ms ?? '—'}ms
+        </p>
+      </>}
     </div>
   )
 }
@@ -336,26 +380,53 @@ export default function KbManager() {
   const [docs, setDocs] = useState(null)
   const [busy, setBusy] = useState(false)        // 同步/切换进行中
   const [syncReport, setSyncReport] = useState(null)
+  const [job, setJob] = useState(null)
+  const [pollAttempt, setPollAttempt] = useState(0)
   const [notice, setNotice] = useState(null)     // 切换/错误提示
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const [s, d] = await Promise.all([fetchKbStats(), fetchKbDocuments()])
       setStats(s)
+      if (s.mode === 'git') {
+        setJob(s.latest_job || null)
+        setPollAttempt((attempt) => attempt + 1)
+      }
       // 后端返回 {docs, total}：只取 docs 数组（踩过的坑：整个对象传给
       // DocTable 后 docs.map 崩溃 → React 整树卸载 → 黑屏）
       setDocs(d.docs)
     } catch (e) {
       setNotice(e.message)
     }
-  }
-  useEffect(() => { load() }, [])
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const jobId = isKbJobRunning(job) ? job.id : null
+  useEffect(() => {
+    if (!jobId) return
+    const controller = new AbortController()
+    pollKbJob(jobId, {
+      signal: controller.signal,
+      onUpdate: (next) => { if (isKbJobRunning(next)) setJob(next) },
+    })
+      .then(async (next) => {
+        if (controller.signal.aborted) return
+        setJob(next)
+        await load()
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) setNotice(`任务状态跟踪中断：${error.message} 后台任务可能仍在继续，请点击任务旁的刷新按钮。`)
+      })
+    return () => controller.abort()
+  }, [jobId, pollAttempt, load])
 
   async function handleSync() {
     setBusy(true); setSyncReport(null); setNotice(null)
     try {
-      setSyncReport(await syncKb())
-      await load() // 刷新统计（candidate chunks 变化）
+      const result = await syncKb()
+      if (result.status) setJob(result)
+      else setSyncReport(result)
+      await load()
     } catch (e) {
       setNotice(e.message)
     } finally {
@@ -364,14 +435,29 @@ export default function KbManager() {
   }
 
   async function handleSwitch() {
-    if (!window.confirm('切换后线上检索立即使用候选库；旧库保留，可再次点击回滚。确认切换？')) return
+    const gitMode = stats?.mode === 'git'
+    if (!window.confirm(gitMode ? '发布最新已验证的候选版本，确认发布？' : '切换后线上检索立即使用候选库；旧库保留，可再次点击回滚。确认切换？')) return
     setBusy(true); setNotice(null)
     try {
       const r = await switchKb()
-      setNotice(`已切换到 ${r.switched_to}（在岗 ${r.active_chunks} chunks）。回滚：再次点击切换`)
+      setNotice(gitMode ? '候选版本已发布。' : `已切换到 ${r.switched_to}（在岗 ${r.active_chunks} chunks）。回滚：再次点击切换`)
       await load()
     } catch (e) {
       setNotice(e.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleRollback() {
+    if (!window.confirm('回滚到上一已验证版本。最新删除和停用限制仍然生效，确认回滚？')) return
+    setBusy(true); setNotice(null)
+    try {
+      await rollbackKb()
+      setNotice('已回滚到上一版本，最新删除和停用限制继续生效。')
+      await load()
+    } catch (error) {
+      setNotice(error.message)
     } finally {
       setBusy(false)
     }
@@ -385,7 +471,8 @@ export default function KbManager() {
           {notice}
         </div>
       )}
-      <StatsCard stats={stats} busy={busy} onSync={handleSync} onSwitch={handleSwitch} />
+      <StatsCard stats={stats} busy={busy || isKbJobRunning(job)} onSync={handleSync} onSwitch={handleSwitch} onRollback={handleRollback} />
+      <SyncJob job={job} onRefresh={load} />
       <SyncResult report={syncReport} />
       <KbDebug extraCollections={stats?.extra_collections} />
       <DocTable docs={docs} onRefresh={load} />

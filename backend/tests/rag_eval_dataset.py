@@ -267,7 +267,10 @@ EDGE_CASES = (
 
 
 _E2E_BASE_IDS = {
-    "r01", "r02", "r04", "r05", "r06", "r09", "r16", "r17", "r18", "r38", "r39", "r40",
+    # 原有分层题 + 候选库相对在岗的回退题 + 当前严格 Top-5 漏失题。
+    # 后两组必须进入生成评测，不能只凭 Gold Chunk 排名推测最终回答会退化。
+    "r01", "r02", "r04", "r05", "r06", "r09", "r10", "r13", "r16", "r17", "r18",
+    "r19", "r29", "r36", "r38", "r39", "r40", "r45", "r57",
 }
 _E2E_GOLD_TERMS = {
     "r01": ("certutil", "重新拨号"),
@@ -276,12 +279,19 @@ _E2E_GOLD_TERMS = {
     "r05": ("imap.company.com", "993"),
     "r06": ("密钥", "授权"),
     "r09": ("SMTP", "认证"),
+    "r10": ("代理", "路由表", "重置"),
+    "r13": ("删除旧连接", "重新创建"),
     "r16": ("8", "90", "最近 5 次"),
     "r17": ("10GB", "归档"),
     "r18": ("14 天", "强制"),
+    "r19": ("IMAP", "SMTP", "认证"),
+    "r29": ("imap.company.com", "993", "SSL"),
+    "r36": ("系统时间", "网络", "入域"),
     "r38": ("5 个工作日", "400"),
     "r39": ("身份证", "3 号楼"),
     "r40": ("3 个工作日", "5 天"),
+    "r45": ("smtp.company.com", "465", "SSL"),
+    "r57": ("家庭版", "企业版", "企业软件分发平台"),
 }
 E2E_CASES = tuple(
     replace(case, gold_answer_terms=_E2E_GOLD_TERMS[case.case_id])
@@ -346,7 +356,7 @@ def resolve_gold_chunk_ids(
 validate_cases(ALL_CASES)
 EXPECTED_RETRIEVAL_CASES = 60
 assert len(RETRIEVAL_CASES) == EXPECTED_RETRIEVAL_CASES
-assert len(E2E_CASES) == 22
+assert len(E2E_CASES) == 29
 
 
 def dataset_summary(cases: tuple[RagEvalCase, ...]) -> dict[str, dict[str, int]]:

@@ -1,0 +1,215 @@
+{
+  "kind": "synthetic_offline_regression_comparison",
+  "scope": "解析与同步正确性；不是生产检索质量率或覆盖率",
+  "before_capture": "本轮父代理修改前/tmp基线快照；未独立复跑旧代码，保留原始证据",
+  "baseline_format": {
+    "docx_intro_lost": true,
+    "docx_pure_table_sections": 0,
+    "xlsx_table_rows_including_header": 2,
+    "text_pdf": {
+      "pages": 1,
+      "sections": 1,
+      "scanned": false
+    },
+    "scan_pdf": {
+      "pages": 1,
+      "sections": 0,
+      "scanned": true,
+      "rendered_pages": 1
+    },
+    "mixed_pdf": {
+      "pages": 2,
+      "sections": 1,
+      "scanned": false,
+      "rendered_pages": 2
+    },
+    "video_10seconds_max3_frames": 3,
+    "pptx": {
+      "page_count": 2,
+      "sections": [
+        [
+          "第 2 页",
+          "PAGE TWO BODY"
+        ]
+      ],
+      "image_pages": [
+        1
+      ],
+      "loaded_content": "## 第 2 页\n\nPAGE TWO BODY\n\nTRANSCRIBED PAGE ONE IMAGE"
+    }
+  },
+  "baseline_sync": {
+    "initial_100_docs_embedded_texts": 300,
+    "one_changed_doc_embedded_texts": 3,
+    "candidate_clear_rebuild_embedded_texts": 300,
+    "incremental_saving_percent": 99.0,
+    "corrupt_existing_doc": {
+      "deleted_report": [
+        "0.md"
+      ],
+      "failed_report": [],
+      "remaining_chunks_for_doc": []
+    }
+  },
+  "after_command": "cd backend && ../.venv/bin/python -m pytest tests/test_ingestion_integrity.py tests/test_rag_lifecycle.py -q",
+  "after_result": "15 passed (14 ingestion parameterized test cases plus 1 existing lifecycle test)",
+  "cases": [
+    {
+      "case": "docx_preamble",
+      "after_test": "tests/test_ingestion_integrity.py::test_docx_preamble_and_table_only",
+      "before_source": "/tmp/itdesk-rag-format-audit.json:docx_intro_lost",
+      "before_observation": true,
+      "before_status": "historical_observation",
+      "after_assertion": "标题前正文现在保留",
+      "after_status": "passed"
+    },
+    {
+      "case": "docx_table_only",
+      "after_test": "tests/test_ingestion_integrity.py::test_docx_preamble_and_table_only",
+      "before_source": "/tmp/itdesk-rag-format-audit.json:docx_pure_table_sections",
+      "before_observation": 0,
+      "before_status": "historical_observation",
+      "after_assertion": "纯表格生成正文章节",
+      "after_status": "passed"
+    },
+    {
+      "case": "ppt_page_anchor",
+      "after_test": "tests/test_ingestion_integrity.py::test_ppt_blank_page_does_not_shift_image_anchor",
+      "before_source": "/tmp/itdesk-rag-format-audit.json:pptx",
+      "before_observation": {
+        "page_count": 2,
+        "sections": [
+          [
+            "第 2 页",
+            "PAGE TWO BODY"
+          ]
+        ],
+        "image_pages": [
+          1
+        ],
+        "loaded_content": "## 第 2 页\n\nPAGE TWO BODY\n\nTRANSCRIBED PAGE ONE IMAGE"
+      },
+      "before_status": "historical_observation",
+      "after_assertion": "空页保留，图片不会被插到下一页正文",
+      "after_status": "passed"
+    },
+    {
+      "case": "pdf_mixed_pages",
+      "after_test": "tests/test_ingestion_integrity.py::test_pdf_mixed_pages_render_scanned_and_text_image_pages",
+      "before_source": "/tmp/itdesk-rag-format-audit.json:mixed_pdf",
+      "before_observation": {
+        "pages": 2,
+        "sections": 1,
+        "scanned": false,
+        "rendered_pages": 2
+      },
+      "before_status": "historical_observation",
+      "after_assertion": "逐页渲染扫描页与含栅格图片文字页",
+      "after_status": "passed"
+    },
+    {
+      "case": "failed_media_transcription",
+      "after_test": "tests/test_ingestion_integrity.py::test_image_transcription_failure_does_not_publish_partial_document",
+      "before_source": null,
+      "before_observation": null,
+      "before_status": "not_measured_no_before_claim",
+      "after_assertion": "拒绝部分媒体文档",
+      "after_status": "passed"
+    },
+    {
+      "case": "per_file_scan_failure",
+      "after_test": "tests/test_ingestion_integrity.py::test_scan_reports_per_file_failure_and_missing_root",
+      "before_source": null,
+      "before_observation": null,
+      "before_status": "not_measured_no_before_claim",
+      "after_assertion": "坏文件单独失败；目录缺失拒绝同步",
+      "after_status": "passed"
+    },
+    {
+      "case": "embedding_failure",
+      "after_test": "tests/test_ingestion_integrity.py::test_failed_embedding_preserves_old_chunks",
+      "before_source": null,
+      "before_observation": null,
+      "before_status": "not_measured_no_before_claim",
+      "after_assertion": "去重探针成功、整篇嵌入失败后旧知识完整保留",
+      "after_status": "passed"
+    },
+    {
+      "case": "persistent_publish_gate",
+      "after_test": "tests/test_ingestion_integrity.py::test_build_readiness_is_persistent_and_failed_build_cannot_publish",
+      "before_source": null,
+      "before_observation": null,
+      "before_status": "not_measured_no_before_claim",
+      "after_assertion": "失败构建标记持久且不可发布",
+      "after_status": "passed"
+    },
+    {
+      "case": "publication_mutex",
+      "after_test": "tests/test_ingestion_integrity.py::test_publication_lock_excludes_parallel_writer",
+      "before_source": null,
+      "before_observation": null,
+      "before_status": "not_measured_no_before_claim",
+      "after_assertion": "第二个发布锁申请立即拒绝",
+      "after_status": "passed"
+    },
+    {
+      "case": "video_end_coverage",
+      "after_test": "tests/test_ingestion_integrity.py::test_video_samples_end_of_long_clip",
+      "before_source": null,
+      "before_observation": null,
+      "before_status": "not_measured_no_before_claim",
+      "after_assertion": "30秒90帧预算3帧覆盖29.667秒；旧基线仅测10秒数量不能证明末帧缺陷",
+      "after_status": "passed"
+    },
+    {
+      "case": "failed_source_preserved",
+      "after_test": "tests/test_ingestion_integrity.py::test_failed_existing_source_is_not_deleted",
+      "before_source": "/tmp/itdesk-rag-sync-audit.json:corrupt_existing_doc",
+      "before_observation": {
+        "deleted_report": [
+          "0.md"
+        ],
+        "failed_report": [],
+        "remaining_chunks_for_doc": []
+      },
+      "before_status": "historical_observation",
+      "after_assertion": "现存损坏源文件报失败且旧块与台账保留",
+      "after_status": "passed"
+    },
+    {
+      "case": "obsolete_chunk_cleanup",
+      "after_test": "tests/test_ingestion_integrity.py::test_update_removes_obsolete_chunks_only_after_success",
+      "before_source": null,
+      "before_observation": null,
+      "before_status": "not_measured_no_before_claim",
+      "after_assertion": "成功写新块后精确删除过期块",
+      "after_status": "passed"
+    },
+    {
+      "case": "repair_missing_child",
+      "after_test": "tests/test_ingestion_integrity.py::test_unchanged_document_repairs_missing_child",
+      "before_source": null,
+      "before_observation": null,
+      "before_status": "not_measured_no_before_claim",
+      "after_assertion": "hash相同但子块缺失时补齐全部ID",
+      "after_status": "passed"
+    },
+    {
+      "case": "switch_empty_and_failed",
+      "after_test": "tests/test_ingestion_integrity.py::test_switch_rejects_empty_or_failed_candidate",
+      "before_source": null,
+      "before_observation": null,
+      "before_status": "not_measured_no_before_claim",
+      "after_assertion": "两个参数场景都返回409",
+      "after_status": "passed"
+    }
+  ],
+  "limits": [
+    "新增测试未有旧版实测的条目只证明当前行为，不声称量化改善",
+    "一项测试同时覆盖DOCX两项，switch参数化为两个场景，因此功能项数不等于测试函数数",
+    "向量使用合成常量，不评估召回或语义准确性",
+    "原视频基线只验证帧数量，不能作为完整视频覆盖的before证据"
+  ],
+  "benchmark_script": "backend/scripts/benchmark_sync.py",
+  "benchmark_result": "backend/tests/quality_reports/sync_benchmark.json"
+}

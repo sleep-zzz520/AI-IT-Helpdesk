@@ -9,6 +9,17 @@ from app.tools.actions import execute_action
 
 
 def execute_node(state: HelpdeskState) -> dict:
+    from app.config import settings
+    match = state.get("kb_match", {})
+    if settings.KB_SYNC_MODE == "git" and match.get("document_id"):
+        from app.rag.generations import denied_ids
+        try:
+            allowed = match["document_id"] not in denied_ids()
+        except Exception:
+            allowed = False
+        if not allowed:
+            result = {"success": False, "error": "方案来源已删除、停用或无法验证，请转人工"}
+            return {"tool_result": result, "trace": [{"node": "execute", "result": result}]}
     action = state.get("kb_match", {}).get("action", "")
     request = ExecutionRequest(
         # actor_id 来自入口认证；target_user_id 来自会话归属。服务会再校验二者相同。

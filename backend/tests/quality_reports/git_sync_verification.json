@@ -1,0 +1,21 @@
+{
+  "backend_tests": 299,
+  "frontend_tests": 16,
+  "ruff": "passed",
+  "frontend_lint": "passed, two pre-existing hook warnings",
+  "frontend_build": "passed",
+  "ui_database_tasks": {
+    "published": 1
+  },
+  "real_data": "git_generations_real.json",
+  "hashes": {
+    "backend/app/rag/generations.py": "80197bba3c3c9504e5bae4f5ee9204602ea19e90e128b9beca1e21eadb09fc6e",
+    "backend/app/rag/git_source.py": "9726a0960431a7797a4be4271fb89902cbab6d80445ba5384b5297aec56a1754",
+    "backend/app/rag/store.py": "309da094c9fc0441ef2dbc55b513dd94d772ecd36d2e803c0c00b643b848aee8",
+    "backend/app/rag/retriever.py": "af78f4e7cc383b6c3209499624e0e616747d768a865e0ed297a5253f975250d4",
+    "backend/app/api/kb.py": "07d07011c54600df63791dca5b898bde181f9b8f345651d20e7634fb2adb7441",
+    "backend/app/models.py": "91127cb3740042a1426007bd6040b63eecfd82977078731ea5d158eef0a43b19",
+    "frontend/src/components/KbManager.jsx": "630c6d47e32690b393c4d12dffb49ff3f7c06e38462376b3a26cda740a544188",
+    ".github/workflows/deploy.yml": "51bfe046dddc5946d3ef57ea388c0f072b3f51e9b8934229f473cb516e339f5e"
+  }
+}

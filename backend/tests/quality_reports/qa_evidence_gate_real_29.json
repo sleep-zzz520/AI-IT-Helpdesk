@@ -1,0 +1,1622 @@
+{
+  "metric": "rag_end_to_end_gold_eval",
+  "status": "completed",
+  "collection": "gate_eval_isolated",
+  "collection_chunks": 80,
+  "cases_requested": 29,
+  "cases_completed": 29,
+  "dataset": {
+    "question_types": {
+      "direct": 12,
+      "distractor": 4,
+      "exact_term": 3,
+      "incomplete": 3,
+      "multi_hop": 2,
+      "no_answer": 3,
+      "stale_knowledge_conflict": 2
+    },
+    "difficulties": {
+      "easy": 5,
+      "hard": 14,
+      "medium": 10
+    },
+    "behaviors": {
+      "answer": 23,
+      "clarify": 3,
+      "refuse": 3
+    }
+  },
+  "model": {
+    "answer_chain": [
+      "glm-4.5-air"
+    ],
+    "json_chain": [
+      "glm-4.5-air"
+    ],
+    "request_timeout_seconds": 10.0,
+    "last_observed_model": "glm-4.5-air"
+  },
+  "retrieval": {
+    "rrf_k": 60.0,
+    "vector_weight": 1.0,
+    "bm25_weight": 1.0,
+    "recall_n": 10,
+    "fusion_candidate_n": 0,
+    "max_chunks_per_source": 2,
+    "rerank_enabled": false
+  },
+  "duration_seconds": 216.0,
+  "llm_calls": 43,
+  "metric_error_count": 6,
+  "answer_call_error_count": 2,
+  "gold_chunk_coverage_avg": 0.543,
+  "gold_answer_coverage_avg": 0.874,
+  "gold_answer_coverage_cases": 29,
+  "faithfulness_avg": null,
+  "faithfulness_cases": 0,
+  "answer_relevancy_avg": 0.831,
+  "answer_relevancy_cases": 6,
+  "answer_behavior_accuracy": 1.0,
+  "refusal_accuracy": 1.0,
+  "clarification_accuracy": 0.0,
+  "expected_multihop_cases": 2,
+  "actual_multihop_cases": 0,
+  "results": [
+    {
+      "case_id": "r01",
+      "query": "VPN 证书过期了 Error 800 怎么续期",
+      "question_type": "direct",
+      "difficulty": "medium",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/vpn/cert-renewal.md#症状与判断"
+      ],
+      "gold_chunk_ids": [
+        "152f7eabd9735b5c:1"
+      ],
+      "gold_chunk_coverage": 0.0,
+      "gold_answer": "Error 800 且监控显示证书过期时，应按证书续期流程处理。 先在监控平台确认状态，证书过期后执行续期，再重新拨号验证。 续期命令是 certutil -renew，执行后需要重新建立 VPN 连接。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "certutil",
+          "重新拨号"
+        ],
+        "expected": [
+          "certutil",
+          "重新拨号"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "VPN证书过期导致Error 800的续期步骤 [证据1][证据2]：\n\n1. 确认证书状态：通过监控平台查看账号证书状态是否为\"expired\" [证据2]\n2. 执行证书续期：运行命令 `certutil -renew` 更新证书 [证据2]\n3. 重新拨号：续期成功后重新建立VPN连接 [证据2]\n4. 验证连接：确认VPN连接正常后关闭工单 [证据2]\n\n注意：证书续期是低风险操作，只更新当前用户证书，不影响他人 [证据2]。\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "sources": [
+        "cert-renewal.md",
+        "client-config.md",
+        "error-codes.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": {
+        "score": 0.841,
+        "questions": [
+          "VPN连接出现Error 800错误，提示证书过期，该如何解决？",
+          "如何续期VPN证书？需要执行什么命令？",
+          "续期VPN证书会影响其他用户或系统吗？有什么风险？"
+        ],
+        "similarities": [
+          0.927,
+          0.848,
+          0.748
+        ]
+      },
+      "answer_relevancy_score": 0.841,
+      "answer_error": null,
+      "metric_errors": [
+        {
+          "stage": "faithfulness",
+          "error_type": "APITimeoutError",
+          "message": "Request timed out."
+        }
+      ],
+      "quality_metrics_skipped": false,
+      "pipeline_errors": []
+    },
+    {
+      "case_id": "r02",
+      "query": "VPN 拨号失败报错 720 连不上",
+      "question_type": "direct",
+      "difficulty": "medium",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/vpn/error-codes.md#Error 720"
+      ],
+      "gold_chunk_ids": [
+        "52480350fccf8031:2"
+      ],
+      "gold_chunk_coverage": 1.0,
+      "gold_answer": "Error 720 通常是拨号连接组件损坏，应删除旧连接后重新创建并拨号。",
+      "gold_answer_coverage": {
+        "score": 0.5,
+        "matched": [
+          "重新创建"
+        ],
+        "expected": [
+          "删除旧连接",
+          "重新创建"
+        ]
+      },
+      "gold_answer_coverage_score": 0.5,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "根据知识库，Error 720表示\"无法建立与远程计算机的连接\"，通常是拨号连接组件损坏（系统更新或杀软误删导致）[证据1]。\n\n处理步骤：\n1. 删除旧的VPN连接\n2. 重新创建VPN连接\n3. 重新拨号连接\n\n执行命令：`vpn.rebuild_connection` [证据1]\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "sources": [
+        "cert-renewal.md",
+        "client-config.md",
+        "error-codes.md",
+        "vpn-install-guide.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": {
+        "score": 0.779,
+        "questions": [
+          "我遇到了Error 720错误，这是什么意思？如何解决？",
+          "我的VPN连接无法建立，显示Error 720，可能是哪些原因导致的？",
+          "如何修复Error 720错误？有没有命令可以快速解决？"
+        ],
+        "similarities": [
+          0.743,
+          0.846,
+          0.748
+        ]
+      },
+      "answer_relevancy_score": 0.779,
+      "answer_error": null,
+      "metric_errors": [
+        {
+          "stage": "faithfulness",
+          "error_type": "APITimeoutError",
+          "message": "Request timed out."
+        }
+      ],
+      "quality_metrics_skipped": false,
+      "pipeline_errors": []
+    },
+    {
+      "case_id": "r04",
+      "query": "忘记密码了 怎么重置密码",
+      "question_type": "direct",
+      "difficulty": "medium",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/password/reset-sop.md#症状与判断"
+      ],
+      "gold_chunk_ids": [
+        "53d73c042ae92c8c:1"
+      ],
+      "gold_chunk_coverage": 0.0,
+      "gold_answer": "忘记密码、密码过期或无法自助重置都应先收集域账号信息。 先人工核验身份，再重置为临时密码；账号锁定时先确认风险后处理。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "身份",
+          "临时密码"
+        ],
+        "expected": [
+          "身份",
+          "临时密码"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "忘记密码重置流程 [证据2]:\n\n1. 验证身份：需提供工号和手机验证码，或由直属主管确认 [证据2]\n2. 账号状态检查：若账号被锁定，需先解锁再重置 [证据2][证据3]\n3. 执行重置：通过账号管理平台设置临时密码 [证据2]\n4. 修改要求：临时密码首次登录必须修改，需满足8位以上，含大小写字母、数字和特殊字符 [证据2]\n\n注意：重置操作需人工处理，无法自助完成。重置后原密码立即失效，请退出其他已登录设备 [证据2][证据3]。\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "sources": [
+        "account-lock.md",
+        "password-policy.md",
+        "reset-sop.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": {
+        "score": 0.845,
+        "questions": [
+          "忘记密码后如何重置？",
+          "重置密码需要提供什么信息？",
+          "重置密码后有什么注意事项？"
+        ],
+        "similarities": [
+          0.932,
+          0.777,
+          0.826
+        ]
+      },
+      "answer_relevancy_score": 0.845,
+      "answer_error": null,
+      "metric_errors": [
+        {
+          "stage": "faithfulness",
+          "error_type": "APITimeoutError",
+          "message": "Request timed out."
+        }
+      ],
+      "quality_metrics_skipped": false,
+      "pipeline_errors": []
+    },
+    {
+      "case_id": "r05",
+      "query": "邮箱收不到邮件 IMAP 怎么配置",
+      "question_type": "direct",
+      "difficulty": "medium",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/email/config-guide.md#服务器参数"
+      ],
+      "gold_chunk_ids": [
+        "657e68c18ad40cc9:2"
+      ],
+      "gold_chunk_coverage": 0.0,
+      "gold_answer": "IMAP 服务器为 imap.company.com、端口 993、SSL；SMTP 为 smtp.company.com、端口 465、SSL。 按客户端和协议填写参数，分别检查 IMAP 或 SMTP 认证，最后互发测试邮件。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "imap.company.com",
+          "993"
+        ],
+        "expected": [
+          "imap.company.com",
+          "993"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "IMAP配置步骤 [证据1][证据3]：\n\n1. 确认故障方向：收不到邮件需检查IMAP配置 [证据1]\n\n2. 配置参数：\n   - 服务器：imap.company.com\n   - 端口：993\n   - 加密方式：SSL [证据3]\n\n3. 检查认证：\n   - 确认账号密码正确\n   - 企业邮箱需使用\"客户端授权码\"而非明文密码 [证据3]\n   - 密码重置后需同步更新客户端密码 [证据1]\n\n4. 验证配置：\n   - 发送测试邮件验证接收功能 [证据3]\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "sources": [
+        "config-guide.md",
+        "mailbox-quota.md",
+        "troubleshoot.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": {
+        "score": 0.875,
+        "questions": [
+          "我无法收到邮件，应该如何配置IMAP设置？",
+          "为什么我的企业邮箱IMAP配置后仍然无法接收邮件？",
+          "如何验证IMAP配置是否正确？"
+        ],
+        "similarities": [
+          0.93,
+          0.879,
+          0.816
+        ]
+      },
+      "answer_relevancy_score": 0.875,
+      "answer_error": null,
+      "metric_errors": [
+        {
+          "stage": "faithfulness",
+          "error_type": "APITimeoutError",
+          "message": "Request timed out."
+        }
+      ],
+      "quality_metrics_skipped": false,
+      "pipeline_errors": []
+    },
+    {
+      "case_id": "r06",
+      "query": "安装办公软件提示许可证无效 激活失败",
+      "question_type": "direct",
+      "difficulty": "medium",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/software/license-activation.md#症状与判断"
+      ],
+      "gold_chunk_ids": [
+        "2921328ecc41c662:1"
+      ],
+      "gold_chunk_coverage": 1.0,
+      "gold_answer": "许可证无效可能是密钥与版本不匹配，激活次数超限可能是旧设备未释放授权。 先核对密钥类型和版本，再检查激活服务器网络；旧设备占用需联系管理员释放或迁移授权。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "密钥",
+          "授权"
+        ],
+        "expected": [
+          "密钥",
+          "授权"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "根据知识库内容，许可证无效激活失败的可能原因及处理步骤如下：\n\n**可能原因**：\n1. 密钥输入错误或密钥类型与软件版本不匹配 [证据1]\n2. 设备未在企业授权名单内 [证据1]\n3. 网络问题：激活服务器域名被防火墙/代理拦截 [证据1]\n4. 激活次数超限（旧设备未释放授权） [证据1]\n5. 系统时间不准确（KMS激活对时间敏感） [证据3]\n\n**处理步骤**：\n1. 核对密钥类型与软件版本是否一致（企业版≠零售密钥） [证据1]\n2. 检查网络是否能访问激活服务器 [证据1]\n3. 确认系统时间准确 [证据3]\n4. 企业版用户确认设备是否在IT分配的授权名单 [证据1]\n5. 如激活次数超限，需联系IT管理员释放旧设备占用 [证据1]\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "sources": [
+        "install-guide.md",
+        "license-activation.md",
+        "software-update.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": {
+        "score": 0.788,
+        "questions": [
+          "我的软件许可证激活失败，可能是什么原因？",
+          "如何解决许可证激活失败的问题？",
+          "许可证激活失败时，如何检查网络连接问题？"
+        ],
+        "similarities": [
+          0.825,
+          0.81,
+          0.729
+        ]
+      },
+      "answer_relevancy_score": 0.788,
+      "answer_error": null,
+      "metric_errors": [
+        {
+          "stage": "faithfulness",
+          "error_type": "APITimeoutError",
+          "message": "Request timed out."
+        }
+      ],
+      "quality_metrics_skipped": false,
+      "pipeline_errors": []
+    },
+    {
+      "case_id": "r09",
+      "query": "发不出邮件 SMTP 报错 553",
+      "question_type": "exact_term",
+      "difficulty": "medium",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/email/config-guide.md#症状与判断"
+      ],
+      "gold_chunk_ids": [
+        "657e68c18ad40cc9:1"
+      ],
+      "gold_chunk_coverage": 1.0,
+      "gold_answer": "邮箱问题先区分收信、发信还是都异常，再判断 IMAP、SMTP 或账号问题。 按客户端和协议填写参数，分别检查 IMAP 或 SMTP 认证，最后互发测试邮件。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "SMTP",
+          "认证"
+        ],
+        "expected": [
+          "SMTP",
+          "认证"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "根据知识库，SMTP报错553表示\"发件人身份不被认可\" [证据1]。排查步骤如下：\n\n1. 检查SMTP认证：确认账号密码正确，特别是改过密码后需更新所有客户端 [证据1]\n2. 检查服务器配置：确保SMTP服务器为smtp.company.com，端口465，使用SSL加密 [证据2]\n3. 确认收件人地址拼写正确，检查是否被反垃圾策略拦截 [证据1]\n4. 查看邮箱垃圾箱/隔离区是否有拦截通知 [证据1]\n5. 检查是否短时间内大量群发触发反垃圾机制 [证据2]\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "sources": [
+        "config-guide.md",
+        "mailbox-quota.md",
+        "troubleshoot.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": {
+        "score": 0.86,
+        "questions": [
+          "我收到SMTP错误553，这是什么意思？如何解决？",
+          "我的邮件发送失败，显示SMTP错误553，我该如何排查？",
+          "我设置了SMTP服务器但无法发送邮件，可能是什么原因？"
+        ],
+        "similarities": [
+          0.879,
+          0.9,
+          0.801
+        ]
+      },
+      "answer_relevancy_score": 0.86,
+      "answer_error": null,
+      "metric_errors": [
+        {
+          "stage": "faithfulness",
+          "error_type": "APITimeoutError",
+          "message": "Request timed out."
+        }
+      ],
+      "quality_metrics_skipped": false,
+      "pipeline_errors": []
+    },
+    {
+      "case_id": "e06",
+      "query": "公司打印机卡纸怎么处理",
+      "question_type": "no_answer",
+      "difficulty": "hard",
+      "answerable": false,
+      "expected_behavior": "refuse",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [],
+      "gold_chunk_ids": [],
+      "gold_chunk_coverage": null,
+      "gold_answer": "知识库中暂无相关内容，需转人工协助。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "知识库中暂无",
+          "转人工"
+        ],
+        "expected": [
+          "知识库中暂无",
+          "转人工"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "has_no_answer_statement": true,
+        "has_handoff": true,
+        "unsupported_markers": [],
+        "reason": "明确拒答并安全转人工"
+      },
+      "answer": "知识库中暂无相关内容，无法回答您的具体问题。\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "error-codes.md",
+        "expense-reimbursement.md",
+        "install-guide.md",
+        "onboarding-guide.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "e07",
+      "query": "会议室空调不制冷怎么修",
+      "question_type": "no_answer",
+      "difficulty": "hard",
+      "answerable": false,
+      "expected_behavior": "refuse",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [],
+      "gold_chunk_ids": [],
+      "gold_chunk_coverage": null,
+      "gold_answer": "知识库中暂无相关内容，需转人工协助。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "知识库中暂无",
+          "转人工"
+        ],
+        "expected": [
+          "知识库中暂无",
+          "转人工"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "has_no_answer_statement": true,
+        "has_handoff": true,
+        "unsupported_markers": [],
+        "reason": "明确拒答并安全转人工"
+      },
+      "answer": "知识库中暂无相关内容，无法回答您的具体问题。\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "cert-renewal.md",
+        "config-guide.md",
+        "error-codes.md",
+        "license-activation.md",
+        "troubleshoot.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "e08",
+      "query": "Java 编译时报空指针异常怎么排查",
+      "question_type": "no_answer",
+      "difficulty": "hard",
+      "answerable": false,
+      "expected_behavior": "refuse",
+      "expected_min_hops": 1,
+      "hops": 2,
+      "gold_chunks": [],
+      "gold_chunk_ids": [],
+      "gold_chunk_coverage": null,
+      "gold_answer": "知识库中暂无相关内容，需转人工协助。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "知识库中暂无",
+          "转人工"
+        ],
+        "expected": [
+          "知识库中暂无",
+          "转人工"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": null,
+        "reason": "回答调用失败，不能判定行为"
+      },
+      "answer": "知识库中暂无相关内容，无法回答您的具体问题。\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [
+        "judge 失败: Request timed out."
+      ],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "client-config.md",
+        "error-codes.md",
+        "license-activation.md",
+        "reset-sop.md",
+        "troubleshoot.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": {
+        "stage": "evidence_gate",
+        "error_type": "PipelineFailure"
+      },
+      "metric_errors": []
+    },
+    {
+      "case_id": "r10",
+      "query": "证书状态正常 VPN 还是连不上 路由表异常",
+      "question_type": "distractor",
+      "difficulty": "hard",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/vpn/client-config.md#常见配置问题"
+      ],
+      "gold_chunk_ids": [
+        "dcc196094d9a0e03:2"
+      ],
+      "gold_chunk_coverage": 0.0,
+      "gold_answer": "重点检查系统代理、公司网段路由表和损坏的客户端配置文件。 排查顺序是确认协议书正常、检查代理、检查路由表，再重置客户端配置。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "代理",
+          "路由表",
+          "重置"
+        ],
+        "expected": [
+          "代理",
+          "路由表",
+          "重置"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "根据您描述的情况，证书状态正常但VPN连不上且路由表异常，这属于客户端配置问题 [证据1]。\n\n排查步骤：\n1. 检查系统代理设置：系统设置→网络→代理，确认未开启全局代理 [证据1]\n2. 检查路由表：执行`route print`查看是否有公司网段 [证据1]\n3. 解决方案：重新安装客户端触发路由重建 [证据1]\n\n注意事项：\n- 不要直接重置配置（证书正常时重置会白费操作）[证据1]\n- 不要卸载重装客户端（无法解决代理/路由问题且耗时长）[证据1]\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "cert-renewal.md",
+        "client-config.md",
+        "error-codes.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "r13",
+      "query": "vpn 720 报错",
+      "question_type": "exact_term",
+      "difficulty": "easy",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/vpn/error-codes.md#Error 720"
+      ],
+      "gold_chunk_ids": [
+        "52480350fccf8031:2"
+      ],
+      "gold_chunk_coverage": 1.0,
+      "gold_answer": "Error 720 通常是拨号连接组件损坏，应删除旧连接后重新创建并拨号。",
+      "gold_answer_coverage": {
+        "score": 0.5,
+        "matched": [
+          "重新创建"
+        ],
+        "expected": [
+          "删除旧连接",
+          "重新创建"
+        ]
+      },
+      "gold_answer_coverage_score": 0.5,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "根据知识库，VPN 720错误表示\"无法建立与远程计算机的连接\"，通常是由于拨号连接组件损坏导致的，与证书问题无关 [证据2]。\n\n处理步骤：\n1. 删除旧的VPN连接\n2. 重新创建VPN连接\n3. 重新拨号验证\n\n如需进一步排查，请描述故障现象，我可转人工协助",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "cert-renewal.md",
+        "client-config.md",
+        "error-codes.md",
+        "vpn-install-guide.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "r16",
+      "query": "密码安全策略是什么 复杂度要求",
+      "question_type": "direct",
+      "difficulty": "easy",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/password/password-policy.md#密码复杂度要求"
+      ],
+      "gold_chunk_ids": [
+        "788a04517bdb44fe:1"
+      ],
+      "gold_chunk_coverage": 1.0,
+      "gold_answer": "密码至少 8 位，建议 12 位，需满足三类字符且每 90 天修改一次，不得复用最近 5 次。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "8",
+          "90",
+          "最近 5 次"
+        ],
+        "expected": [
+          "8",
+          "90",
+          "最近 5 次"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "密码安全策略的复杂度要求如下 [证据1]：\n\n- 长度要求：8位以上（建议12位以上）\n- 字符要求：必须包含大小写字母、数字、特殊字符中的三类\n- 禁用内容：不得包含用户名、工号、连续数字（如123456）或常见弱密码\n- 更新周期：每90天强制修改一次\n- 密码历史：不得复用最近5次使用过的密码\n\n此外，系统有账号锁定规则：连续输错5次锁定30分钟，10次锁定至次日需管理员解锁 [证据1]。\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "account-lock.md",
+        "password-policy.md",
+        "reset-sop.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "r17",
+      "query": "邮箱满了收不到新邮件怎么办",
+      "question_type": "distractor",
+      "difficulty": "hard",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/email/mailbox-quota.md#容量配额"
+      ],
+      "gold_chunk_ids": [
+        "a21531d338d520ab:1"
+      ],
+      "gold_chunk_coverage": 1.0,
+      "gold_answer": "个人邮箱默认 10GB，超过 90% 会预警；超配额后无法接收新邮件。 优先归档三年以上邮件，大附件存网盘后删除附件，归档邮件可保留 7 年。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "10GB",
+          "归档"
+        ],
+        "expected": [
+          "10GB",
+          "归档"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "邮箱满了收不到新邮件的处理步骤 [证据1]：\n\n1. 检查邮箱容量：个人邮箱默认配额10GB，超过90%会预警，超配额无法接收新邮件 [证据1]\n\n2. 清理邮件：\n   - 优先清理3年以上邮件(通过OA系统归档) [证据1]\n   - 处理大附件(>20MB)，存入网盘后删除邮件附件 [证据1]\n   - 检查已发送、草稿、订阅邮件等可能占空间的文件夹 [证据1]\n\n3. 归档操作：\n   - 手动归档：选中邮件→归档→选择归档目录 [证据1]\n   - 归档后仍可搜索，保留7年 [证据1]\n\n4. 如仍无法解决，需联系人工处理邮箱扩容或特殊问题 [证据1]\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "config-guide.md",
+        "mailbox-quota.md",
+        "troubleshoot.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "r18",
+      "query": "办公软件更新是自动的吗 能推迟吗",
+      "question_type": "direct",
+      "difficulty": "medium",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/software/software-update.md#更新规则"
+      ],
+      "gold_chunk_ids": [
+        "ac555fa879fb185a:2"
+      ],
+      "gold_chunk_coverage": 1.0,
+      "gold_answer": "软件中心更新自动安装，可推迟最多 14 天；超过期限会强制执行并提前提醒。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "14 天",
+          "强制"
+        ],
+        "expected": [
+          "14 天",
+          "强制"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "办公软件更新是自动的，由软件中心统一推送，无需用户操作 [证据1]。\n\n用户可以将更新推迟最多14天，通过手动点击\"稍后提醒\"实现 [证据1]。被推迟超过14天的更新会被强制执行，强制更新前3天每天会有弹窗提醒 [证据1]。\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "install-guide.md",
+        "license-activation.md",
+        "software-update.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "r19",
+      "query": "Outlook 客户端一直提示密码错误 怎么重新配置",
+      "question_type": "distractor",
+      "difficulty": "hard",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/email/config-guide.md#处理步骤"
+      ],
+      "gold_chunk_ids": [
+        "657e68c18ad40cc9:3"
+      ],
+      "gold_chunk_coverage": 0.0,
+      "gold_answer": "按客户端和协议填写参数，分别检查 IMAP 或 SMTP 认证，最后互发测试邮件。",
+      "gold_answer_coverage": {
+        "score": 0.667,
+        "matched": [
+          "IMAP",
+          "SMTP"
+        ],
+        "expected": [
+          "IMAP",
+          "SMTP",
+          "认证"
+        ]
+      },
+      "gold_answer_coverage_score": 0.667,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "Outlook客户端密码错误重新配置步骤：\n\n1. 确认账号密码正确，特别是近期是否修改过密码，改过密码后客户端会静默失败，需更新所有客户端 [证据1]\n\n2. 检查是否使用客户端授权码：企业邮箱通常禁止明文密码，需在邮箱安全中心生成客户端授权码代替密码 [证据2]\n\n3. 验证服务器参数配置：\n   - IMAP服务器：imap.company.com，端口993，SSL加密\n   - SMTP服务器：smtp.company.com，端口465，SSL加密 [证据2]\n\n4. 检查客户端权限：新设备/客户端可能被\"客户端授权\"功能拦截，需在邮箱后台开启授权 [证据1]\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "config-guide.md",
+        "mailbox-quota.md",
+        "troubleshoot.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "r29",
+      "query": "新电脑上的 Outlook 要怎样填写企业邮箱的收件服务器",
+      "question_type": "direct",
+      "difficulty": "easy",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/email/config-guide.md#服务器参数"
+      ],
+      "gold_chunk_ids": [
+        "657e68c18ad40cc9:2"
+      ],
+      "gold_chunk_coverage": 0.0,
+      "gold_answer": "IMAP 服务器为 imap.company.com、端口 993、SSL；SMTP 为 smtp.company.com、端口 465、SSL。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "imap.company.com",
+          "993",
+          "SSL"
+        ],
+        "expected": [
+          "imap.company.com",
+          "993",
+          "SSL"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "根据[证据2]，在新电脑上配置Outlook企业邮箱收件服务器需填写以下参数：\n\n1. 收件服务器(IMAP)配置：\n   - 服务器地址：imap.company.com\n   - 端口：993\n   - 加密方式：SSL\n\n2. 操作步骤：\n   - 打开Outlook，选择\"文件\" > \"添加账户\"\n   - 选择\"手动配置服务器设置或其他服务器类型\"\n   - 选择\"POP或IMAP\"\n   - 填写IMAP服务器参数(上述信息)\n   - 勾选\"使用SSL加密连接\"\n\n3. 注意事项：\n   - 企业邮箱通常需使用\"客户端授权码\"而非明文密码[证据2]\n   - 如配置后仍收不到邮件，需检查IMAP认证设置[证据1]\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "config-guide.md",
+        "mailbox-quota.md",
+        "troubleshoot.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "r36",
+      "query": "Office 的 KMS 激活失败，系统时间会有影响吗",
+      "question_type": "direct",
+      "difficulty": "medium",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/software/install-guide.md#处理步骤"
+      ],
+      "gold_chunk_ids": [
+        "e08dff7985a8c328:2"
+      ],
+      "gold_chunk_coverage": 0.0,
+      "gold_answer": "只从企业软件分发平台安装；KMS 激活失败先检查系统时间、网络和设备是否入域。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "系统时间",
+          "网络",
+          "入域"
+        ],
+        "expected": [
+          "系统时间",
+          "网络",
+          "入域"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "是的，系统时间会影响Office的KMS激活 [证据1][证据2]。\n\nKMS激活对系统时间敏感，时间不准确是激活失败的常见原因 [证据1]。当KMS激活失败时，应首先检查系统时间是否准确 [证据2]。\n\n排查步骤：\n1. 确认系统时间准确 [证据1]\n2. 检查网络能访问激活服务器 [证据1]\n3. 确认设备已入域 [证据1]\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "install-guide.md",
+        "license-activation.md",
+        "software-update.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "r38",
+      "query": "出差结束后几天内要提交报销，酒店费用标准是多少",
+      "question_type": "direct",
+      "difficulty": "medium",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/finance/expense-reimbursement.md#报销范围"
+      ],
+      "gold_chunk_ids": [
+        "3c806778b02f59c2:1"
+      ],
+      "gold_chunk_coverage": 1.0,
+      "gold_answer": "住宿标准通常为 400 元每晚、一线城市 500 元；餐饮补贴 120 元每天。 出差结束 5 个工作日内在 OA 提交报销单并上传合规发票，主管和财务审核后打款。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "5 个工作日",
+          "400"
+        ],
+        "expected": [
+          "5 个工作日",
+          "400"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "根据[证据1]：\n1. 报销提交时限：出差结束5个工作日内，需在OA系统提交差旅报销单\n2. 酒店费用标准：400元/晚（一线城市500元/晚），超标准需提前申请\n\n如需进一步排查，请描述故障现象，我可转人工协助",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "account-lock.md",
+        "expense-reimbursement.md",
+        "onboarding-guide.md",
+        "vacation-policy.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "r39",
+      "query": "新员工入职当天要带哪些材料，去哪个楼层办理",
+      "question_type": "direct",
+      "difficulty": "easy",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/hr/onboarding-guide.md#入职流程"
+      ],
+      "gold_chunk_ids": [
+        "e13d7dbdbab5edc6:1"
+      ],
+      "gold_chunk_coverage": 1.0,
+      "gold_answer": "入职当天携身份证和学历证明到 3 号楼 2 层办理手续，并领取临时工牌和门禁卡。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "身份证",
+          "3 号楼"
+        ],
+        "expected": [
+          "身份证",
+          "3 号楼"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "新员工入职当天需携带以下材料到人力资源部办理手续：\n\n1. 身份证\n2. 学历证明\n\n办理地点：3号楼2层人力资源部 [证据1]\n\n入职当天还需完成：\n- 领取工牌与门禁卡（临时卡，正式卡3个工作日后发放）\n- 签订劳动合同（一式两份）与保密协议\n- 参加入职培训（每周一、三下午，时长2小时）\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "mailbox-quota.md",
+        "onboarding-guide.md",
+        "password-policy.md",
+        "vacation-policy.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "r40",
+      "query": "年假需要提前几天申请，没休完能否结转",
+      "question_type": "direct",
+      "difficulty": "medium",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/general/vacation-policy.md#年假额度"
+      ],
+      "gold_chunk_ids": [
+        "9034cdf33e5bd0ee:1"
+      ],
+      "gold_chunk_coverage": 1.0,
+      "gold_answer": "入职满 1 年有 5 天年假，未休完最多结转 5 天至次年 3 月底。 年假需提前 3 个工作日申请；病假通常需要二级甲等以上医院证明。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "3 个工作日",
+          "5 天"
+        ],
+        "expected": [
+          "3 个工作日",
+          "5 天"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "年假需提前 3 个工作日申请 [证据1]。当年未休完的年假可结转最多 5 天至次年 3 月底 [证据1]。\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "expense-reimbursement.md",
+        "mailbox-quota.md",
+        "onboarding-guide.md",
+        "vacation-policy.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "r45",
+      "query": "SMTP 465 SSL 发信配置",
+      "question_type": "exact_term",
+      "difficulty": "easy",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/email/config-guide.md#服务器参数"
+      ],
+      "gold_chunk_ids": [
+        "657e68c18ad40cc9:2"
+      ],
+      "gold_chunk_coverage": 0.0,
+      "gold_answer": "IMAP 服务器为 imap.company.com、端口 993、SSL；SMTP 为 smtp.company.com、端口 465、SSL。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "smtp.company.com",
+          "465",
+          "SSL"
+        ],
+        "expected": [
+          "smtp.company.com",
+          "465",
+          "SSL"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "SMTP 465 SSL发信配置参数如下 [证据1][证据2]：\n\n- 服务器地址：smtp.company.com\n- 端口：465\n- 加密方式：SSL\n\n配置步骤：\n1. 在邮箱客户端中找到SMTP服务器设置\n2. 服务器地址填入：smtp.company.com\n3. 端口填入：465\n4. 加密方式选择：SSL\n5. 启用SMTP认证（需使用客户端授权码，而非邮箱密码）[证据1]\n\n注意事项：\n- 企业邮箱禁止使用明文密码，必须使用\"客户端授权码\"（在邮箱安全中心生成）[证据1]\n- 若配置后仍无法发信，检查是否触发反垃圾策略（短时间内大量群发）[证据1][证据2]\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "config-guide.md",
+        "mailbox-quota.md",
+        "troubleshoot.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "r57",
+      "query": "新电脑预装家庭版 Office，怎样换成公司的企业授权版本",
+      "question_type": "distractor",
+      "difficulty": "hard",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/software/install-guide.md#症状与判断"
+      ],
+      "gold_chunk_ids": [
+        "e08dff7985a8c328:1"
+      ],
+      "gold_chunk_coverage": 0.0,
+      "gold_answer": "安装软件前需确认软件名称、操作系统和授权类型，家庭版与企业版可能不匹配。 只从企业软件分发平台安装；KMS 激活失败先检查系统时间、网络和设备是否入域。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "家庭版",
+          "企业版",
+          "企业软件分发平台"
+        ],
+        "expected": [
+          "家庭版",
+          "企业版",
+          "企业软件分发平台"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "将家庭版Office更换为企业授权版本的操作步骤：\n\n1. 确认Office软件在企业软件白名单内 [证据1]\n2. 从企业软件分发平台下载企业版Office安装包 [证据1]\n3. 卸载预装的家庭版Office [证据1]\n4. 安装企业版Office [证据1]\n5. 执行企业授权激活（批量授权KMS/账号激活）[证据1]\n6. 如激活失败，检查：\n   - 系统时间是否准确 [证据1]\n   - 网络能否访问激活服务器 [证据1]\n   - 设备是否已入域 [证据1]\n7. 验证软件可正常启动 [证据1]\n\n注意事项：不要从非官方渠道下载安装包 [证据1]，激活失败需联系IT管理员确认设备是否在授权名单内 [证据3]。\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "install-guide.md",
+        "license-activation.md",
+        "software-update.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "e01",
+      "query": "重置密码后邮箱客户端提示密码错误，怎么恢复收信",
+      "question_type": "multi_hop",
+      "difficulty": "hard",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 2,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/email/troubleshoot.md#注意事项",
+        "docs/knowledge/password/reset-sop.md#注意事项"
+      ],
+      "gold_chunk_ids": [
+        "53d73c042ae92c8c:4",
+        "fe0c6e28c883a70c:4"
+      ],
+      "gold_chunk_coverage": 0.5,
+      "gold_answer": "密码重置后原密码立即失效，需要在邮箱客户端更新为新密码；仍无法收信时再检查客户端配置与授权。",
+      "gold_answer_coverage": {
+        "score": 0.667,
+        "matched": [
+          "更新",
+          "客户端"
+        ],
+        "expected": [
+          "原密码",
+          "更新",
+          "客户端"
+        ]
+      },
+      "gold_answer_coverage_score": 0.667,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "根据知识库内容，重置密码后客户端提示密码错误的解决方案如下：\n\n1. 更新客户端密码：在邮箱客户端设置中，将密码更新为重置后的新密码 [证据1]\n\n2. 检查客户端授权设置：企业邮箱通常需要使用\"客户端授权码\"而非明文密码，需在邮箱安全中心生成授权码并配置到客户端 [证据2]\n\n3. 确保所有客户端同步更新：包括电脑、手机、平板等所有使用该邮箱的设备，旧设备未更新密码会导致认证失败 [证据1]\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "config-guide.md",
+        "mailbox-quota.md",
+        "troubleshoot.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "e02",
+      "query": "邮箱账号被锁定且登录日志有异常 IP，应该立即解锁吗",
+      "question_type": "multi_hop",
+      "difficulty": "hard",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 2,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/password/account-lock.md#处理步骤"
+      ],
+      "gold_chunk_ids": [
+        "770369b81515c927:2"
+      ],
+      "gold_chunk_coverage": 0.0,
+      "gold_answer": "异常 IP 或高频失败可能是攻击，不能立即解锁；应先查登录日志、冻结账号并通知安全团队。",
+      "gold_answer_coverage": {
+        "score": 0.0,
+        "matched": [],
+        "expected": [
+          "登录日志",
+          "冻结",
+          "安全团队"
+        ]
+      },
+      "gold_answer_coverage_score": 0.0,
+      "behavior": {
+        "passed": null,
+        "reason": "回答调用失败，不能判定行为"
+      },
+      "answer": "知识库中暂无相关内容，无法回答您的具体问题。\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [
+        "judge 返回不符合 schema"
+      ],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "config-guide.md",
+        "mailbox-quota.md",
+        "troubleshoot.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": {
+        "stage": "evidence_gate",
+        "error_type": "PipelineFailure"
+      },
+      "metric_errors": []
+    },
+    {
+      "case_id": "e03",
+      "query": "VPN 连不上",
+      "question_type": "incomplete",
+      "difficulty": "hard",
+      "answerable": false,
+      "expected_behavior": "clarify",
+      "expected_min_hops": 1,
+      "hops": 2,
+      "gold_chunks": [],
+      "gold_chunk_ids": [],
+      "gold_chunk_coverage": null,
+      "gold_answer": "需要补充错误码、证书状态、设备和网络环境，才能继续判断。",
+      "gold_answer_coverage": {
+        "score": 0.667,
+        "matched": [
+          "错误码",
+          "证书"
+        ],
+        "expected": [
+          "错误码",
+          "证书",
+          "设备"
+        ]
+      },
+      "gold_answer_coverage_score": 0.667,
+      "behavior": {
+        "passed": false,
+        "requested_terms": [],
+        "missing_terms": [
+          "错误码",
+          "证书",
+          "设备"
+        ],
+        "reason": "未明确请求全部必要信息"
+      },
+      "answer": "VPN连接不上可能有多种原因，请先确认是否出现错误码：\n\n1. **Error 800**：最常见，先检查证书状态 [证据2][证据4]\n   - 证书已过期：需续期（联系IT执行`certutil -renew`）\n   - 证书正常：检查代理设置和路由表 [证据1]\n\n2. **Error 720/721/809**：拨号连接损坏或网络问题 [证据4]\n   - Error 720：重建拨号连接\n   - Error 721/809：检查网络连通性和防火墙\n\n3. **无错误码**：可能是客户端配置损坏 [证据1]\n   - 检查系统代理是否干扰VPN流量\n   - 重置客户端配置（不要直接卸载重装）\n\n排查顺序：先确认证书状态，再检查客户端配置，最后排查网络问题。\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "cert-renewal.md",
+        "client-config.md",
+        "error-codes.md",
+        "vpn-install-guide.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "e04",
+      "query": "邮箱坏了怎么办",
+      "question_type": "incomplete",
+      "difficulty": "hard",
+      "answerable": false,
+      "expected_behavior": "clarify",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [],
+      "gold_chunk_ids": [],
+      "gold_chunk_coverage": null,
+      "gold_answer": "需要补充是收不到、发不出还是都异常，以及客户端和报错信息。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "收不到",
+          "发不出",
+          "客户端"
+        ],
+        "expected": [
+          "收不到",
+          "发不出",
+          "客户端"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": false,
+        "requested_terms": [],
+        "missing_terms": [
+          "收不到",
+          "发不出",
+          "客户端"
+        ],
+        "reason": "未明确请求全部必要信息"
+      },
+      "answer": "邮箱故障需根据具体问题类型处理：\n\n1. **配置问题**（收/发邮件异常）：\n   - 确认设备类型和客户端\n   - 检查服务器参数：IMAP(imap.company.com:993/SSL)、SMTP(smtp.company.com:465/SSL) [证据1]\n   - 使用客户端授权码而非明文密码 [证据1]\n\n2. **容量问题**（提示\"邮箱已满\"）：\n   - 清理3年以上邮件或大附件\n   - 使用OA系统归档功能（保留7年） [证据2]\n\n3. **收发故障**：\n   - 先区分\"收不到\"或\"发不出\"\n   - 检查账号密码是否最新（改密码后需同步更新客户端） [证据3]\n   - 查看垃圾箱/隔离区是否被拦截 [证据3]\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "config-guide.md",
+        "mailbox-quota.md",
+        "troubleshoot.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "e05",
+      "query": "办公软件激活失败",
+      "question_type": "incomplete",
+      "difficulty": "hard",
+      "answerable": false,
+      "expected_behavior": "clarify",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [],
+      "gold_chunk_ids": [],
+      "gold_chunk_coverage": null,
+      "gold_answer": "需要补充软件名称、操作系统、授权类型和具体报错，才能定位原因。",
+      "gold_answer_coverage": {
+        "score": 0.333,
+        "matched": [
+          "软件"
+        ],
+        "expected": [
+          "软件",
+          "操作系统",
+          "报错"
+        ]
+      },
+      "gold_answer_coverage_score": 0.333,
+      "behavior": {
+        "passed": false,
+        "requested_terms": [],
+        "missing_terms": [
+          "软件",
+          "操作系统",
+          "报错"
+        ],
+        "reason": "未明确请求全部必要信息"
+      },
+      "answer": "办公软件激活失败常见原因及处理步骤：\n\n1. 检查密钥类型与软件版本是否匹配 [证据3]\n2. 确认系统时间准确（KMS激活对时间敏感）[证据1]\n3. 检查网络能否访问激活服务器 [证据1][证据3]\n4. 确认设备已入域且在企业授权名单内 [证据1][证据3]\n5. 如提示\"激活次数超限\"，需联系IT管理员释放旧设备占用授权 [证据3]\n\n如以上步骤仍无法解决，请提供具体错误码和故障现象，我可转人工协助处理。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "install-guide.md",
+        "license-activation.md",
+        "software-update.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "e09",
+      "query": "听说办公软件更新能推迟 30 天，这个规则现在还有效吗",
+      "question_type": "stale_knowledge_conflict",
+      "difficulty": "hard",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/software/software-update.md#更新规则"
+      ],
+      "gold_chunk_ids": [
+        "ac555fa879fb185a:2"
+      ],
+      "gold_chunk_coverage": 1.0,
+      "gold_answer": "当前规则只允许推迟最多 14 天；超过期限会强制执行，并在此前持续提醒。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "14 天",
+          "强制"
+        ],
+        "expected": [
+          "14 天",
+          "强制"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "根据知识库内容，办公软件更新最多只能推迟14天，而不是30天 [证据1]。\n\n具体规则是：\n- 用户可通过手动点击\"稍后提醒\"将更新推迟最多14天\n- 超过14天的更新会被强制执行，且强制更新前3天每天会弹窗提醒\n\n30天的推迟规则目前并不有效，当前政策是14天的推迟期限。如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "install-guide.md",
+        "license-activation.md",
+        "software-update.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    },
+    {
+      "case_id": "e10",
+      "query": "有人说公司密码 60 天改一次并且可以重复使用旧密码，这还是现行要求吗",
+      "question_type": "stale_knowledge_conflict",
+      "difficulty": "hard",
+      "answerable": true,
+      "expected_behavior": "answer",
+      "expected_min_hops": 1,
+      "hops": 1,
+      "gold_chunks": [
+        "docs/knowledge/password/password-policy.md#密码复杂度要求"
+      ],
+      "gold_chunk_ids": [
+        "788a04517bdb44fe:1"
+      ],
+      "gold_chunk_coverage": 1.0,
+      "gold_answer": "当前密码每 90 天必须修改，并且不得复用最近 5 次使用过的密码。",
+      "gold_answer_coverage": {
+        "score": 1.0,
+        "matched": [
+          "90 天",
+          "最近 5 次"
+        ],
+        "expected": [
+          "90 天",
+          "最近 5 次"
+        ]
+      },
+      "gold_answer_coverage_score": 1.0,
+      "behavior": {
+        "passed": true,
+        "reason": "有证据且未落入固定暂无兜底"
+      },
+      "answer": "根据[证据1]，公司现行密码策略要求每90天强制修改一次，且不得复用最近5次使用过的密码。因此，\"60天改一次并且可以重复使用旧密码\"的说法不符合现行要求。\n\n如需进一步排查，请描述故障现象，我可转人工协助。",
+      "pipeline_errors": [],
+      "quality_metrics_skipped": true,
+      "sources": [
+        "account-lock.md",
+        "password-policy.md",
+        "reset-sop.md"
+      ],
+      "faithfulness": null,
+      "faithfulness_score": null,
+      "answer_relevancy": null,
+      "answer_relevancy_score": null,
+      "answer_error": null,
+      "metric_errors": []
+    }
+  ],
+  "quality_metrics_requested": false,
+  "resumed_cases": 6,
+  "scope": "真实Embedding-3+glm-4.5-air；默认质量评测不变，本轮可显式跳过额外质量指标",
+  "prior_llm_calls": 23,
+  "prior_duration_seconds": 168.6,
+  "prior_run_protocol": {
+    "completed_case_ids": [
+      "r01",
+      "r02",
+      "r04",
+      "r05",
+      "r06",
+      "r07"
+    ],
+    "request_timeout_seconds": 8,
+    "quality_metrics_requested": true,
+    "scope": "初段6题完成后复用缓存，停止额外质量指标以优先完成全部29题"
+  },
+  "per_question_budget_seconds": 20,
+  "sdk_max_retries": 0
+}

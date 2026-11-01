@@ -6,6 +6,7 @@
 - 查会话/发消息/查 trace：先校验租户，跨租户 → 404（"不存在"而非"无权限"，
   避免泄露别租户的会话存在性）
 """
+import hashlib
 import json
 import logging
 import time
@@ -19,7 +20,7 @@ from app.agents.graph import graph
 from app.api.llm_configs import get_owned_config_or_404
 from app.config import settings
 from app.db import SessionLocal
-from app.models import Conversation, User
+from app.models import AgentRequest, Conversation, User
 from app.schemas import (
     ConversationCreate,
     ConversationOut,
@@ -30,6 +31,8 @@ from app.schemas import (
 )
 from app.security import get_current_user
 from app.services import session_service
+from app.services.agent_admission import acquire_conversation, acquire_slot
+from app.services.agent_stream import GuardedStreamingResponse
 from app.services.audit_service import audit
 from app.services.llm_config_service import LLMConfigSecretError, profile_from_config
 
@@ -51,7 +54,7 @@ def _run_agent_stream(state: dict):
     """跑一轮 Agent 并【边跑边产出】。
 
     生成器 yield 两种事件：
-    - ("node", new_traces)：每完成一个节点，产出该节点新增的 trace（含耗时）
+    - ("node", new_traces, state_snapshot)：每个节点的 trace 及可持久化状态快照
     - ("done", final_state, total_ms)：全部跑完，产出最终 state 和本轮总耗时
 
     为什么用 stream 而不是 invoke：invoke 只返回最终 state，拿不到【每个节点各自的
@@ -75,7 +78,7 @@ def _run_agent_stream(state: dict):
                 if k != "trace":
                     final[k] = v
             prev_t = time.perf_counter()
-            yield "node", new_traces
+            yield "node", new_traces, {**final, "trace": list(final["trace"])}
     total_ms = round((time.perf_counter() - t_all) * 1000)
     yield "done", final, total_ms
 
@@ -125,6 +128,57 @@ def send_message(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """先鉴权与准入，再恢复状态；同一 request_id 重放已保存的终态事件。"""
+    _get_owned_conversation(db, conv_id, user)
+    conversation_lease = acquire_conversation(user.tenant_id, conv_id)
+    slot = None
+    row = None
+
+    def cleanup():
+        try:
+            if row is not None:
+                db.rollback()
+                db.refresh(row)
+                if row.status == "pending":
+                    row.status = "interrupted"
+                    db.commit()
+        finally:
+            if slot is not None:
+                slot.release()
+            conversation_lease.release()
+
+    try:
+        # 获取互斥后丢弃任何旧 identity-map 快照。
+        db.expire_all()
+        request_id = body.request_id or str(uuid4())
+        fingerprint = hashlib.sha256(json.dumps(
+            body.model_dump(exclude={"request_id"}), sort_keys=True,
+            ensure_ascii=False,
+        ).encode()).hexdigest()
+        row = db.query(AgentRequest).filter_by(
+            conversation_id=conv_id, actor_id=user.username, request_id=request_id,
+        ).one_or_none()
+        if row is not None:
+            if row.fingerprint != fingerprint:
+                raise HTTPException(409, "request_id 已用于不同的请求内容")
+            if row.terminal_event is None:
+                raise HTTPException(409, "该请求尚未确认完成，请检查会话记录，勿重复执行")
+            event = row.terminal_event
+            conversation_lease.release()
+            return StreamingResponse(iter([event]), media_type="text/event-stream",
+                                     headers={"X-Idempotent-Replay": "true", "Cache-Control": "no-cache"})
+        slot = acquire_slot()
+        row = AgentRequest(conversation_id=conv_id, actor_id=user.username,
+                           request_id=request_id, fingerprint=fingerprint, status="pending")
+        db.add(row)
+        db.commit()
+        return _send_message_accepted(conv_id, body, request, user, db, row, cleanup)
+    except BaseException:
+        cleanup()
+        raise
+
+
+def _send_message_accepted(conv_id, body, request, user, db, request_row, cleanup):
     """发消息（SSE 流式）：边跑 Agent 边推送节点进度，最后推完整结果。
 
     事件流：
@@ -145,7 +199,7 @@ def send_message(
         "actor_id": user.username,
         "tenant_id": user.tenant_id,
         "execution_source": "web_agent",
-        "operation_id": f"web-agent:{uuid4()}",
+        "operation_id": f"web-agent:{request_row.id}",
     })
     # 自定义密钥只以运行时 profile 形式存在。save_turn 只落 messages/trace，
     # 因此 API Key 不会进入会话历史、Trace 或 SSE 响应。
@@ -162,8 +216,9 @@ def send_message(
     state["messages"] = [*state.get("messages", []), msg]
     # 2.3 本轮用户消息（工单状态机触发用：new→processing 与"未解决"重开）
     state["new_user_message"] = body.content
-    # 2.5 模型链模式（前端"速度/准确"切换）→ 注入 state，节点据此选链
-    state["model_chain"] = settings.GLM_MODELS_FAST if body.mode == "fast" else settings.GLM_MODELS
+    # 项目默认文本模型统一为 glm-5.3-flash；仍接收旧客户端的 mode 字段，
+    # 但不能让它把本轮 Agent 悄悄切到另一种回答模型。
+    state["model_chain"] = settings.GLM_MODELS
 
     def event_stream():
         """SSE 生成器：节点事件实时推，done 事件携带最终结果。
@@ -171,18 +226,21 @@ def send_message(
         落库策略：**边跑边存**（节点完成即增量落库）——客户端中途断开
         （刷新/断网）时生成器被 cancel，如果只在 done 落库会静默丢整轮数据；
         增量落库保证已完成的节点/消息都在库里，断开只丢"还没跑的节点"。
-        save_turn 内部用长度对比只存新增，重复调用幂等。
+        save_turn 在会话锁保护下用长度对比只存新增；跨请求去重由台账负责。
         """
         acc_trace = list(state.get("trace", []))
+        current_state = dict(state)
         try:
             for event in _run_agent_stream(state):
                 kind = event[0]
                 if kind == "node":
-                    _, new_traces = event
+                    new_traces = event[1]
                     acc_trace += new_traces
+                    if len(event) > 2:
+                        current_state = event[2]
                     # 增量落库：用户消息 + 已完成的节点 trace 立即持久化
                     conv = db.get(Conversation, conv_id)
-                    session_service.save_turn(db, conv, {**state, "trace": acc_trace})
+                    session_service.save_turn(db, conv, {**current_state, "trace": acc_trace})
                     yield f"event: node\ndata: {json.dumps({'traces': new_traces}, ensure_ascii=False)}\n\n"
                 else:
                     _, final, total_ms = event
@@ -219,18 +277,28 @@ def send_message(
                             "ticket_id": conv.ticket_id,
                         },
                     }
-                    yield f"event: done\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+                    terminal = f"event: done\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+                    request_row.status = "completed"
+                    request_row.terminal_event = terminal
+                    db.commit()
+                    yield terminal
         except Exception as e:
             # 兜底：至少把用户消息落库（save_turn 幂等，长度对比不会重复），
             # 并推送明确 error 事件，前端能显示"执行失败"而不是"连接中断"
+            db.rollback()
             conv = db.get(Conversation, conv_id)
-            session_service.save_turn(db, conv, state)
+            session_service.save_turn(db, conv, {**current_state, "trace": acc_trace})
             logger.error("Agent 执行异常: %s: %s", type(e).__name__, e)
-            yield f"event: error\ndata: {json.dumps({'message': f'Agent 执行失败（{type(e).__name__}），您的消息已保存'}, ensure_ascii=False)}\n\n"
+            terminal = f"event: error\ndata: {json.dumps({'message': f'Agent 执行失败（{type(e).__name__}），您的消息已保存'}, ensure_ascii=False)}\n\n"
+            request_row.status = "failed"
+            request_row.terminal_event = terminal
+            db.commit()
+            yield terminal
             return
 
-    return StreamingResponse(
+    return GuardedStreamingResponse(
         event_stream(),
+        cleanup,
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

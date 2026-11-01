@@ -100,7 +100,7 @@ jobs:
           echo "=== intent (report.json) ==="
           python -c "import json;d=json.load(open('tests/report.json'));print('accuracy=',d.get('accuracy'),'total=',d.get('total'))" || true
           echo "=== rag (rag_report.json) ==="
-          python -c "import json;d=json.load(open('tests/rag_report.json'));print({k:d.get(k) for k in ('recall@1','recall@3','recall@5','mrr')})" || true
+          python -c "import json;d=json.load(open('tests/rag_report.json'));print({r['name']:{k:r[k] for k in ('gold_chunk_recall@1','gold_chunk_recall@3','gold_chunk_recall@5','mrr')} for r in d.get('results',[])})" || true
           echo "=== qa (qa_report.json) ==="
           python -c "import json;d=json.load(open('tests/qa_report.json'));print({k:d.get(k) for k in ('faithfulness_avg','answer_relevancy_avg','multihop_cases')})" || true
           echo "=== transcribe (transcribe_report.json) ==="

@@ -46,7 +46,10 @@ services:
     environment:
       ZHIPU_API_KEY: ${ZHIPU_API_KEY:?请在 .env 配置 ZHIPU_API_KEY}
       GLM_BASE_URL: ${GLM_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
-      GLM_MODELS: ${GLM_MODELS:-glm-4.7-flash,glm-4.6-flash,glm-4.5-flash,glm-4-flash}
+      GLM_MODELS: ${GLM_MODELS:-glm-5.3-flash}
+      # 兼容旧客户端的 fast / JSON 链同样锁定 glm-5.3-flash，禁止按模式换回答模型。
+      GLM_MODELS_FAST: ${GLM_MODELS_FAST:-glm-5.3-flash}
+      GLM_JSON_MODELS: ${GLM_JSON_MODELS:-glm-5.3-flash}
       GLM_VISION_MODELS: ${GLM_VISION_MODELS:-glm-4v-flash}
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
@@ -64,10 +67,19 @@ services:
       LLM_CONFIG_ENCRYPTION_KEY: ${LLM_CONFIG_ENCRYPTION_KEY:-}
       LLM_REQUEST_TIMEOUT: ${LLM_REQUEST_TIMEOUT:-60}
       LLM_ALLOW_PRIVATE_ENDPOINTS: ${LLM_ALLOW_PRIVATE_ENDPOINTS:-false}
+      AGENT_MAX_CONCURRENT: ${AGENT_MAX_CONCURRENT:-8}
+      AGENT_MAX_INFLIGHT_HTTP: ${AGENT_MAX_INFLIGHT_HTTP:-16}
+      AGENT_LOCK_DIR: /.rag/agent_locks
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-16}
+      DB_POOL_TIMEOUT: ${DB_POOL_TIMEOUT:-2}
       # RAG：镜像内 app/ 被扁平复制到 /app/app，显式固定源文档与向量索引路径，
       # 避免 BASE_DIR 在容器内解析为 / 后读到错误目录。
       KB_ROOT: /app/docs/knowledge
       KB_VECTOR_DIR: /.rag/kb_chroma
+      KB_SYNC_MODE: ${KB_SYNC_MODE:-git}
+      KB_GIT_EXPORT: /app/knowledge-source.json
+      KB_SYNC_STATE_DIR: /.rag/sync
+      KB_SOURCE_ID: shared-it-knowledge
       # 独立规模库（如 kb_docs_scale）只在部署者显式配置时参加联合检索。
       KB_EXTRA_COLLECTIONS: ${KB_EXTRA_COLLECTIONS:-}
       # 日志：级别可配（生产可调 WARNING 减噪）+ 文件轮转落盘
@@ -79,6 +91,7 @@ services:
       # 否则容器重建会清掉实际使用的索引。
       - rag_data:/.rag           # Chroma 索引、蓝绿指针和转译缓存持久化
       - ./docs/knowledge:/app/docs/knowledge:ro  # 知识库源文档随代码更新，容器内只读
+      - ./knowledge-source.json:/app/knowledge-source.json:ro
     depends_on:
       mysql:
         condition: service_healthy

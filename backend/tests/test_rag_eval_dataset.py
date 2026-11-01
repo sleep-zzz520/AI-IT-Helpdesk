@@ -14,7 +14,7 @@ from tests.rag_eval_dataset import (
 
 def test_every_case_has_required_gold_labels():
     assert len(RETRIEVAL_CASES) == EXPECTED_RETRIEVAL_CASES == 60
-    assert len(E2E_CASES) == 22
+    assert len(E2E_CASES) == 29
     assert {"multi_hop", "incomplete", "no_answer", "stale_knowledge_conflict"} <= {
         case.question_type for case in ALL_CASES
     }

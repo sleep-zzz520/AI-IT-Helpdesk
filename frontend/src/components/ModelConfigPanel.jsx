@@ -90,7 +90,7 @@ export default function ModelConfigPanel({ configs, selectedId, onSelect, onChan
               >
                 <span className="model-choice-copy">
                   <span className="model-choice-title">项目默认模型</span>
-                  <span className="model-choice-detail mono">GLM · 速度 / 准确模式</span>
+                  <span className="model-choice-detail mono">GLM · 4.5-Air</span>
                 </span>
                 {selectedId == null && <CheckCircle size={18} weight="fill" className="model-choice-check" />}
               </button>

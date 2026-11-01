@@ -38,9 +38,14 @@ _BM25_CACHE: dict[str, "Bm25Index"] = {}
 def _get_bm25(store) -> Bm25Index:
     """取该 store 对应的 BM25 索引（复用缓存实例）。"""
     key = store.collection_name  # ChromaStore 暴露；蓝绿切换后 collection 名
+    if settings.KB_SYNC_MODE == "git":
+        from app.rag.generations import _hash, denied_ids
+        key = f"{settings.KB_VECTOR_DIR}:{key}:{_hash(sorted(denied_ids()))}"
     # 不同 → 新 key → 自动建新索引（旧索引随 GC 释放）
     if key not in _BM25_CACHE:
         _BM25_CACHE[key] = Bm25Index(store)
+        if settings.KB_SYNC_MODE == "git" and len(_BM25_CACHE) > 8:
+            _BM25_CACHE.pop(next(iter(_BM25_CACHE)))
     return _BM25_CACHE[key]
 
 
@@ -58,6 +63,10 @@ class RetrievalStats:
     # 平时 None（不占内存）；retrieve(debug=True) 时填充
     debug_vector_hits: list | None = None
     debug_bm25_hits: list | None = None
+    # RRF 已完成文档去重、但尚未截断为最终 Top-K 的候选。
+    # 有了这一层，才能区分“候选没召回”和“候选被最终排序挤掉”。
+    debug_fused_hits: list | None = None
+    debug_final_hits: list | None = None
 
 
 def _build_where(scenario: str | None) -> dict:
@@ -106,43 +115,52 @@ def _enhance_query(query: str) -> str:
     return query if not codes else f"{query} {' '.join(codes)}"
 
 
+def _limit_by_source(hits: list[Hit], top_k: int, per_source_limit: int) -> list[Hit]:
+    """按 source_url 限制每篇文档的子 Chunk 数，同时保留全局排序。"""
+    limited: list[Hit] = []
+    source_counts: dict[str, int] = {}
+    for hit in hits:
+        url = hit.metadata.get("source_url")
+        key = url or hit.id  # 无 source_url 的历史数据退化为 id 级去重
+        count = source_counts.get(key, 0)
+        if count >= per_source_limit:
+            continue
+        source_counts[key] = count + 1
+        limited.append(hit)
+        if len(limited) >= top_k:
+            break
+    return limited
+
+
 def _rrf_fuse(vector_hits: list[Hit], bm25_hits: list[Hit],
-              k: float, top_k: int) -> list[Hit]:
+              k: float, top_k: int,
+              vector_weight: float = 1.0,
+              bm25_weight: float = 1.0,
+              per_source_limit: int | None = None) -> list[Hit]:
     """加权 RRF 融合：score = Σ weight / (k + rank)，按 chunk id 对齐。
 
     融合时给保留的 hit 实例打检索路标（routes）——向量/BM25 双路命中
     合并为 both。路标不参与分数计算，只作证据强度的规则层信号
     （judge 缺席时 BM25 词法命中 = 确定性相关，见 rag_query）。
 
-    文档级去重（2026-08-12 加，Eval 真实化发现）：
-    同一篇文档的多个 chunk 在融合时分数叠加霸榜，挤占其他文档的
-    证据位置（实测：BM25 对泛词命中同一文档 2 个 chunk 排 #1#2，
-    把答案文档挤出 top-5）。候选已在双路召回阶段限定为子块，命中的
-    子块会由 _attach_parents 补上父块全文。故按 source_url 去重，每篇
-    文档只保留得分最高的一个子块。
+    ``per_source_limit`` 为 ``None`` 时只做 Chunk 级 RRF，供 Rerank 看见
+    原始子段候选；常规返回前再由调用方应用来源上限。这样精排能够从同一
+    文档的多个段落中选出真正回答问题的一段，而不是看到已被截断的结果。
     """
     fused: dict[str, dict] = {}
     for rank, hit in enumerate(vector_hits, start=1):
         e = fused.setdefault(hit.id, {"hit": hit, "score": 0.0})
         e["hit"].routes.add("vector")
-        e["score"] += 1.0 / (k + rank)
+        e["score"] += vector_weight / (k + rank)
     for rank, hit in enumerate(bm25_hits, start=1):
         e = fused.setdefault(hit.id, {"hit": hit, "score": 0.0})
         e["hit"].routes.add("bm25")
-        e["score"] += 1.0 / (k + rank)
+        e["score"] += bm25_weight / (k + rank)
     ranked = sorted(fused.values(), key=lambda e: e["score"], reverse=True)
-    deduped: list[Hit] = []
-    seen_docs: set[str] = set()
-    for e in ranked:
-        url = e["hit"].metadata.get("source_url")
-        key = url or e["hit"].id  # 无 source_url 的 chunk 退化为 id 级去重
-        if key in seen_docs:
-            continue
-        seen_docs.add(key)
-        deduped.append(e["hit"])
-        if len(deduped) >= top_k:
-            break
-    return deduped
+    ranked_hits = [e["hit"] for e in ranked]
+    if per_source_limit is None:
+        return ranked_hits[:top_k]
+    return _limit_by_source(ranked_hits, top_k, per_source_limit=per_source_limit)
 
 
 def _attach_parents(hits: list[Hit], store: VectorStore) -> None:
@@ -155,6 +173,16 @@ def _attach_parents(hits: list[Hit], store: VectorStore) -> None:
             h.parent_text = parent_texts[pid]
 
 
+def _recall_vector(store: VectorStore, query_vec: list[float] | None,
+                   scenario: str | None) -> list[Hit]:
+    """按线上向量路的候选规则召回，供混合检索和公平基线共用。"""
+    if query_vec is None:
+        return []
+    return [h for h in store.query(query_vec, top_k=settings.RRF_RECALL_N,
+                                   where=_build_where(scenario))
+            if h.score >= settings.VECTOR_MIN_SCORE]
+
+
 def _recall_store(store: VectorStore, bm25: Bm25Index | None, enhanced: str,
                   query_vec: list[float] | None, scenario: str | None) -> tuple[list[Hit], list[Hit]]:
     """单库双路召回（向量 + BM25），单库/联合共用。
@@ -164,12 +192,7 @@ def _recall_store(store: VectorStore, bm25: Bm25Index | None, enhanced: str,
     BM25 路不做分数过滤（词法命中至少词面重叠，可信度由 judge 把关）。
     query_vec=None（embedding 失败降级）→ 跳过向量路，仅 BM25 词法召回。
     """
-    if query_vec is None:
-        vector_hits: list[Hit] = []
-    else:
-        vector_hits = [h for h in store.query(query_vec, top_k=settings.RRF_RECALL_N,
-                                              where=_build_where(scenario))
-                       if h.score >= settings.VECTOR_MIN_SCORE]
+    vector_hits = _recall_vector(store, query_vec, scenario)
     if bm25 is None:
         bm25 = _get_bm25(store)  # 模块级缓存（实测：不缓存每次重建 = 3s 检索）
     raw_bm25 = bm25.search(enhanced, top_k=settings.RRF_RECALL_N * 2)  # 留过滤余量
@@ -210,6 +233,8 @@ def _joint_store_pairs() -> list[tuple[str, VectorStore, None]]:
     """在岗库 + 配置的独立库（多库联合的检索目标集）。"""
     active = create_store()
     pairs = [(active.collection_name, active, None)]
+    if settings.KB_SYNC_MODE == "git":
+        return pairs  # 首版受控共享来源不联合任意历史/候选collection。
     for name in settings.extra_collections:  # config 层已排除蓝绿/在岗/重复
         if name not in _existing_collections():
             logger.warning("联合检索库 %s 不存在（未创建），跳过", name)
@@ -228,11 +253,53 @@ def _attach_parents_multi(hits: list[Hit], stores: dict[str, VectorStore]) -> No
         _attach_parents(group, store)
 
 
+def retrieve_vector_only(query_text: str, scenario: str | None = None,
+                         top_k: int = 5, store=None,
+                         stats: RetrievalStats | None = None,
+                         debug: bool = False,
+                         query_vector: list[float] | None = None) -> list[Hit]:
+    """按线上候选规则执行纯向量检索，供检索评测做公平对照。
+
+    该函数刻意保留混合链路已有的子 Chunk 过滤、相似度下限和来源上限；
+    唯一不执行的步骤是 BM25 召回与 RRF 融合。这样评测中的差异才可以归因于
+    混合排序，而不是两条链路的候选口径不同。
+    """
+    stats = stats or RetrievalStats()
+    if query_vector is None:
+        try:
+            query_vec = embed_text(query_text)
+        except Exception as e:
+            stats.notes.append(f"embedding 失败，纯向量无可用候选: {type(e).__name__}")
+            return []
+    else:
+        query_vec = query_vector
+
+    active_store = store or create_store()
+    vector_hits = _recall_vector(active_store, query_vec, scenario)
+    _tag_collection(vector_hits, active_store.collection_name)
+    stats.vector_recall = len(vector_hits)
+    stats.per_collection[active_store.collection_name] = {
+        "vector_recall": len(vector_hits), "bm25_recall": 0}
+    if debug:
+        stats.debug_vector_hits = list(vector_hits)
+
+    hits = _limit_by_source(
+        vector_hits,
+        top_k,
+        per_source_limit=max(1, settings.RAG_MAX_CHUNKS_PER_SOURCE),
+    )
+    if debug:
+        stats.debug_final_hits = list(hits)
+    _attach_parents(hits, active_store)
+    return hits
+
+
 def retrieve(query_text: str, scenario: str | None = None,
              top_k: int = 5, store=None, bm25=None,
              stats: RetrievalStats | None = None,
              debug: bool = False,
-             joint: bool = True) -> list[Hit]:
+             joint: bool = True,
+             query_vector: list[float] | None = None) -> list[Hit]:
     """混合检索最相关的知识块（单库 / 跨库联合）。
 
     - store/bm25：可注入（测试用独立库）；默认生产库
@@ -250,11 +317,14 @@ def retrieve(query_text: str, scenario: str | None = None,
     # embedding 失败降级（系统性修复）：付费 embedding API 也会限流/超时，
     # 挂掉不应让检索瘫痪——降级 BM25-only（本地内存索引零 API，词法路径
     # 仍可命中错误码/专有名词），stats.notes 记录原因供 Trace 可观测
-    try:
-        query_vec = embed_text(query_text)
-    except Exception as e:
-        query_vec = None
-        stats.notes.append(f"embedding 失败，降级 BM25-only: {type(e).__name__}")
+    if query_vector is None:
+        try:
+            query_vec = embed_text(query_text)
+        except Exception as e:
+            query_vec = None
+            stats.notes.append(f"embedding 失败，降级 BM25-only: {type(e).__name__}")
+    else:
+        query_vec = query_vector
 
     if store is None and bm25 is None and joint:
         pairs = _joint_store_pairs()
@@ -281,14 +351,45 @@ def retrieve(query_text: str, scenario: str | None = None,
         stats.debug_bm25_hits = all_bm25
 
     # ---- RRF 融合（跨库合并：按 chunk id 对齐，同 id 分数叠加）----
-    fused = _rrf_fuse(all_vector, all_bm25, k=settings.RRF_K, top_k=top_k * 2)
-    stats.fused_total = len(fused)
-
-    # ---- 可选 Rerank 精排（召回 2 倍量精排取 top_k）----
-    if settings.RERANK_ENABLED and fused:
-        fused = rerank(enhanced, fused, top_n=top_k)
+    # Rerank 必须先看到未应用来源上限的子 Chunk；否则“文档命中了，但答案
+    # 段被同文档泛化段挤掉”后，精排没有机会恢复它。免费路径默认保留历史的
+    # 2 * top_k 候选规模；RRF_FUSION_CANDIDATE_N 只允许在固定评测证明收益后
+    # 扩大这个中间池，最终仍受来源上限和 top_k 约束。
+    rerank_enabled = settings.RERANK_ENABLED
+    default_fusion_candidates = top_k * 2
+    fusion_top_k = (
+        max(default_fusion_candidates, settings.RERANK_CANDIDATE_N)
+        if rerank_enabled else default_fusion_candidates
+    )
+    if not rerank_enabled and settings.RRF_FUSION_CANDIDATE_N > 0:
+        fusion_top_k = max(default_fusion_candidates, settings.RRF_FUSION_CANDIDATE_N)
+    raw_fused = _rrf_fuse(
+        all_vector,
+        all_bm25,
+        k=settings.RRF_K,
+        top_k=fusion_top_k,
+        vector_weight=settings.RRF_VECTOR_WEIGHT,
+        bm25_weight=settings.RRF_BM25_WEIGHT,
+    )
+    source_limit = max(1, settings.RAG_MAX_CHUNKS_PER_SOURCE)
+    if rerank_enabled and raw_fused:
+        # 让交叉编码器在原始 Chunk 池中选段，再控制最终来源多样性。
+        reranked = rerank(enhanced, raw_fused, top_n=len(raw_fused))
+        fused = _limit_by_source(reranked, top_k, per_source_limit=source_limit)
         stats.reranked = True
+    else:
+        fused = _limit_by_source(raw_fused, top_k * 2, per_source_limit=source_limit)
+    stats.fused_total = len(fused)
+    if debug:
+        stats.debug_fused_hits = list(fused)
 
     hits = fused[:top_k]
+    if settings.KB_SYNC_MODE == "git":
+        from app.rag.generations import filter_hits
+        hits = filter_hits(hits)
+    if debug:
+        stats.debug_final_hits = list(hits)
     _attach_parents_multi(hits, {name: s for name, s, _ in pairs})
+    if settings.KB_SYNC_MODE == "git":
+        hits = filter_hits(hits)
     return hits

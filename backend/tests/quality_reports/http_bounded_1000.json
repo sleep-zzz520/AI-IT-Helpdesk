@@ -1,0 +1,51 @@
+{
+  "scope": "local HTTP + real auth/SSE/SQLite; synthetic slow Agent, no external API; not production capacity",
+  "mode": "bounded_admission",
+  "environment": {
+    "platform": "macOS-15.6.1-arm64-arm-64bit",
+    "python": "3.12.13",
+    "cpu_count": 8,
+    "workers": 1,
+    "database": "temporary SQLite WAL",
+    "pool_size": 16
+  },
+  "requests": 1000,
+  "client_concurrency": 200,
+  "admission_capacity": 8,
+  "synthetic_provider_budget": 8,
+  "synthetic_provider_seconds": 0.15,
+  "elapsed_seconds": 17.309,
+  "outcomes": {
+    "503": 666,
+    "done": 334
+  },
+  "execution": {
+    "active": 0,
+    "peak": 8,
+    "provider_overload": 0,
+    "agent_calls": 334
+  },
+  "request_ledger": {
+    "completed": 334
+  },
+  "latencies_by_outcome_ms": {
+    "503": {
+      "p50": 1200.09,
+      "p95": 6777.4,
+      "p99": 7428.35
+    },
+    "done": {
+      "p50": 3029.51,
+      "p95": 6728.21,
+      "p99": 7597.98
+    }
+  },
+  "checks": {
+    "bounded_execution": true,
+    "no_provider_overload": true,
+    "only_success_or_explicit_rejection": true,
+    "no_inflight_work_remaining": true,
+    "all_admitted_requests_completed": true
+  },
+  "checks_passed": true
+}

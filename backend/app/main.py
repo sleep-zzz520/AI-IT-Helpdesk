@@ -13,6 +13,7 @@ from app.api.llm_configs import router as llm_configs_router
 from app.config import settings
 from app.db import init_db
 from app.logging_config import setup_logging
+from app.services.agent_ingress import AgentIngressMiddleware
 
 
 @asynccontextmanager
@@ -20,10 +21,24 @@ async def lifespan(app: FastAPI):
     """应用启动时自动建表（容器化部署必需：无手动初始化步骤）。"""
     setup_logging()  # 统一日志：级别可配 + 文件轮转（生产排障可查）
     init_db()
-    yield
+    if settings.KB_SYNC_MODE == "git":
+        import threading
+
+        from app.rag.generations import run_worker
+        stop = threading.Event()
+        worker = threading.Thread(target=run_worker, args=(stop,), daemon=True, name="kb-sync-worker")
+        worker.start()
+        try:
+            yield
+        finally:
+            stop.set()
+            worker.join(timeout=3)
+    else:
+        yield
 
 
 app = FastAPI(title="智能IT运维服务台", version="0.4.0", lifespan=lifespan)
+app.add_middleware(AgentIngressMiddleware)
 
 # CORS：开发期允许所有来源（前端 Vite dev server 不同端口）
 app.add_middleware(
@@ -45,8 +60,14 @@ app.include_router(llm_configs_router)
 @app.get("/health")
 def health():
     """健康检查：确认服务、模型配置、数据库配置都就位。"""
-    return {
+    result = {
         "status": "ok",
         "model": settings.GLM_MODELS[0],  # 主模型（链首）
         "db": settings.MYSQL_DB,
     }
+    if settings.KB_SYNC_MODE == "git":
+        from app.rag.generations import state
+        current = state()
+        result.update(kb_mode="git", kb_generation=current["active_generation"],
+                      kb_source_commit=current["source_commit"], kb_documents=current["doc_count"])
+    return result
