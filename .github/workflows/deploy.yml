@@ -78,6 +78,7 @@ jobs:
             "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_PATH" <<'REMOTE'
           set -euo pipefail
           cd "$1"
+          umask 077
           mkdir -p backups
           stamp="$(date -u +%Y%m%dT%H%M%SZ)"
           if docker compose ps --status running --services | grep -qx backend; then
@@ -86,12 +87,17 @@ jobs:
           fi
           if docker compose ps --status running --services | grep -qx mysql; then
             docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysqldump -uroot --single-transaction --routines --triggers "$MYSQL_DATABASE"' </dev/null > "backups/pre-sync-$stamp.sql"
+            docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysqldump -uroot --single-transaction --no-tablespaces --set-gtid-purged=OFF --skip-comments "$MYSQL_DATABASE" kb_sources kb_sync_jobs' </dev/null > "backups/pre-sync-$stamp-knowledge.sql"
           fi
           if docker compose ps --all --services | grep -qx backend; then
+            docker compose run --rm --no-deps -T backend python -c 'import hashlib,json; from app.rag import generations as g; s=g.state(); chunks=g.resolve_store().get_all_meta(); fields=("active_generation","source_commit","active_collection","doc_count"); b={k:s[k] for k in fields}; b.update(content_metadata_sha256=hashlib.sha256(json.dumps(chunks,ensure_ascii=False,sort_keys=True,separators=(",",":")).encode()).hexdigest(),denied_ids=sorted(g.denied_ids())); print(json.dumps({"baseline":b},ensure_ascii=False))' </dev/null > "backups/pre-sync-$stamp-manifest.json"
             docker compose run --rm --no-deps -T backend python -c 'import sys,tarfile; t=tarfile.open(fileobj=sys.stdout.buffer, mode="w|gz"); t.add("/.rag", arcname="rag"); t.close()' </dev/null > "backups/pre-sync-$stamp-rag.tar.gz"
           fi
           test -s "backups/pre-sync-$stamp.sql"
           test -s "backups/pre-sync-$stamp-rag.tar.gz"
+          test -s "backups/pre-sync-$stamp-knowledge.sql"
+          test -s "backups/pre-sync-$stamp-manifest.json"
+          printf 'pre-sync-%s\n' "$stamp" > backups/latest-kb-backup
           printf 'Backup verified: %s\n' "$stamp"
           REMOTE
 
@@ -153,6 +159,28 @@ jobs:
           docker compose ps
           REMOTE
 
+      - name: Verify the previous generation survived service restart
+        run: |
+          ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_PATH" <<'REMOTE'
+          set -euo pipefail
+          cd "$1"
+          ready=0
+          for attempt in $(seq 1 30); do
+            if docker compose exec -T backend python -c 'import urllib.request; urllib.request.urlopen("http://localhost:8000/health", timeout=3)' </dev/null >/dev/null 2>&1; then
+              ready=1
+              break
+            fi
+            sleep 2
+          done
+          test "$ready" -eq 1
+          read -r prefix < backups/latest-kb-backup
+          [[ "$prefix" =~ ^pre-sync-[0-9]{8}T[0-9]{6}Z$ ]]
+          read -r expected digest < <(python3 -c 'import json,sys; b=json.load(open(sys.argv[1]))["baseline"]; print(b["active_generation"],b["content_metadata_sha256"])' "backups/$prefix-manifest.json")
+          docker compose exec -T backend python -c 'import hashlib,json,sys; from app.rag import generations as g; s=g.state(); data=g.resolve_store().get_all_meta(); actual=hashlib.sha256(json.dumps(data,ensure_ascii=False,sort_keys=True,separators=(",",":")).encode()).hexdigest(); assert s["active_generation"]==sys.argv[1] and actual==sys.argv[2], "Restart changed published knowledge"; print(json.dumps({"passed":True,"old_generation_survived_restart":True,"active_generation":s["active_generation"]}))' "$expected" "$digest" </dev/null > "backups/$prefix-restart-check.json"
+          cat "backups/$prefix-restart-check.json"
+          REMOTE
+
       - name: Build, verify and publish the Git knowledge generation
         run: |
           ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
@@ -162,6 +190,25 @@ jobs:
         run: |
           ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
             "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_PATH' && docker compose exec -T backend python -m app.rag.release_check"
+
+      - name: Restore the stopped knowledge backup into an isolated database
+        run: |
+          ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_PATH' && bash scripts/verify_kb_backup.sh" </dev/null
+
+      - name: Download recovery evidence
+        run: |
+          mkdir -p recovery-evidence
+          scp -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/backups/*-restore-check.json" recovery-evidence/
+          scp -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/backups/*-restart-check.json" recovery-evidence/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: knowledge-restore-evidence
+          path: recovery-evidence/*-check.json
+          if-no-files-found: error
 
       - name: Check the public service
         run: |

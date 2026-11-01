@@ -1,0 +1,2051 @@
+{
+  "scope": "isolated source, real MySQL and Chroma, temporary vectors; no production pointer changes",
+  "mysql_version": "8.0.43",
+  "real_embedding": true,
+  "source_commit": "1ac31e72d1ee72da0360efb04b5813cc84fc6527",
+  "documents": 16,
+  "phases": {
+    "full_rebuild_reference": {
+      "embedding_inputs": 96,
+      "chunks": 80,
+      "elapsed_ms": 12655.78
+    },
+    "initial_generation": {
+      "added": [
+        "email/config-guide.md",
+        "email/mailbox-quota.md",
+        "email/troubleshoot.md",
+        "finance/expense-reimbursement.md",
+        "general/vacation-policy.md",
+        "hr/onboarding-guide.md",
+        "password/account-lock.md",
+        "password/password-policy.md",
+        "password/reset-sop.md",
+        "software/install-guide.md",
+        "software/license-activation.md",
+        "software/software-update.md",
+        "vpn/cert-renewal.md",
+        "vpn/client-config.md",
+        "vpn/error-codes.md",
+        "vpn/vpn-install-guide.md"
+      ],
+      "deleted": [],
+      "discovery": {},
+      "elapsed_ms": 6954.2,
+      "embedding_inputs": 64,
+      "embedding_inputs_attempted": 64,
+      "embedding_requests_attempted": 16,
+      "reused_vectors": 0,
+      "skipped_count": 0,
+      "stages": {
+        "chunk_misses": 16,
+        "chunked_documents": 16,
+        "parse_hits": 16
+      },
+      "updated": [],
+      "measured_embedding_inputs": 64
+    },
+    "ten_duplicate_deliveries": {
+      "jobs": 1,
+      "embedding_inputs": 0
+    },
+    "changed_full_rebuild_reference": {
+      "embedding_inputs": 97,
+      "chunks": 81,
+      "elapsed_ms": 9183.6
+    },
+    "one_document_body_change": {
+      "added": [],
+      "deleted": [],
+      "discovery": {},
+      "elapsed_ms": 618.71,
+      "embedding_inputs": 1,
+      "embedding_inputs_attempted": 1,
+      "embedding_requests_attempted": 1,
+      "reused_vectors": 64,
+      "skipped_count": 15,
+      "stages": {
+        "chunk_hits": 15,
+        "chunk_misses": 1,
+        "chunked_documents": 1,
+        "parse_hits": 16
+      },
+      "updated": [
+        "vpn/cert-renewal.md"
+      ],
+      "measured_embedding_inputs": 1
+    },
+    "metadata_only_change": {
+      "added": [],
+      "deleted": [],
+      "discovery": {},
+      "elapsed_ms": 332.53,
+      "embedding_inputs": 0,
+      "reused_vectors": 65,
+      "skipped_count": 15,
+      "stages": {
+        "chunk_hits": 15,
+        "chunk_misses": 1,
+        "chunked_documents": 1,
+        "parse_hits": 16
+      },
+      "updated": [
+        "vpn/cert-renewal.md"
+      ],
+      "measured_embedding_inputs": 0
+    }
+  },
+  "first_source_concurrent_enqueue": {
+    "requests": 10,
+    "jobs": 1
+  },
+  "retrieval_60": [
+    {
+      "name": "full_rebuild_reference",
+      "cases": 60,
+      "gold_chunk_recall@1": 0.733,
+      "gold_chunk_recall@3": 0.883,
+      "gold_chunk_recall@5": 0.917,
+      "mrr": 0.811,
+      "per_case": [
+        {
+          "case_id": "r01",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1"
+          ],
+          "retrieved_chunk_ids": [
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:1",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:4",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:6"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r02",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:2"
+          ],
+          "retrieved_chunk_ids": [
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:2",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:2",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r03",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:1"
+          ],
+          "retrieved_chunk_ids": [
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:1",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:3",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:6"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r04",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "85a50e54-9a82-587d-a691-76c70599ed10:1"
+          ],
+          "retrieved_chunk_ids": [
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:4",
+            "85a50e54-9a82-587d-a691-76c70599ed10:2",
+            "85a50e54-9a82-587d-a691-76c70599ed10:4",
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:3",
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:4"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r05",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "af961553-311d-51a7-8e53-2067b3c35551:2"
+          ],
+          "retrieved_chunk_ids": [
+            "24207e25-ef64-5432-867b-1678fdda834e:2",
+            "65193386-786b-5c33-a2e2-b44713409994:4",
+            "af961553-311d-51a7-8e53-2067b3c35551:1",
+            "af961553-311d-51a7-8e53-2067b3c35551:3",
+            "24207e25-ef64-5432-867b-1678fdda834e:1"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r06",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "c2899ed7-4afa-5387-b98c-564965d47184:1"
+          ],
+          "retrieved_chunk_ids": [
+            "c2899ed7-4afa-5387-b98c-564965d47184:1",
+            "28500f7c-640a-5587-958b-25003b2010ad:4",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:1",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:2",
+            "c2899ed7-4afa-5387-b98c-564965d47184:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r07",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:4"
+          ],
+          "retrieved_chunk_ids": [
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:4",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:6",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r08",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "85a50e54-9a82-587d-a691-76c70599ed10:1"
+          ],
+          "retrieved_chunk_ids": [
+            "85a50e54-9a82-587d-a691-76c70599ed10:2",
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:4",
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:4",
+            "85a50e54-9a82-587d-a691-76c70599ed10:1",
+            "24207e25-ef64-5432-867b-1678fdda834e:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r09",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "af961553-311d-51a7-8e53-2067b3c35551:1"
+          ],
+          "retrieved_chunk_ids": [
+            "24207e25-ef64-5432-867b-1678fdda834e:1",
+            "24207e25-ef64-5432-867b-1678fdda834e:2",
+            "af961553-311d-51a7-8e53-2067b3c35551:1",
+            "af961553-311d-51a7-8e53-2067b3c35551:3",
+            "65193386-786b-5c33-a2e2-b44713409994:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r10",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:2"
+          ],
+          "retrieved_chunk_ids": [
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:3",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:1",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:2"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r11",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:5"
+          ],
+          "retrieved_chunk_ids": [
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:5",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r12",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:4"
+          ],
+          "retrieved_chunk_ids": [
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:4",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:2",
+            "af961553-311d-51a7-8e53-2067b3c35551:5",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:6"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r13",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:2"
+          ],
+          "retrieved_chunk_ids": [
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:2",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:1",
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:2",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r14",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "c2899ed7-4afa-5387-b98c-564965d47184:1"
+          ],
+          "retrieved_chunk_ids": [
+            "c2899ed7-4afa-5387-b98c-564965d47184:1",
+            "c2899ed7-4afa-5387-b98c-564965d47184:2",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:1",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:2",
+            "28500f7c-640a-5587-958b-25003b2010ad:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r15",
+          "question_type": "distractor",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:1"
+          ],
+          "retrieved_chunk_ids": [
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:1",
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:2",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:2",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:4",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r16",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:1"
+          ],
+          "retrieved_chunk_ids": [
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:1",
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:4",
+            "85a50e54-9a82-587d-a691-76c70599ed10:4",
+            "85a50e54-9a82-587d-a691-76c70599ed10:1",
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r17",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "65193386-786b-5c33-a2e2-b44713409994:1"
+          ],
+          "retrieved_chunk_ids": [
+            "65193386-786b-5c33-a2e2-b44713409994:1",
+            "65193386-786b-5c33-a2e2-b44713409994:3",
+            "af961553-311d-51a7-8e53-2067b3c35551:1",
+            "24207e25-ef64-5432-867b-1678fdda834e:2",
+            "24207e25-ef64-5432-867b-1678fdda834e:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r18",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "28500f7c-640a-5587-958b-25003b2010ad:2"
+          ],
+          "retrieved_chunk_ids": [
+            "28500f7c-640a-5587-958b-25003b2010ad:2",
+            "28500f7c-640a-5587-958b-25003b2010ad:1",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:1",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:3",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r19",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "af961553-311d-51a7-8e53-2067b3c35551:3"
+          ],
+          "retrieved_chunk_ids": [
+            "24207e25-ef64-5432-867b-1678fdda834e:4",
+            "af961553-311d-51a7-8e53-2067b3c35551:5",
+            "24207e25-ef64-5432-867b-1678fdda834e:2",
+            "af961553-311d-51a7-8e53-2067b3c35551:3",
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r20",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1"
+          ],
+          "retrieved_chunk_ids": [
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:6",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:1",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r21",
+          "question_type": "paraphrase",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1"
+          ],
+          "retrieved_chunk_ids": [
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:1",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:4",
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r22",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1"
+          ],
+          "retrieved_chunk_ids": [
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:1",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:4",
+            "0108ddf6-f34c-542b-bb9b-fce268d605cd:2",
+            "4d4ad049-7ee7-5135-9b9f-7662a02da9d5:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r23",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:1"
+          ],
+          "retrieved_chunk_ids": [
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:2",
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:2",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:4",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r24",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:3"
+          ],
+          "retrieved_chunk_ids": [
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:3",
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:2",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:2",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r25",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:1"
+          ],
+          "retrieved_chunk_ids": [
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:1",
+            "85a50e54-9a82-587d-a691-76c70599ed10:4",
+            "24207e25-ef64-5432-867b-1678fdda834e:4",
+            "85a50e54-9a82-587d-a691-76c70599ed10:2",
+            "af961553-311d-51a7-8e53-2067b3c35551:5"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r26",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:1"
+          ],
+          "retrieved_chunk_ids": [
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:1",
+            "85a50e54-9a82-587d-a691-76c70599ed10:4",
+            "85a50e54-9a82-587d-a691-76c70599ed10:2",
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:4",
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r27",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:1"
+          ],
+          "retrieved_chunk_ids": [
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:1",
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:2",
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:2",
+            "85a50e54-9a82-587d-a691-76c70599ed10:4",
+            "85a50e54-9a82-587d-a691-76c70599ed10:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r28",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "85a50e54-9a82-587d-a691-76c70599ed10:1"
+          ],
+          "retrieved_chunk_ids": [
+            "85a50e54-9a82-587d-a691-76c70599ed10:1",
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:1",
+            "85a50e54-9a82-587d-a691-76c70599ed10:2",
+            "af961553-311d-51a7-8e53-2067b3c35551:5",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r29",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "af961553-311d-51a7-8e53-2067b3c35551:2"
+          ],
+          "retrieved_chunk_ids": [
+            "24207e25-ef64-5432-867b-1678fdda834e:2",
+            "af961553-311d-51a7-8e53-2067b3c35551:1",
+            "af961553-311d-51a7-8e53-2067b3c35551:5",
+            "65193386-786b-5c33-a2e2-b44713409994:4",
+            "24207e25-ef64-5432-867b-1678fdda834e:4"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r30",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "af961553-311d-51a7-8e53-2067b3c35551:5"
+          ],
+          "retrieved_chunk_ids": [
+            "af961553-311d-51a7-8e53-2067b3c35551:5",
+            "af961553-311d-51a7-8e53-2067b3c35551:3",
+            "24207e25-ef64-5432-867b-1678fdda834e:2",
+            "85a50e54-9a82-587d-a691-76c70599ed10:4",
+            "24207e25-ef64-5432-867b-1678fdda834e:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r31",
+          "question_type": "cross_context",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "24207e25-ef64-5432-867b-1678fdda834e:4"
+          ],
+          "retrieved_chunk_ids": [
+            "24207e25-ef64-5432-867b-1678fdda834e:4",
+            "24207e25-ef64-5432-867b-1678fdda834e:2",
+            "af961553-311d-51a7-8e53-2067b3c35551:3",
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:4",
+            "af961553-311d-51a7-8e53-2067b3c35551:5"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r32",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "65193386-786b-5c33-a2e2-b44713409994:1"
+          ],
+          "retrieved_chunk_ids": [
+            "65193386-786b-5c33-a2e2-b44713409994:1",
+            "65193386-786b-5c33-a2e2-b44713409994:3",
+            "af961553-311d-51a7-8e53-2067b3c35551:1",
+            "af961553-311d-51a7-8e53-2067b3c35551:4",
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r33",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "65193386-786b-5c33-a2e2-b44713409994:2"
+          ],
+          "retrieved_chunk_ids": [
+            "65193386-786b-5c33-a2e2-b44713409994:2",
+            "65193386-786b-5c33-a2e2-b44713409994:1",
+            "24207e25-ef64-5432-867b-1678fdda834e:1",
+            "af961553-311d-51a7-8e53-2067b3c35551:1",
+            "24207e25-ef64-5432-867b-1678fdda834e:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r34",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "28500f7c-640a-5587-958b-25003b2010ad:2"
+          ],
+          "retrieved_chunk_ids": [
+            "28500f7c-640a-5587-958b-25003b2010ad:2",
+            "28500f7c-640a-5587-958b-25003b2010ad:1",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:1",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:4",
+            "c2899ed7-4afa-5387-b98c-564965d47184:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r35",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "28500f7c-640a-5587-958b-25003b2010ad:3"
+          ],
+          "retrieved_chunk_ids": [
+            "28500f7c-640a-5587-958b-25003b2010ad:3",
+            "28500f7c-640a-5587-958b-25003b2010ad:4",
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:3",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:2",
+            "c2899ed7-4afa-5387-b98c-564965d47184:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r36",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:2"
+          ],
+          "retrieved_chunk_ids": [
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:4",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:2",
+            "c2899ed7-4afa-5387-b98c-564965d47184:1",
+            "28500f7c-640a-5587-958b-25003b2010ad:3",
+            "c2899ed7-4afa-5387-b98c-564965d47184:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r37",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "c2899ed7-4afa-5387-b98c-564965d47184:2"
+          ],
+          "retrieved_chunk_ids": [
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:2",
+            "c2899ed7-4afa-5387-b98c-564965d47184:2",
+            "c2899ed7-4afa-5387-b98c-564965d47184:1",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:1",
+            "28500f7c-640a-5587-958b-25003b2010ad:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r38",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "4d4ad049-7ee7-5135-9b9f-7662a02da9d5:1"
+          ],
+          "retrieved_chunk_ids": [
+            "4d4ad049-7ee7-5135-9b9f-7662a02da9d5:1",
+            "4d4ad049-7ee7-5135-9b9f-7662a02da9d5:2",
+            "dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:2",
+            "0108ddf6-f34c-542b-bb9b-fce268d605cd:2",
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r39",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:1"
+          ],
+          "retrieved_chunk_ids": [
+            "dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:1",
+            "dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:3",
+            "0108ddf6-f34c-542b-bb9b-fce268d605cd:2",
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:3",
+            "65193386-786b-5c33-a2e2-b44713409994:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r40",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "0108ddf6-f34c-542b-bb9b-fce268d605cd:1"
+          ],
+          "retrieved_chunk_ids": [
+            "0108ddf6-f34c-542b-bb9b-fce268d605cd:1",
+            "0108ddf6-f34c-542b-bb9b-fce268d605cd:3",
+            "dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:2",
+            "65193386-786b-5c33-a2e2-b44713409994:3",
+            "4d4ad049-7ee7-5135-9b9f-7662a02da9d5:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r41",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:2"
+          ],
+          "retrieved_chunk_ids": [
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:2",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:3",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:2",
+            "af961553-311d-51a7-8e53-2067b3c35551:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r42",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:2"
+          ],
+          "retrieved_chunk_ids": [
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:2",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:3",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:3",
+            "8c26b8be-5869-514b-aeca-767b1bd06a7e:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:6"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r43",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:3"
+          ],
+          "retrieved_chunk_ids": [
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:3",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:6",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:2",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r44",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "af961553-311d-51a7-8e53-2067b3c35551:2"
+          ],
+          "retrieved_chunk_ids": [
+            "af961553-311d-51a7-8e53-2067b3c35551:2",
+            "24207e25-ef64-5432-867b-1678fdda834e:2",
+            "af961553-311d-51a7-8e53-2067b3c35551:3",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:3",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r45",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "af961553-311d-51a7-8e53-2067b3c35551:2"
+          ],
+          "retrieved_chunk_ids": [
+            "af961553-311d-51a7-8e53-2067b3c35551:3",
+            "af961553-311d-51a7-8e53-2067b3c35551:2",
+            "24207e25-ef64-5432-867b-1678fdda834e:2",
+            "24207e25-ef64-5432-867b-1678fdda834e:1",
+            "65193386-786b-5c33-a2e2-b44713409994:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r46",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "28500f7c-640a-5587-958b-25003b2010ad:3"
+          ],
+          "retrieved_chunk_ids": [
+            "28500f7c-640a-5587-958b-25003b2010ad:3",
+            "28500f7c-640a-5587-958b-25003b2010ad:1",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:1",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:2",
+            "c2899ed7-4afa-5387-b98c-564965d47184:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r47",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "4d4ad049-7ee7-5135-9b9f-7662a02da9d5:3"
+          ],
+          "retrieved_chunk_ids": [
+            "4d4ad049-7ee7-5135-9b9f-7662a02da9d5:3",
+            "4d4ad049-7ee7-5135-9b9f-7662a02da9d5:2",
+            "24207e25-ef64-5432-867b-1678fdda834e:3",
+            "dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:2",
+            "0108ddf6-f34c-542b-bb9b-fce268d605cd:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r48",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:3"
+          ],
+          "retrieved_chunk_ids": [
+            "dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:3",
+            "85a50e54-9a82-587d-a691-76c70599ed10:4",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:6",
+            "af961553-311d-51a7-8e53-2067b3c35551:5",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:5"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r49",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:1"
+          ],
+          "retrieved_chunk_ids": [
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:1",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:3",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:6"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r50",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1"
+          ],
+          "retrieved_chunk_ids": [
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:1",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:1",
+            "c29b5087-23a6-500b-aabf-5cafc0c1399e:2",
+            "43a26783-bedb-52ec-9f0d-2e906dcabbc3:6"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r51",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:2"
+          ],
+          "retrieved_chunk_ids": [
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:2",
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:1",
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:4",
+            "85a50e54-9a82-587d-a691-76c70599ed10:4",
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:1"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r52",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:2"
+          ],
+          "retrieved_chunk_ids": [
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:2",
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:2",
+            "85a50e54-9a82-587d-a691-76c70599ed10:4",
+            "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:4",
+            "85a50e54-9a82-587d-a691-76c70599ed10:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r53",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "24207e25-ef64-5432-867b-1678fdda834e:2"
+          ],
+          "retrieved_chunk_ids": [
+            "af961553-311d-51a7-8e53-2067b3c35551:3",
+            "24207e25-ef64-5432-867b-1678fdda834e:2",
+            "24207e25-ef64-5432-867b-1678fdda834e:1",
+            "af961553-311d-51a7-8e53-2067b3c35551:1",
+            "65193386-786b-5c33-a2e2-b44713409994:4"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r54",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "24207e25-ef64-5432-867b-1678fdda834e:1"
+          ],
+          "retrieved_chunk_ids": [
+            "24207e25-ef64-5432-867b-1678fdda834e:1",
+            "65193386-786b-5c33-a2e2-b44713409994:1",
+            "af961553-311d-51a7-8e53-2067b3c35551:1",
+            "65193386-786b-5c33-a2e2-b44713409994:3",
+            "af961553-311d-51a7-8e53-2067b3c35551:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r55",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "65193386-786b-5c33-a2e2-b44713409994:2"
+          ],
+          "retrieved_chunk_ids": [
+            "65193386-786b-5c33-a2e2-b44713409994:3",
+            "65193386-786b-5c33-a2e2-b44713409994:2",
+            "af961553-311d-51a7-8e53-2067b3c35551:1",
+            "24207e25-ef64-5432-867b-1678fdda834e:1",
+            "24207e25-ef64-5432-867b-1678fdda834e:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r56",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "28500f7c-640a-5587-958b-25003b2010ad:3"
+          ],
+          "retrieved_chunk_ids": [
+            "28500f7c-640a-5587-958b-25003b2010ad:3",
+            "28500f7c-640a-5587-958b-25003b2010ad:1",
+            "c2899ed7-4afa-5387-b98c-564965d47184:4",
+            "c2899ed7-4afa-5387-b98c-564965d47184:1",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r57",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:1"
+          ],
+          "retrieved_chunk_ids": [
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:2",
+            "28500f7c-640a-5587-958b-25003b2010ad:3",
+            "c2899ed7-4afa-5387-b98c-564965d47184:1",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:4",
+            "c2899ed7-4afa-5387-b98c-564965d47184:2"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r58",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "c2899ed7-4afa-5387-b98c-564965d47184:1"
+          ],
+          "retrieved_chunk_ids": [
+            "c2899ed7-4afa-5387-b98c-564965d47184:2",
+            "c2899ed7-4afa-5387-b98c-564965d47184:1",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:2",
+            "f54a7d21-a05b-5e65-a7b5-caaa69b4641a:2",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:3"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r59",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "4d4ad049-7ee7-5135-9b9f-7662a02da9d5:3"
+          ],
+          "retrieved_chunk_ids": [
+            "4d4ad049-7ee7-5135-9b9f-7662a02da9d5:3",
+            "4d4ad049-7ee7-5135-9b9f-7662a02da9d5:2",
+            "08096cab-84ba-5fec-9f82-25d00e1ebef4:3",
+            "44c477be-47aa-52bc-ae42-6e68087f0e28:3",
+            "24207e25-ef64-5432-867b-1678fdda834e:2"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r60",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "0108ddf6-f34c-542b-bb9b-fce268d605cd:3"
+          ],
+          "retrieved_chunk_ids": [
+            "0108ddf6-f34c-542b-bb9b-fce268d605cd:3",
+            "0108ddf6-f34c-542b-bb9b-fce268d605cd:1",
+            "65193386-786b-5c33-a2e2-b44713409994:2",
+            "dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:2",
+            "4d4ad049-7ee7-5135-9b9f-7662a02da9d5:1"
+          ],
+          "recall_at_5": 1.0
+        }
+      ]
+    },
+    {
+      "name": "git_generation",
+      "cases": 60,
+      "gold_chunk_recall@1": 0.75,
+      "gold_chunk_recall@3": 0.883,
+      "gold_chunk_recall@5": 0.917,
+      "mrr": 0.819,
+      "per_case": [
+        {
+          "case_id": "r01",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:1:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:4:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:6:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r02",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:2:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:2:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:1:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r03",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:1:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:3:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:6:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r04",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:4:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:2:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:4:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:4:0",
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:3:0"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r05",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:4:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:1:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:3:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:1:0"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r06",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:1:0",
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:4:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:1:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:2:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:4:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r07",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:4:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:4:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:6:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r08",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:2:0",
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:4:0",
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:4:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:1:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:4:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r09",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:1:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:1:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:3:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:4:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r10",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:3:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:1:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:2:0"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r11",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:5:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:5:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r12",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:4:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:4:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:2:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:5:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:6:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r13",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:2:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:1:0",
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:2:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r14",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:1:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:2:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:1:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:2:0",
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:3:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r15",
+          "question_type": "distractor",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:1:0",
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:2:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:2:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:4:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r16",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:1:0",
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:4:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:4:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:1:0",
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:4:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r17",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:1:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:3:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:1:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:1:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r18",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:2:0",
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:1:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:1:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:3:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:4:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r19",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:3:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:4:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:5:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:3:0",
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:1:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r20",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:6:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:1:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r21",
+          "question_type": "paraphrase",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:1:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:4:0",
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:4:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r22",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:1:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:4:0",
+            "81a5bc4adc22:0108ddf6-f34c-542b-bb9b-fce268d605cd:2fabb4407d32bdd85939ab14d1a1a81833a33deeb7d3568cf3adbd99ec6c9337:2:0",
+            "81a5bc4adc22:4d4ad049-7ee7-5135-9b9f-7662a02da9d5:85fcf1a7332606948559ee7df97c1a708aad2b992651c6bf1f01e31020c8a6fa:1:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r23",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:2:0",
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:2:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:4:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r24",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:3:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:3:0",
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:2:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:2:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:4:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r25",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:1:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:4:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:4:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:2:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:5:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r26",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:1:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:4:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:2:0",
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:4:0",
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r27",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:1:0",
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:2:0",
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:2:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:4:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r28",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:1:0",
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:1:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:2:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:5:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r29",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:1:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:5:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:4:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:4:0"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r30",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:5:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:5:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:3:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:4:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:4:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r31",
+          "question_type": "cross_context",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:4:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:4:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:3:0",
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:4:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:5:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r32",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:1:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:3:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:1:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:4:0",
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:4:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r33",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:2:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:1:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:1:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:1:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r34",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:2:0",
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:1:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:1:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:4:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:1:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r35",
+          "question_type": "paraphrase",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:3:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:3:0",
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:4:0",
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:3:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:2:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r36",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:4:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:2:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:1:0",
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:3:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r37",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:2:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:2:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:1:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:1:0",
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:4:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r38",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:4d4ad049-7ee7-5135-9b9f-7662a02da9d5:85fcf1a7332606948559ee7df97c1a708aad2b992651c6bf1f01e31020c8a6fa:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:4d4ad049-7ee7-5135-9b9f-7662a02da9d5:85fcf1a7332606948559ee7df97c1a708aad2b992651c6bf1f01e31020c8a6fa:1:0",
+            "81a5bc4adc22:4d4ad049-7ee7-5135-9b9f-7662a02da9d5:85fcf1a7332606948559ee7df97c1a708aad2b992651c6bf1f01e31020c8a6fa:2:0",
+            "81a5bc4adc22:dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:aaaed90b84a27aa3b16820caed5ac672a9765198cbf2780992d962b9efa505da:2:0",
+            "81a5bc4adc22:0108ddf6-f34c-542b-bb9b-fce268d605cd:2fabb4407d32bdd85939ab14d1a1a81833a33deeb7d3568cf3adbd99ec6c9337:2:0",
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:4:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r39",
+          "question_type": "direct",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:aaaed90b84a27aa3b16820caed5ac672a9765198cbf2780992d962b9efa505da:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:aaaed90b84a27aa3b16820caed5ac672a9765198cbf2780992d962b9efa505da:1:0",
+            "81a5bc4adc22:dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:aaaed90b84a27aa3b16820caed5ac672a9765198cbf2780992d962b9efa505da:3:0",
+            "81a5bc4adc22:0108ddf6-f34c-542b-bb9b-fce268d605cd:2fabb4407d32bdd85939ab14d1a1a81833a33deeb7d3568cf3adbd99ec6c9337:2:0",
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:3:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:3:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r40",
+          "question_type": "direct",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:0108ddf6-f34c-542b-bb9b-fce268d605cd:2fabb4407d32bdd85939ab14d1a1a81833a33deeb7d3568cf3adbd99ec6c9337:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:0108ddf6-f34c-542b-bb9b-fce268d605cd:2fabb4407d32bdd85939ab14d1a1a81833a33deeb7d3568cf3adbd99ec6c9337:1:0",
+            "81a5bc4adc22:0108ddf6-f34c-542b-bb9b-fce268d605cd:2fabb4407d32bdd85939ab14d1a1a81833a33deeb7d3568cf3adbd99ec6c9337:3:0",
+            "81a5bc4adc22:dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:aaaed90b84a27aa3b16820caed5ac672a9765198cbf2780992d962b9efa505da:2:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:3:0",
+            "81a5bc4adc22:4d4ad049-7ee7-5135-9b9f-7662a02da9d5:85fcf1a7332606948559ee7df97c1a708aad2b992651c6bf1f01e31020c8a6fa:1:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r41",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:2:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:3:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:2:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r42",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:2:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:3:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:3:0",
+            "81a5bc4adc22:8c26b8be-5869-514b-aeca-767b1bd06a7e:ce30781caeeb17b4afd0f6e19faed292a85b242c3c46606609e7d9acd2f53c8d:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:6:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r43",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:3:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:3:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:6:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:2:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:1:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r44",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:2:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:3:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:3:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r45",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:3:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:2:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:1:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:4:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r46",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:3:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:3:0",
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:1:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:1:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:2:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:1:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r47",
+          "question_type": "exact_term",
+          "difficulty": "medium",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:4d4ad049-7ee7-5135-9b9f-7662a02da9d5:85fcf1a7332606948559ee7df97c1a708aad2b992651c6bf1f01e31020c8a6fa:3:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:4d4ad049-7ee7-5135-9b9f-7662a02da9d5:85fcf1a7332606948559ee7df97c1a708aad2b992651c6bf1f01e31020c8a6fa:3:0",
+            "81a5bc4adc22:4d4ad049-7ee7-5135-9b9f-7662a02da9d5:85fcf1a7332606948559ee7df97c1a708aad2b992651c6bf1f01e31020c8a6fa:2:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:3:0",
+            "81a5bc4adc22:dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:aaaed90b84a27aa3b16820caed5ac672a9765198cbf2780992d962b9efa505da:2:0",
+            "81a5bc4adc22:0108ddf6-f34c-542b-bb9b-fce268d605cd:2fabb4407d32bdd85939ab14d1a1a81833a33deeb7d3568cf3adbd99ec6c9337:3:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r48",
+          "question_type": "exact_term",
+          "difficulty": "easy",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:aaaed90b84a27aa3b16820caed5ac672a9765198cbf2780992d962b9efa505da:3:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:aaaed90b84a27aa3b16820caed5ac672a9765198cbf2780992d962b9efa505da:3:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:4:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:6:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:5:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:5:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r49",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:1:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:3:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:6:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r50",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:1:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:1:0",
+            "81a5bc4adc22:c29b5087-23a6-500b-aabf-5cafc0c1399e:8b02b5f00fe0329ef676e6bb11f6c49ac169449b83ba84944920196ff61b1f84:2:0",
+            "81a5bc4adc22:43a26783-bedb-52ec-9f0d-2e906dcabbc3:7a5171359af54ad9301313f79c40088173e6eb3a673972a5b0cba8b0dffa09ab:6:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r51",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:2:0",
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:1:0",
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:4:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:4:0",
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:1:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r52",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:2:0",
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:2:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:4:0",
+            "81a5bc4adc22:7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926:d406984002a9a25472df87fbbd69f62e5d5a1e48d8564b0dc22d9e9616521f8c:4:0",
+            "81a5bc4adc22:85a50e54-9a82-587d-a691-76c70599ed10:c8d3bd6e8c13525359284604f2bedf7e9c5c3b85c6a0ead516b328fbae7051c9:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r53",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:3:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:1:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:1:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:4:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r54",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:1:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:1:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:1:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:3:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:3:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r55",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:2:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:2:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:3:0",
+            "81a5bc4adc22:af961553-311d-51a7-8e53-2067b3c35551:b6d8f65460b110f3b51a543cace70226556b1ef8d87e808a7a5abc52c2cba0ff:1:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:1:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r56",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:3:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:3:0",
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:1:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:4:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:1:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r57",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:2:0",
+            "81a5bc4adc22:28500f7c-640a-5587-958b-25003b2010ad:09fe9f7993f980736534241cffa768182df7d38d6160c83216efac0d1fedafd4:3:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:1:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:4:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:2:0"
+          ],
+          "recall_at_5": 0.0
+        },
+        {
+          "case_id": "r58",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:1:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:2:0",
+            "81a5bc4adc22:c2899ed7-4afa-5387-b98c-564965d47184:2891434ec2a23185abd3675898a67f9ca3f80995f02e5c92a9f962a52583a4ac:1:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:2:0",
+            "81a5bc4adc22:f54a7d21-a05b-5e65-a7b5-caaa69b4641a:0f4a7d2a8fa21e935464f74b13aca729d61183a120ec0fce7a4c24d9fbe260c6:2:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:3:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r59",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:4d4ad049-7ee7-5135-9b9f-7662a02da9d5:85fcf1a7332606948559ee7df97c1a708aad2b992651c6bf1f01e31020c8a6fa:3:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:4d4ad049-7ee7-5135-9b9f-7662a02da9d5:85fcf1a7332606948559ee7df97c1a708aad2b992651c6bf1f01e31020c8a6fa:3:0",
+            "81a5bc4adc22:4d4ad049-7ee7-5135-9b9f-7662a02da9d5:85fcf1a7332606948559ee7df97c1a708aad2b992651c6bf1f01e31020c8a6fa:2:0",
+            "81a5bc4adc22:08096cab-84ba-5fec-9f82-25d00e1ebef4:5d7317f45392b9a3617ffd45d0408610dec633ba90c147ac8c90d2715b1fe100:3:0",
+            "81a5bc4adc22:44c477be-47aa-52bc-ae42-6e68087f0e28:5f5bce42912c1a7adbe257d6359995e218ea29baa256b6a21fe348abcf839e63:3:0",
+            "81a5bc4adc22:24207e25-ef64-5432-867b-1678fdda834e:35e5c46cc66bc84e0b229a965fdc8972c270f92ef478684d83a455fb0806533f:2:0"
+          ],
+          "recall_at_5": 1.0
+        },
+        {
+          "case_id": "r60",
+          "question_type": "distractor",
+          "difficulty": "hard",
+          "gold_chunk_ids": [
+            "81a5bc4adc22:0108ddf6-f34c-542b-bb9b-fce268d605cd:2fabb4407d32bdd85939ab14d1a1a81833a33deeb7d3568cf3adbd99ec6c9337:3:0"
+          ],
+          "retrieved_chunk_ids": [
+            "81a5bc4adc22:0108ddf6-f34c-542b-bb9b-fce268d605cd:2fabb4407d32bdd85939ab14d1a1a81833a33deeb7d3568cf3adbd99ec6c9337:3:0",
+            "81a5bc4adc22:0108ddf6-f34c-542b-bb9b-fce268d605cd:2fabb4407d32bdd85939ab14d1a1a81833a33deeb7d3568cf3adbd99ec6c9337:1:0",
+            "81a5bc4adc22:65193386-786b-5c33-a2e2-b44713409994:0a1434f7d3c9cc245e7bdf92b43c8905710232e81af92c863593076347184195:2:0",
+            "81a5bc4adc22:dc0a99d8-5f0b-5c0a-b514-0bf568131ae6:aaaed90b84a27aa3b16820caed5ac672a9765198cbf2780992d962b9efa505da:2:0",
+            "81a5bc4adc22:4d4ad049-7ee7-5135-9b9f-7662a02da9d5:85fcf1a7332606948559ee7df97c1a708aad2b992651c6bf1f01e31020c8a6fa:1:0"
+          ],
+          "recall_at_5": 1.0
+        }
+      ]
+    }
+  ],
+  "fault_injection": {
+    "failed_build_kept_active": true,
+    "confirmed_delete_hidden_on_failed_build": true,
+    "rollback_did_not_restore_deleted": true
+  },
+  "retained_generations": 3,
+  "storage_bytes": 9081451
+}

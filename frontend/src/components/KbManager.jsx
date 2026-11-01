@@ -125,15 +125,22 @@ const JOB_LABEL = {
 function SyncJob({ job, onRefresh }) {
   if (!job) return null
   const report = job.report
+  const recordedStages = new Map((job.failures || []).filter((item) => item.stages).map((item) => [item.attempt, item.stages]))
+  if (report?.stages) recordedStages.set(report.attempt ?? job.attempts, report.stages)
+  const parsed = (report?.discovery?.parsed_documents || 0) + [...recordedStages.values()].reduce((n, stage) => n + (stage.parsed_documents || 0), 0)
+  const chunked = [...recordedStages.values()].reduce((n, stage) => n + (stage.chunked_documents || 0), 0)
   return (
     <div className="rounded-[12px] border p-4 text-xs leading-relaxed" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }} aria-live="polite">
       <div className="flex items-center justify-between gap-2">
         <p className="font-medium" style={{ color: job.status === 'failed' ? 'var(--error)' : 'var(--text-primary)' }}>
-          同步任务 #{job.id} · {JOB_LABEL[job.status] || job.status}
+          同步任务 #{job.id} · {job.status === 'queued' && job.next_attempt_at ? '等待自动重试' : (JOB_LABEL[job.status] || job.status)}
         </p>
         <button onClick={onRefresh} className="press rounded p-1 text-[var(--text-secondary)]" title="刷新任务状态" aria-label="刷新任务状态"><ArrowClockwise size={13} /></button>
       </div>
       {isKbJobRunning(job) && <p className="mt-1 text-[var(--text-secondary)]">后台正在处理，完成前不会发布新版本。刷新页面后可继续查看进度。</p>}
+      {job.next_attempt_at && <p className="mt-1 text-[var(--text-secondary)]">
+        下次自动重试 {new Date(job.next_attempt_at).toLocaleString()}
+      </p>}
       {job.status === 'prepared' && <p className="mt-1 text-[var(--text-secondary)]">候选版本已通过验证，等待发布。</p>}
       {job.status === 'superseded' && <p className="mt-1 text-[var(--text-secondary)]">已有更新的同步任务，请刷新查看最新状态。</p>}
       {(job.error || job.status === 'failed') && <p className="mt-1 text-[var(--error)]">{job.error || '同步失败，旧版本继续服务。请检查任务记录后重试。'}</p>}
@@ -144,6 +151,9 @@ function SyncJob({ job, onRefresh }) {
         <p className="mt-1 text-[var(--text-secondary)]">
           嵌入输入 {report.embedding_inputs ?? '—'} · 复用向量 {report.reused_vectors ?? '—'} · 耗时 {report.elapsed_ms ?? '—'}ms
         </p>
+        {report.stages && <p className="mt-1 text-[var(--text-secondary)]">
+          已尝试 {job.attempts || 0} 次 · 已记录解析 {parsed} 篇 · 已记录切分 {chunked} 篇
+        </p>}
       </>}
     </div>
   )

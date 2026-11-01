@@ -36,6 +36,11 @@ def init_db() -> None:
 
 # 新增列清单：表名 → [列名, DDL 类型]。缺列就 ALTER 补上（老库平滑升级）。
 _EXTRA_COLUMNS = {
+    "kb_sync_jobs": [
+        ("error_kind", "VARCHAR(32) NULL"),
+        ("next_attempt_at", "DATETIME NULL"),
+        ("failures_json", "LONGTEXT NULL"),
+    ],
     "messages": [
         ("elapsed_ms", "INT NULL"),                          # agent 回复总耗时（ms）
         ("feedback", "VARCHAR(8) NULL"),                     # 用户反馈 up/down（反馈闭环）

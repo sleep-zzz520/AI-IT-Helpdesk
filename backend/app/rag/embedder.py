@@ -8,6 +8,8 @@
 为什么批处理：单请求最多 64 条；批量能省网络往返，限流时段更稳。
 """
 import time
+from contextlib import contextmanager
+from contextvars import ContextVar
 
 from openai import OpenAI
 
@@ -27,6 +29,20 @@ _CTRL_RE = None  # 惰性编译，避免 import 成本
 
 _client = OpenAI(api_key=settings.ZHIPU_API_KEY, base_url=settings.GLM_BASE_URL,
                  timeout=settings.LLM_REQUEST_TIMEOUT, max_retries=0)
+_ATTEMPT_BUDGET = ContextVar("embedding_attempt_budget", default=None)
+_REQUEST_METRICS = ContextVar("embedding_request_metrics", default=None)
+
+
+@contextmanager
+def single_attempt(stats=None):
+    """同步worker统一管理重试，避免SDK/批处理/任务三层重试相乘。"""
+    token = _ATTEMPT_BUDGET.set(1)
+    metrics_token = _REQUEST_METRICS.set(stats)
+    try:
+        yield
+    finally:
+        _ATTEMPT_BUDGET.reset(token)
+        _REQUEST_METRICS.reset(metrics_token)
 
 
 def _clean_text(text: str) -> str:
@@ -50,8 +66,13 @@ def _clean_text(text: str) -> str:
 def _embed_batch(texts: list[str]) -> list[list[float]]:
     """嵌入一批（≤64 条），失败指数退避重试。"""
     last_error = None
-    for attempt in range(MAX_RETRIES):
+    attempts = _ATTEMPT_BUDGET.get() or MAX_RETRIES
+    for attempt in range(attempts):
         try:
+            metrics = _REQUEST_METRICS.get()
+            if metrics is not None:
+                metrics["embedding_requests_attempted"] = metrics.get("embedding_requests_attempted", 0) + 1
+                metrics["embedding_inputs_attempted"] = metrics.get("embedding_inputs_attempted", 0) + len(texts)
             resp = _client.embeddings.create(
                 model=EMBED_MODEL, input=texts, dimensions=EMBED_DIM
             )
@@ -59,9 +80,12 @@ def _embed_batch(texts: list[str]) -> list[list[float]]:
             return [d.embedding for d in resp.data]
         except Exception as e:
             last_error = e
-            if attempt < MAX_RETRIES - 1:
-                time.sleep(RETRY_BACKOFF ** attempt)
-    raise RuntimeError(f"Embedding 调用失败（重试 {MAX_RETRIES} 次）: {last_error}")
+            from app.rag.retry_policy import classify, retry_delay
+            failure = classify(e, "embedding")
+            if not failure.retryable or attempt == attempts - 1:
+                break
+            time.sleep(retry_delay(failure, attempt + 1))
+    raise RuntimeError("Embedding调用失败，详情见异常类型") from last_error
 
 
 def embed_texts(texts: list[str]) -> list[list[float]]:

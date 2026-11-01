@@ -226,7 +226,8 @@ def test_partial_upsert_failure_keeps_active_generation_intact(env):
 
     env.patch.setattr(ChromaStore, "upsert_chunks", partial_failure)
     result = g.process_job(job["id"])
-    assert result["status"] == "failed" and "partial upsert" in result["error"]
+    assert result["status"] == "failed" and result["error_kind"] == "storage_error"
+    assert result["failures"][-1]["stage"] == "index_write"
     assert env.active() == first["id"]
     assert set(g.resolve_store().get_all()) == old_ids
     with pytest.raises(ValueError):

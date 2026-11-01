@@ -1,0 +1,166 @@
+{
+  "scope": "isolated MySQL source and temporary Chroma; raw files from fixed Git, variation commits are synthetic",
+  "source_commit": "1ac31e72d1ee72da0360efb04b5813cc84fc6527",
+  "mysql_version": "8.0.43",
+  "documents": 16,
+  "real_embedding": true,
+  "phases": {
+    "cold": {
+      "actual_calls": {
+        "parsed_documents": 16,
+        "chunked_documents": 16,
+        "embedding_inputs": 64
+      },
+      "worker": {
+        "added": [
+          "email/config-guide.md",
+          "email/mailbox-quota.md",
+          "email/troubleshoot.md",
+          "finance/expense-reimbursement.md",
+          "general/vacation-policy.md",
+          "hr/onboarding-guide.md",
+          "password/account-lock.md",
+          "password/password-policy.md",
+          "password/reset-sop.md",
+          "software/install-guide.md",
+          "software/license-activation.md",
+          "software/software-update.md",
+          "vpn/cert-renewal.md",
+          "vpn/client-config.md",
+          "vpn/error-codes.md",
+          "vpn/vpn-install-guide.md"
+        ],
+        "deleted": [],
+        "discovery": {
+          "parse_misses": 16,
+          "parsed_documents": 16
+        },
+        "elapsed_ms": 6029.42,
+        "embedding_inputs": 64,
+        "embedding_inputs_attempted": 64,
+        "embedding_requests_attempted": 16,
+        "reused_vectors": 0,
+        "skipped_count": 0,
+        "stages": {
+          "chunk_misses": 16,
+          "chunked_documents": 16,
+          "parse_hits": 16
+        },
+        "updated": []
+      },
+      "full_flow_elapsed_ms": 6142.96
+    },
+    "new_commit_same_bytes": {
+      "actual_calls": {
+        "parsed_documents": 0,
+        "chunked_documents": 0,
+        "embedding_inputs": 0
+      },
+      "worker": {
+        "added": [],
+        "deleted": [],
+        "discovery": {
+          "parse_hits": 16
+        },
+        "elapsed_ms": 309.5,
+        "embedding_inputs": 0,
+        "reused_vectors": 64,
+        "skipped_count": 16,
+        "stages": {
+          "chunk_hits": 16,
+          "parse_hits": 16
+        },
+        "updated": []
+      },
+      "full_flow_elapsed_ms": 389.38
+    },
+    "one_document_change": {
+      "actual_calls": {
+        "parsed_documents": 1,
+        "chunked_documents": 1,
+        "embedding_inputs": 1
+      },
+      "worker": {
+        "added": [],
+        "deleted": [],
+        "discovery": {
+          "parse_hits": 15,
+          "parse_misses": 1,
+          "parsed_documents": 1
+        },
+        "elapsed_ms": 1012.65,
+        "embedding_inputs": 1,
+        "embedding_inputs_attempted": 1,
+        "embedding_requests_attempted": 1,
+        "reused_vectors": 64,
+        "skipped_count": 15,
+        "stages": {
+          "chunk_hits": 15,
+          "chunk_misses": 1,
+          "chunked_documents": 1,
+          "parse_hits": 16
+        },
+        "updated": [
+          "vpn/cert-renewal.md"
+        ]
+      },
+      "full_flow_elapsed_ms": 1092.42
+    },
+    "metadata_only": {
+      "actual_calls": {
+        "parsed_documents": 1,
+        "chunked_documents": 1,
+        "embedding_inputs": 0
+      },
+      "worker": {
+        "added": [],
+        "deleted": [],
+        "discovery": {
+          "parse_hits": 15,
+          "parse_misses": 1,
+          "parsed_documents": 1
+        },
+        "elapsed_ms": 309.03,
+        "embedding_inputs": 0,
+        "reused_vectors": 65,
+        "skipped_count": 15,
+        "stages": {
+          "chunk_hits": 15,
+          "chunk_misses": 1,
+          "chunked_documents": 1,
+          "parse_hits": 16
+        },
+        "updated": [
+          "vpn/cert-renewal.md"
+        ]
+      },
+      "full_flow_elapsed_ms": 389.29
+    },
+    "parser_upgrade_same_output": {
+      "actual_calls": {
+        "parsed_documents": 16,
+        "chunked_documents": 0,
+        "embedding_inputs": 0
+      },
+      "worker": {
+        "added": [],
+        "deleted": [],
+        "discovery": {
+          "parse_misses": 16,
+          "parsed_documents": 16
+        },
+        "elapsed_ms": 314.78,
+        "embedding_inputs": 0,
+        "reused_vectors": 65,
+        "skipped_count": 16,
+        "stages": {
+          "chunk_hits": 16,
+          "parse_hits": 16
+        },
+        "updated": []
+      },
+      "full_flow_elapsed_ms": 408.4
+    }
+  },
+  "storage_bytes": 8314058
+}

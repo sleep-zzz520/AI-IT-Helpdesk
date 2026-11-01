@@ -42,7 +42,7 @@ def hit(identity=A, source="docs/knowledge/a.md"):
 
 def test_admin_sync_job_publish_documents_stats_and_rollback(api_client, api_users, env, monkeypatch):
     headers = login(api_client)
-    monkeypatch.setattr(g, "configured_snapshot", snapshot)
+    monkeypatch.setattr(g, "configured_snapshot", lambda **_: snapshot())
     queued = api_client.post("/api/kb/sync", headers=headers)
     assert queued.status_code == 202, queued.text
     job_id = queued.json()["id"]
@@ -62,7 +62,7 @@ def test_admin_sync_job_publish_documents_stats_and_rollback(api_client, api_use
     assert stats["active_generation"] == job_id and stats["active_chunks"] == 4
     assert docs["total"] == 2 and {item["id"] for item in docs["docs"]} == {A, B}
     assert api_client.get(f"/api/kb/jobs/{job_id}", headers=headers).json()["status"] == "published"
-    monkeypatch.setattr(g, "configured_snapshot", lambda: snapshot(2, a="new alpha certificate"))
+    monkeypatch.setattr(g, "configured_snapshot", lambda **_: snapshot(2, a="new alpha certificate"))
     queued2 = api_client.post("/api/kb/sync", headers=headers).json()
     assert g.process_job(queued2["id"])["status"] == "prepared"
     assert api_client.post("/api/kb/switch", headers=headers).status_code == 200

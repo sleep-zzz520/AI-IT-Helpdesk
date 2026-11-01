@@ -23,6 +23,7 @@ from uuid import UUID
 import yaml
 
 from app.rag.chunks import KnowledgeDoc
+from app.rag.stage_cache import cached_parse
 
 MAX_DOCUMENTS = 512
 MAX_FILE_BYTES = 2 * 1024 * 1024
@@ -93,9 +94,7 @@ def _metadata(meta: dict) -> dict:
     return result
 
 
-def _parse(path: str, raw: bytes, legacy_ids: dict[str, str]) -> KnowledgeDoc:
-    if PurePosixPath(path).suffix.lower() != ".md":
-        raise GitSourceError(f"Unsupported file format: {path}")
+def _parse_content(path: str, raw: bytes) -> dict:
     if raw.startswith(b"version https://git-lfs.github.com/spec/v1"):
         raise GitSourceError(f"Git LFS pointer is unsupported: {path}")
     try:
@@ -119,19 +118,65 @@ def _parse(path: str, raw: bytes, legacy_ids: dict[str, str]) -> KnowledgeDoc:
     meta = _metadata(meta)
     if not isinstance(meta.get("scenario"), str) or not meta["scenario"].strip():
         raise GitSourceError(f"Missing nonempty scenario: {path}")
-    identity = meta.get("document_id", legacy_ids.get(path))
-    try:
-        identity = str(UUID(identity))
-    except (ValueError, TypeError, AttributeError) as exc:
-        raise GitSourceError(f"Missing or invalid document_id: {path}") from exc
     body = "".join(lines[end + 1:]).lstrip("\r\n")
     if _IMAGE.search(body):
         raise GitSourceError(f"Embedded images or external objects are unsupported: {path}")
+    return {"meta": meta, "content": body}
+
+
+def _validate_parsed(value):
+    if (not isinstance(value, dict) or set(value) != {"meta", "content"}
+            or not isinstance(value["meta"], dict) or not isinstance(value["content"], str)):
+        raise GitSourceError("Invalid parsed cache fields")
+    meta = _metadata(value["meta"])
+    if not isinstance(meta.get("scenario"), str) or not meta["scenario"].strip():
+        raise GitSourceError("Invalid cached scenario")
+    if "document_id" in meta:
+        try:
+            UUID(meta["document_id"])
+        except (ValueError, TypeError, AttributeError) as exc:
+            raise GitSourceError("Invalid cached document_id") from exc
+    if "\x00" in value["content"] or _IMAGE.search(value["content"]):
+        raise GitSourceError("Invalid cached Markdown")
+
+
+def parser_profile(legacy_ids: dict[str, str]) -> str:
+    """Invalidate parsed artifacts when parser/config/dependency/migration changes."""
+    value = {"parser": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+             "yaml": yaml.__version__, "legacy_ids": legacy_ids,
+             "format": "strict-markdown-v1", "image_pattern": _IMAGE.pattern,
+             "file_limit": MAX_FILE_BYTES, "total_limit": MAX_TOTAL_BYTES}
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def _parse(path: str, raw: bytes, legacy_ids: dict[str, str], *,
+           cache_dir: Path | None = None, stats: dict | None = None,
+           profile: str | None = None) -> KnowledgeDoc:
+    if PurePosixPath(path).suffix.lower() != ".md":
+        raise GitSourceError(f"Unsupported file format: {path}")
+
+    def identity_for(meta):
+        try:
+            return str(UUID(meta.get("document_id", legacy_ids.get(path))))
+        except (ValueError, TypeError, AttributeError) as exc:
+            raise GitSourceError(f"Missing or invalid document_id: {path}") from exc
+
+    def build():
+        value = _parse_content(path, raw)
+        identity_for(value["meta"])  # Never persist a failed document as a success.
+        return value
+
+    profile = profile or (parser_profile(legacy_ids) if cache_dir is not None else "disabled")
+    parsed = cached_parse(hashlib.sha256(raw).hexdigest(), profile, build, _validate_parsed,
+                          cache_dir=cache_dir, stats=stats)
+    meta = dict(parsed["meta"])
+    identity = identity_for(meta)
     meta.update(document_id=identity, source_url=path)
-    return KnowledgeDoc(rel_path=path, doc_id=identity, meta=meta, content=body)
+    return KnowledgeDoc(rel_path=path, doc_id=identity, meta=meta, content=parsed["content"])
 
 
-def read_snapshot_from_files(commit: str, files: dict[str, bytes]) -> GitSnapshot:
+def read_snapshot_from_files(commit: str, files: dict[str, bytes], *,
+                             cache_dir: Path | None = None, stats: dict | None = None) -> GitSnapshot:
     """Validate retained bytes without touching Git (also used during recovery)."""
     if not isinstance(commit, str) or not _OID.fullmatch(commit):
         raise GitSourceError("A full Git commit SHA is required")
@@ -143,6 +188,7 @@ def read_snapshot_from_files(commit: str, files: dict[str, bytes]) -> GitSnapsho
         raise GitSourceError("Cannot read explicit legacy ID migration map") from exc
     for path in files:
         _path(path)
+    profile = parser_profile(legacy_ids) if cache_dir is not None else None
     docs, retained, raw_hashes = [], {}, {}
     total = 0
     for path, raw in sorted(files.items()):
@@ -152,7 +198,7 @@ def read_snapshot_from_files(commit: str, files: dict[str, bytes]) -> GitSnapsho
         total += len(raw)
         if total > MAX_TOTAL_BYTES:
             raise GitSourceError("Snapshot byte limit exceeded")
-        doc = _parse(path, raw, legacy_ids)
+        doc = _parse(path, raw, legacy_ids, cache_dir=cache_dir, stats=stats, profile=profile)
         if doc.doc_id in raw_hashes:
             raise GitSourceError(f"Duplicate document_id: {doc.doc_id}")
         docs.append(doc)
@@ -178,7 +224,8 @@ def _git(repo: Path, *args: str) -> bytes:
         raise GitSourceError(f"Git snapshot command failed: {args[0]}") from exc
 
 
-def read_snapshot(repo: Path, ref: str = "HEAD", subdir: str = "docs/knowledge") -> GitSnapshot:
+def read_snapshot(repo: Path, ref: str = "HEAD", subdir: str = "docs/knowledge", *,
+                  cache_dir: Path | None = None, stats: dict | None = None) -> GitSnapshot:
     """Resolve ref once, enumerate once, then read only the pinned blob objects."""
     _path(subdir)
     if not isinstance(ref, str) or not ref or ref.startswith("-") or any(
@@ -225,7 +272,7 @@ def read_snapshot(repo: Path, ref: str = "HEAD", subdir: str = "docs/knowledge")
             if isinstance(exc, GitSourceError):
                 raise
             raise GitSourceError("Malformed Git tree enumeration") from exc
-    return read_snapshot_from_files(commit, files)
+    return read_snapshot_from_files(commit, files, cache_dir=cache_dir, stats=stats)
 
 
 def _unique_pairs(pairs):
@@ -237,9 +284,10 @@ def _unique_pairs(pairs):
     return result
 
 
-def write_export(snapshot: GitSnapshot, path: Path) -> None:
+def write_export(snapshot: GitSnapshot, path: Path, *, cache_dir: Path | None = None,
+                 stats: dict | None = None) -> None:
     """Atomically persist portable source bytes for workers without .git access."""
-    verified = read_snapshot_from_files(snapshot.commit, snapshot.files)
+    verified = read_snapshot_from_files(snapshot.commit, snapshot.files, cache_dir=cache_dir, stats=stats)
     if verified.snapshot_hash != snapshot.snapshot_hash:
         raise GitSourceError("Snapshot was mutated after validation")
     payload = {"version": 1, "commit": verified.commit,
@@ -272,7 +320,7 @@ def write_export(snapshot: GitSnapshot, path: Path) -> None:
             temp.unlink(missing_ok=True)
 
 
-def read_export(path: Path) -> GitSnapshot:
+def read_export(path: Path, *, cache_dir: Path | None = None, stats: dict | None = None) -> GitSnapshot:
     """Read a bounded export, verify every checksum, and reparse authoritative bytes."""
     try:
         with Path(path).open("rb") as handle:
@@ -296,7 +344,7 @@ def read_export(path: Path) -> GitSnapshot:
             if hashlib.sha256(content).hexdigest() != entry["sha256"]:
                 raise GitSourceError(f"Export checksum mismatch: {name}")
             files[name] = content
-        snapshot = read_snapshot_from_files(payload["commit"], files)
+        snapshot = read_snapshot_from_files(payload["commit"], files, cache_dir=cache_dir, stats=stats)
         if snapshot.snapshot_hash != payload["snapshot_hash"]:
             raise GitSourceError("Export snapshot checksum mismatch")
         return snapshot

@@ -4,12 +4,14 @@ ponytail: 首版同机、单共享IT知识来源，最多512篇。每代复制�
 以存储换读写隔离；禁止自动GC，不承诺多主机或文档级租户授权。
 """
 import hashlib
+import inspect
 import json
 import logging
 import math
 import os
 import threading
 import time
+import traceback
 import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -63,30 +65,51 @@ def _atomic_json(path, value):
         temporary.unlink(missing_ok=True)
 
 
+def embedding_profile():
+    """嵌入空间只绑定实际清洗输入及模型，解析器/重试代码升级不使向量失效。"""
+    return _hash({"model": embedder.EMBED_MODEL, "dimensions": embedder.EMBED_DIM,
+                  "endpoint": settings.GLM_BASE_URL, "max_chars": embedder.EMBED_MAX_CHARS,
+                  "cleaner": hashlib.sha256(inspect.getsource(embedder._clean_text).encode()).hexdigest(),
+                  "epoch": settings.KB_PIPELINE_EPOCH, "source": settings.KB_SOURCE_ID})
+
+
+def chunk_profile():
+    return _hash({"splitter": hashlib.sha256(Path(__file__).with_name("splitter.py").read_bytes()).hexdigest(),
+                  "chunker": "bounded-h2-v1-parent-zero", "max_chars": embedder.EMBED_MAX_CHARS,
+                  "builder": hashlib.sha256(inspect.getsource(_build_chunks).encode()).hexdigest(),
+                  "source_url_prefix": settings.KB_GIT_SUBDIR})
+
+
 def pipeline_profile():
+    from app.rag.git_source import parser_profile
     # 绑定实际嵌入空间及清洗/切分代码；供应商静默换权重需人工提高epoch。
     return _hash({
-        "model": embedder.EMBED_MODEL, "dimensions": embedder.EMBED_DIM,
-        "endpoint": settings.GLM_BASE_URL, "max_chars": embedder.EMBED_MAX_CHARS,
-        "epoch": settings.KB_PIPELINE_EPOCH, "chunker": "bounded-h2-v1-parent-zero",
-        "splitter": hashlib.sha256(Path(__file__).with_name("splitter.py").read_bytes()).hexdigest(),
-        "embedder": hashlib.sha256(Path(embedder.__file__).read_bytes()).hexdigest(),
-        "parser": hashlib.sha256(Path(__file__).with_name("git_source.py").read_bytes()).hexdigest(),
+        "embedding": embedding_profile(), "chunking": chunk_profile(),
+        "parser": parser_profile(json.loads(Path(__file__).with_name("legacy_document_ids.json").read_text())),
         "source": settings.KB_SOURCE_ID, "subdir": settings.KB_GIT_SUBDIR,
     })
 
 
-def configured_snapshot():
+def configured_snapshot(stats=None):
     from app.rag.git_source import read_export, read_snapshot
     if settings.KB_GIT_EXPORT:
-        return read_export(Path(settings.KB_GIT_EXPORT))
-    return read_snapshot(Path(settings.KB_GIT_REPO), settings.KB_GIT_REF, settings.KB_GIT_SUBDIR)
+        return read_export(Path(settings.KB_GIT_EXPORT), cache_dir=stage_cache_dir(), stats=stats)
+    return read_snapshot(Path(settings.KB_GIT_REPO), settings.KB_GIT_REF, settings.KB_GIT_SUBDIR,
+                         cache_dir=stage_cache_dir(), stats=stats)
+
+
+def stage_cache_dir():
+    # 来源隔离；缓存可丢弃，固定快照字节仍是权威。
+    return Path(settings.KB_SYNC_STATE_DIR) / "stages" / _hash(settings.KB_SOURCE_ID)
 
 
 def job_out(job):
     report = json.loads(job.report_json or "{}")
     return {"id": job.id, "status": job.status, "source_commit": job.commit_sha,
             "collection": job.collection, "attempts": job.attempts, "error": job.error,
+            "error_kind": job.error_kind,
+            "next_attempt_at": job.next_attempt_at.replace(tzinfo=UTC).isoformat() if job.next_attempt_at else None,
+            "failures": json.loads(job.failures_json or "[]"),
             "report": report, "created_at": job.created_at.isoformat() if job.created_at else None}
 
 
@@ -138,10 +161,11 @@ def state():
 
 
 def enqueue(snapshot=None):
-    snapshot = snapshot or configured_snapshot()
+    discovery = {}
+    snapshot = snapshot or configured_snapshot(stats=discovery)
     for attempt in range(3):
         try:
-            return _enqueue_once(snapshot)
+            return _enqueue_once(snapshot, discovery)
         except (IntegrityError, OperationalError) as exc:
             # 首次来源并发建立、MySQL行/间隙锁死锁可安全重试整个短事务。
             code = exc.orig.args[0] if exc.orig.args else None
@@ -151,7 +175,7 @@ def enqueue(snapshot=None):
     raise RuntimeError("来源入队重试耗尽")
 
 
-def _enqueue_once(snapshot=None):
+def _enqueue_once(snapshot=None, discovery=None):
     from app.rag.git_source import write_export
     snapshot = snapshot or configured_snapshot()
     if not snapshot.docs:
@@ -159,7 +183,7 @@ def _enqueue_once(snapshot=None):
     profile = pipeline_profile()
     snapshot_path = Path(settings.KB_SYNC_STATE_DIR) / "snapshots" / f"{snapshot.snapshot_hash}.json"
     # 先落可恢复字节，SQL只引用已经持久的产物。未入SQL的孤立快照不影响在岗。
-    write_export(snapshot, snapshot_path)
+    write_export(snapshot, snapshot_path, cache_dir=stage_cache_dir())
     with db_module.SessionLocal.begin() as db:
         source = db.query(KbSource).filter_by(id=settings.KB_SOURCE_ID).with_for_update().one_or_none()
         if source is None:
@@ -195,7 +219,8 @@ def _enqueue_once(snapshot=None):
         job = KbSyncJob(id=job_id, source_id=source.id, seq=source.desired_seq,
                        commit_sha=snapshot.commit, snapshot_hash=snapshot.snapshot_hash,
                        profile=profile, status="queued", fence=0, attempts=0,
-                       collection=f"kb_gen_{job_id}", snapshot_path=str(snapshot_path))
+                       collection=f"kb_gen_{job_id}", snapshot_path=str(snapshot_path),
+                       report_json=_json({"discovery": discovery or {}}))
         db.add(job)
         db.flush()
         return job_out(job)
@@ -229,15 +254,27 @@ def _claim(job_id):
             job.status == "running" and job.lease_until and job.lease_until <= _now()
         ):
             return None
-        if job.attempts >= MAX_ATTEMPTS:
-            job.status, job.error = "failed", "任务恢复次数达到上限，请重新同步"
+        if job.status == "queued" and job.next_attempt_at and job.next_attempt_at > _now():
             return None
+        if job.attempts >= MAX_ATTEMPTS:
+            job.status, job.error = "failed", "任务恢复/重试次数达到上限，请重新同步"
+            job.error_kind, job.next_attempt_at, job.lease_until = "retry_exhausted", None, None
+            return None
+        if job.status == "running":
+            history = json.loads(job.failures_json or "[]")
+            history.append({"attempt": job.attempts, "at": _now().replace(tzinfo=UTC).isoformat(),
+                            "kind": "worker_lease_expired", "stage": "unknown",
+                            "retryable": True, "summary": "上次工作进程租约到期，重新领取持久任务"})
+            job.failures_json = _json(history[-MAX_ATTEMPTS:])
+            db.flush()
         previous_fence = job.fence
         claimed = db.execute(update(KbSyncJob).where(
             KbSyncJob.id == job.id, KbSyncJob.fence == previous_fence,
-            or_(KbSyncJob.status == "queued", (KbSyncJob.status == "running") & (KbSyncJob.lease_until <= _now())),
+            or_((KbSyncJob.status == "queued") & or_(KbSyncJob.next_attempt_at.is_(None), KbSyncJob.next_attempt_at <= _now()),
+                (KbSyncJob.status == "running") & (KbSyncJob.lease_until <= _now())),
         ).values(status="running", attempts=job.attempts + 1, fence=previous_fence + 1,
-                 lease_until=_now() + timedelta(seconds=LEASE_SECONDS), error=None))
+                 lease_until=_now() + timedelta(seconds=LEASE_SECONDS), error=None,
+                 error_kind=None, next_attempt_at=None))
         if claimed.rowcount != 1:
             return None
         db.refresh(job)
@@ -245,7 +282,14 @@ def _claim(job_id):
         return job
 
 
-def _chunks(doc, revision, source_id):
+def _chunks(doc, revision, source_id, stats=None):
+    from app.rag.stage_cache import cached_chunks
+    return cached_chunks(doc, revision, source_id, chunk_profile(),
+                         lambda: _build_chunks(doc, revision, source_id),
+                         cache_dir=stage_cache_dir(), stats=stats)
+
+
+def _build_chunks(doc, revision, source_id):
     metadata = dict(doc.meta)
     metadata["source_url"] = f"{settings.KB_GIT_SUBDIR.strip('/')}/{doc.rel_path}"
     namespaced = KnowledgeDoc(doc.rel_path, f"{_hash(source_id)[:12]}:{doc.doc_id}:{revision}",
@@ -292,16 +336,58 @@ def _vectors(chunks, profile, report):
             misses.setdefault(key, {"text": cleaned, "ids": []})["ids"].append(chunk.id)
     if misses:
         items = list(misses.items())
-        values = embedder.embed_texts([item["text"] for _, item in items])
-        if len(values) != len(items) or not all(_valid_vector(v) for v in values):
-            raise RuntimeError("嵌入响应数量/维度/有限值校验失败")
-        report["embedding_inputs"] += len(items)
-        for (key, item), vector in zip(items, values, strict=True):
-            _atomic_json(cache_root / f"{key}.json", {"input_hash": key, "profile": profile,
-                         "vector_hash": _hash(vector), "vector": vector})
-            for cid in item["ids"]:
-                vectors[cid] = vector
+        for start in range(0, len(items), embedder.BATCH_SIZE):
+            batch = items[start:start + embedder.BATCH_SIZE]
+            # 每个成功批次立刻缓存，后续批次失败不会丢掉已完成计算。
+            # 任务调度层统一重试，每次任务尝试每个API批次最多发起一次调用。
+            with embedder.single_attempt(stats=report):
+                values = embedder.embed_texts([item["text"] for _, item in batch])
+            if len(values) != len(batch) or not all(_valid_vector(v) for v in values):
+                raise RuntimeError("嵌入响应数量/维度/有限值校验失败")
+            report["embedding_inputs"] += len(batch)
+            for (key, item), vector in zip(batch, values, strict=True):
+                _atomic_json(cache_root / f"{key}.json", {"input_hash": key, "profile": profile,
+                             "vector_hash": _hash(vector), "vector": vector})
+                for cid in item["ids"]:
+                    vectors[cid] = vector
     return [vectors[chunk.id] for chunk in chunks]
+
+
+def _record_failure(job, exc, stage, report):
+    from app.rag.retry_policy import classify, retry_delay
+    failure = classify(exc, stage)
+    with db_module.SessionLocal.begin() as db:
+        source = db.query(KbSource).filter_by(id=job.source_id).with_for_update().one()
+        current = db.query(KbSyncJob).filter_by(id=job.id).with_for_update().one()
+        if (current.fence != job.fence or current.status != "running"
+                or current.lease_until is None or current.lease_until <= _now()):
+            return
+        eligible = failure.retryable and current.attempts < MAX_ATTEMPTS
+        current.status = ("superseded" if source.desired_seq != job.seq else
+                          "queued" if eligible else "failed")
+        delay = retry_delay(failure, current.attempts) if current.status == "queued" else None
+        current.next_attempt_at = _now() + timedelta(seconds=delay) if delay is not None else None
+        current.lease_until = None
+        current.error_kind = failure.kind
+        current.error = failure.summary
+        if failure.retryable and not eligible:
+            current.error += "；自动重试预算已耗尽"
+        history = json.loads(current.failures_json or "[]")
+        history.append({"attempt": current.attempts, "at": _now().replace(tzinfo=UTC).isoformat(),
+                        "kind": failure.kind, "stage": stage, "status_code": failure.status_code,
+                        "retryable": failure.retryable, "scheduled_delay_seconds": delay,
+                        "embedding_requests_attempted": report.get("embedding_requests_attempted", 0),
+                        "embedding_inputs_attempted": report.get("embedding_inputs_attempted", 0),
+                        "embedding_inputs_completed": report.get("embedding_inputs", 0),
+                        "stages": dict(report.get("stages", {})),
+                        "summary": failure.summary})
+        current.failures_json = _json(history[-MAX_ATTEMPTS:])
+        current.report_json = _json(report)
+    frames = [f"{Path(frame.filename).name}:{frame.lineno}:{frame.name}"
+              for frame in traceback.extract_tb(exc.__traceback__)]
+    # 供应商原文可能包含请求正文/凭据；只记录安全类别与不含局部变量的代码位置。
+    logger.error("同步失败 job=%s stage=%s kind=%s attempt=%s frames=%s",
+                 job.id, stage, failure.kind, job.attempts, frames)
 
 
 def process_job(job_id):
@@ -324,14 +410,19 @@ def process_job(job_id):
         heartbeat.start()
         started = time.perf_counter()
         report = {"added": [], "updated": [], "deleted": [], "skipped_count": 0,
-                  "embedding_inputs": 0, "reused_vectors": 0}
+                  "attempt": job.attempts,
+                  "embedding_inputs": 0, "reused_vectors": 0,
+                  "discovery": json.loads(job.report_json or "{}").get("discovery", {}), "stages": {}}
+        stage = "snapshot"
         try:
             from app.rag.git_source import read_export
-            snapshot = read_export(Path(job.snapshot_path))
+            snapshot = read_export(Path(job.snapshot_path), cache_dir=stage_cache_dir(), stats=report["stages"])
             if snapshot.snapshot_hash != job.snapshot_hash or snapshot.commit != job.commit_sha:
                 raise RuntimeError("恢复快照与持久任务目标不一致")
+            stage = "profile"
             if pipeline_profile() != job.profile:
                 raise RuntimeError("流水线配置已变化，请重新同步")
+            stage = "index_read"
             with db_module.SessionLocal() as db:
                 source = db.get(KbSource, job.source_id)
                 previous = db.get(KbSyncJob, source.active_job) if source.active_job else None
@@ -343,8 +434,11 @@ def process_job(job_id):
             documents, expected_ids = {}, set()
             for doc in snapshot.docs:
                 _lease(job.id, job.fence)
-                revision = _hash({"body": doc.content, "meta": doc.meta, "profile": job.profile})
-                chunks = _chunks(doc, revision, job.source_id)
+                # 解析器升级但输出不变时，复用切分/向量；job仍记录完整流水线profile。
+                revision = _hash({"body": doc.content, "meta": doc.meta,
+                                  "chunking": chunk_profile(), "embedding": embedding_profile()})
+                stage = "chunking"
+                chunks = _chunks(doc, revision, job.source_id, stats=report["stages"])
                 ids = [c.id for c in chunks]
                 old = old_manifest.get(doc.doc_id)
                 if old and old["revision"] == revision and previous_store:
@@ -355,11 +449,14 @@ def process_job(job_id):
                         vectors = [vectors_by_id[cid] for cid in ids]
                         report["reused_vectors"] += len(chunks) - 1
                     else:
-                        vectors = _vectors(chunks, job.profile, report)
+                        stage = "embedding"
+                        vectors = _vectors(chunks, embedding_profile(), report)
                     report["skipped_count"] += 1
                 else:
-                    vectors = _vectors(chunks, job.profile, report)
+                    stage = "embedding"
+                    vectors = _vectors(chunks, embedding_profile(), report)
                     report["updated" if old else "added"].append(doc.rel_path)
+                stage = "index_write"
                 target.upsert_chunks(chunks, vectors)
                 got = target.get_chunks(ids)
                 if any(got.get(c.id) != {"text": c.text, "metadata": c.metadata} for c in chunks):
@@ -368,6 +465,7 @@ def process_job(job_id):
                                           "status": doc.meta.get("status", "active"), "meta": doc.meta,
                                           "raw_hash": snapshot.raw_hashes[doc.doc_id]}
                 expected_ids.update(ids)
+            stage = "validation"
             report["deleted"] = [v["path"] for key, v in old_manifest.items() if key not in documents]
             # 重试可能留下过期局部块：清理仅限从未对外发布的本任务候选。
             unexpected = set(target.get_all()) - expected_ids
@@ -381,6 +479,7 @@ def process_job(job_id):
             _lease(job.id, job.fence)
             target.set_build_ready(True)
             report["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 2)
+            stage = "finalize"
             with db_module.SessionLocal.begin() as db:
                 source = db.query(KbSource).filter_by(id=job.source_id).with_for_update().one()
                 status = "prepared" if source.desired_seq == job.seq else "superseded"
@@ -393,12 +492,12 @@ def process_job(job_id):
                     raise RuntimeError("完成阶段租约校验失败")
         except Exception as exc:
             report["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 2)
-            with db_module.SessionLocal.begin() as db:
-                db.execute(update(KbSyncJob).where(
-                    KbSyncJob.id == job.id, KbSyncJob.fence == job.fence, KbSyncJob.status == "running",
-                ).values(status="failed", error=f"{type(exc).__name__}: {exc}"[:800],
-                         report_json=_json(report), lease_until=None))
-            logger.exception("知识同步任务失败 %s", job.id)
+            try:
+                _record_failure(job, exc, stage, report)
+            except Exception as persist_error:
+                # DB故障时无法持久退避，保留running等待租约恢复；避免异常链泄露上游正文。
+                logger.error("同步失败状态写入失败 job=%s type=%s；等待租约恢复",
+                             job.id, type(persist_error).__name__)
         finally:
             stop.set()
             heartbeat.join(timeout=2)
@@ -411,7 +510,7 @@ def _verify_generation(job):
     store = ChromaStore(settings.KB_VECTOR_DIR, job.collection, must_exist=True)
     if not store.is_build_ready():
         raise RuntimeError("索引没有完整构建标记")
-    snapshot = read_export(Path(job.snapshot_path))
+    snapshot = read_export(Path(job.snapshot_path), cache_dir=stage_cache_dir())
     if snapshot.snapshot_hash != job.snapshot_hash or snapshot.commit != job.commit_sha:
         raise RuntimeError("版本来源快照不一致")
     expected = {}
@@ -538,7 +637,8 @@ def run_worker(stop):
         try:
             with db_module.SessionLocal() as db:
                 job = (db.query(KbSyncJob).filter(KbSyncJob.source_id == settings.KB_SOURCE_ID,
-                    or_(KbSyncJob.status == "queued", (KbSyncJob.status == "running") & (KbSyncJob.lease_until <= _now())))
+                    or_((KbSyncJob.status == "queued") & or_(KbSyncJob.next_attempt_at.is_(None), KbSyncJob.next_attempt_at <= _now()),
+                        (KbSyncJob.status == "running") & (KbSyncJob.lease_until <= _now())))
                     .order_by(KbSyncJob.seq.desc()).first())
                 job_id = job.id if job else None
             if job_id:

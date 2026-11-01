@@ -301,6 +301,8 @@ Docker 默认启用 Git 模式。GitHub Actions 从通过 CI 的提交导出知�
 
 同一提交/profile 重复提交复用任务；新提交复用未变化向量，仅为新的嵌入输入调用 Embedding。每代使用独立的完整 Chroma 索引，查询中的向量、BM25 与父块固定同代；旧版本保留，不自动清理。详细设计、真实对照数据及边界见 [Git 增量同步验收报告](docs/git-sync-evaluation-2026-11-01.md)。
 
+解析、切分、向量分别缓存；内容不变的新提交实测三个阶段新增工作量均为 0。同步失败按原因分类，最多执行三次，等待时间写入 SQL；管理页显示自动重试状态。发布工作流验证服务重启后旧知识保留，并把停写备份恢复至隔离 MySQL/Chroma 做检索校验。测评数据、四次真实进程终止演练及适用范围见 [阶段缓存与恢复测评](docs/git-sync-hardening-evaluation-2026-11-01.md)。
+
 ```bash
 docker compose exec backend python -m app.rag.generations --publish --timeout 900
 docker compose exec backend python -m app.rag.release_check
