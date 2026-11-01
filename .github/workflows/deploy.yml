@@ -85,11 +85,14 @@ jobs:
             trap 'docker compose start backend >/dev/null || true' EXIT
           fi
           if docker compose ps --status running --services | grep -qx mysql; then
-            docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysqldump -uroot --single-transaction --routines --triggers "$MYSQL_DATABASE"' > "backups/pre-sync-$stamp.sql"
+            docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysqldump -uroot --single-transaction --routines --triggers "$MYSQL_DATABASE"' </dev/null > "backups/pre-sync-$stamp.sql"
           fi
           if docker compose ps --all --services | grep -qx backend; then
-            docker compose run --rm --no-deps -T backend python -c 'import sys,tarfile; t=tarfile.open(fileobj=sys.stdout.buffer, mode="w|gz"); t.add("/.rag", arcname="rag"); t.close()' > "backups/pre-sync-$stamp-rag.tar.gz"
+            docker compose run --rm --no-deps -T backend python -c 'import sys,tarfile; t=tarfile.open(fileobj=sys.stdout.buffer, mode="w|gz"); t.add("/.rag", arcname="rag"); t.close()' </dev/null > "backups/pre-sync-$stamp-rag.tar.gz"
           fi
+          test -s "backups/pre-sync-$stamp.sql"
+          test -s "backups/pre-sync-$stamp-rag.tar.gz"
+          printf 'Backup verified: %s\n' "$stamp"
           REMOTE
 
       - name: Synchronize application source

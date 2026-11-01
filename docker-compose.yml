@@ -120,10 +120,12 @@ services:
   caddy:
     image: caddy:2.10-alpine
     container_name: it-helpdesk-caddy
+    entrypoint: ["/bin/sh", "/usr/local/bin/helpdesk-caddy.sh"]
     ports:
       - "8443:8443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./scripts/run_caddy.sh:/usr/local/bin/helpdesk-caddy.sh:ro
       # 复用数据分析项目已验证的公网 IP 证书；IP_CERT_DIR 只在服务器 .env 设置。
       - "${IP_CERT_DIR:-./.certs}:/etc/letsencrypt:ro"
       - caddy_data:/data

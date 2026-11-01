@@ -39,13 +39,9 @@ jobs:
             github-deploy-helpdesk@121.43.124.98 bash -s -- "$TLS_ACTION" <<'REMOTE'
           set -euo pipefail
           cd /opt/ai-it-helpdesk
-          docker compose exec -T caddy cat /etc/letsencrypt/live/121.43.124.98/fullchain.pem | openssl x509 -noout -dates -serial
-          docker compose exec -T caddy sh -c "grep -E '^(authenticator|installer|webroot_path|server|preferred_profile|required_profile|renew_before_expiry)' /etc/letsencrypt/renewal/121.43.124.98.conf || true"
-          docker ps -a --format '{{.Names}} {{.Image}}' | grep -E 'certbot|caddy|nginx|acme' || true
-          for container in $(docker ps -aq --filter name=certbot); do
-            docker inspect --format '{{.Name}} project={{index .Config.Labels "com.docker.compose.project.working_dir"}} mounts={{range .Mounts}}{{.Source}}:{{.Destination}} {{end}}' "$container"
-          done
+          docker compose exec -T caddy cat /etc/letsencrypt/live/121.43.124.98/fullchain.pem </dev/null | openssl x509 -noout -dates -serial
           if [ "$1" = reload ]; then
-            docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force
+            docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force </dev/null
           fi
+          curl --fail --silent --show-error --connect-timeout 5 --max-time 10 https://121.43.124.98:8443/health
           REMOTE
