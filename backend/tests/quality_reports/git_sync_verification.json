@@ -1,5 +1,5 @@
 {
-  "backend_tests": 299,
+  "backend_tests": 300,
   "frontend_tests": 16,
   "ruff": "passed",
   "frontend_lint": "passed, two pre-existing hook warnings",
@@ -16,6 +16,9 @@
     "backend/app/api/kb.py": "07d07011c54600df63791dca5b898bde181f9b8f345651d20e7634fb2adb7441",
     "backend/app/models.py": "91127cb3740042a1426007bd6040b63eecfd82977078731ea5d158eef0a43b19",
     "frontend/src/components/KbManager.jsx": "630c6d47e32690b393c4d12dffb49ff3f7c06e38462376b3a26cda740a544188",
-    ".github/workflows/deploy.yml": "51bfe046dddc5946d3ef57ea388c0f072b3f51e9b8934229f473cb516e339f5e"
+    ".github/workflows/deploy.yml": "a3c929d578370105a1b24d83f409993958a903e13c7c451b67dbd902988ab833",
+    ".github/workflows/production-tls.yml": "1d91546801d8673a49663fe8ce211579f0178b274031ab9edf567c76a77679b3",
+    "scripts/run_caddy.sh": "275da2a2a16804fe61876a5fd63321178652f23ea29316cf7b19f40d2128d9f6",
+    "backend/tests/test_caddy_certificate_reload.py": "8f319c43e3f9be218426f71d844cdea5b71c097f92632701291a75102c60760c"
   }
 }

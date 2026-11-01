@@ -8,11 +8,11 @@ stop_children() {
   [ -z "$server_pid" ] || kill "$server_pid" 2>/dev/null || true
 }
 trap stop_children EXIT INT TERM
+certificate=/etc/letsencrypt/live/121.43.124.98/fullchain.pem
+previous=$(sha256sum "$certificate")
 caddy run --config /etc/caddy/Caddyfile --adapter caddyfile &
 server_pid=$!
 (
-  certificate=/etc/letsencrypt/live/121.43.124.98/fullchain.pem
-  previous=$(sha256sum "$certificate")
   while sleep 3600; do
     current=$(sha256sum "$certificate")
     if [ "$current" != "$previous" ]; then
