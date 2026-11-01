@@ -1,0 +1,51 @@
+name: Production TLS maintenance
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        options: [inspect, reload]
+        default: inspect
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-it-helpdesk-tls
+  cancel-in-progress: false
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+      - name: Inspect certificate and renewal service
+        env:
+          TLS_ACTION: ${{ inputs.action }}
+        run: |
+          ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            github-deploy-helpdesk@121.43.124.98 bash -s -- "$TLS_ACTION" <<'REMOTE'
+          set -euo pipefail
+          cd /opt/ai-it-helpdesk
+          docker compose exec -T caddy cat /etc/letsencrypt/live/121.43.124.98/fullchain.pem | openssl x509 -noout -dates -serial
+          docker compose exec -T caddy sh -c "grep -E '^(authenticator|installer|webroot_path|server|preferred_profile|required_profile|renew_before_expiry)' /etc/letsencrypt/renewal/121.43.124.98.conf || true"
+          docker ps -a --format '{{.Names}} {{.Image}}' | grep -E 'certbot|caddy|nginx|acme' || true
+          for container in $(docker ps -aq --filter name=certbot); do
+            docker inspect --format '{{.Name}} project={{index .Config.Labels "com.docker.compose.project.working_dir"}} mounts={{range .Mounts}}{{.Source}}:{{.Destination}} {{end}}' "$container"
+          done
+          if [ "$1" = reload ]; then
+            docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force
+          fi
+          REMOTE
