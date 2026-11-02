@@ -58,7 +58,7 @@ L1 工程师全程无感，仅在后台审计日志看到一条成功记录。
 - 🧪 **测试工程化**：pytest 一条命令跑全量离线回归（mock LLM + 内存 SQLite），CI 自动验证，改坏流程立刻红
 - 📜 **统一日志系统**：logging 级别/文件轮转/结构化格式（时间|级别|模块|消息），容器日志卷持久化——生产排障可查，不再 print 满天飞
 - 🧹 **代码规范强制**：后端 ruff + 前端 oxlint，CI 必跑，改坏规范立刻红
-- 💾 **备份与恢复**：MySQL 全量备份（在线不锁表、保留 7 份滚动）+ 向量库打包 + 恢复演练脚本，数据可回滚
+- 💾 **备份与恢复**：部署前停写备份 SQL 与知识卷，隔离恢复验证；按引用保护版本，备份至少保留 7 天并提供 7 天隔离宽限
 
 ## 架构图
 
@@ -299,7 +299,7 @@ npm run dev                                           # http://localhost:5173
 
 Docker 默认启用 Git 模式。GitHub Actions 从通过 CI 的提交导出知识快照，部署后构建并验证新版本，再发布。同步任务读取导出的原始字节，不读取正在编辑的工作树。管理页的「增量同步」提交持久任务；完成后点击「发布生效」。回滚有独立按钮，已确认删除或停用的文档不会因回滚重新进入证据。
 
-同一提交/profile 重复提交复用任务；新提交复用未变化向量，仅为新的嵌入输入调用 Embedding。每代使用独立的完整 Chroma 索引，查询中的向量、BM25 与父块固定同代；旧版本保留，不自动清理。详细设计、真实对照数据及边界见 [Git 增量同步验收报告](docs/git-sync-evaluation-2026-11-01.md)。
+同一提交/profile 重复提交复用任务；新提交复用未变化向量，仅为新的嵌入输入调用 Embedding。每代使用独立的完整 Chroma 索引，查询中的向量、BM25 与父块固定同代；旧版本按在岗/回滚/任务引用和七天窗口保护，离线隔离后再到期清理。详细设计、真实对照数据及边界见 [Git 增量同步验收报告](docs/git-sync-evaluation-2026-11-01.md)。
 
 解析、切分、向量分别缓存；内容不变的新提交实测三个阶段新增工作量均为 0。同步失败按原因分类，最多执行三次，等待时间写入 SQL；管理页显示自动重试状态。发布工作流验证服务重启后旧知识保留，并把停写备份恢复至隔离 MySQL/Chroma 做检索校验。测评数据、四次真实进程终止演练及适用范围见 [阶段缓存与恢复测评](docs/git-sync-hardening-evaluation-2026-11-01.md)。
 
@@ -404,13 +404,16 @@ pytest                            # 离线单测（mock LLM + 内存 SQLite + mo
 
 ## 备份与恢复
 
+现有发布工作流先停后端，生成全量 SQL、两张知识表 SQL 和完整 RAG 卷备份，再验证服务重启不改变在岗知识，并将知识备份恢复到隔离 MySQL/Chroma 做双路检索与父块校验。全量 SQL 已备份，但本轮恢复演练只覆盖知识子系统。
+
 ```bash
-scripts/backup_mysql.sh    # MySQL 全量备份 → backups/mysql/，保留最近 7 份
-scripts/backup_kb.sh       # 向量库 .rag/ 打包（台账在 MySQL，向量库可由文档重建）
-scripts/restore_mysql.sh   # 恢复演练：清空重建 → 导入 → 校验表数
+# 默认预览；--apply 先移入隔离区，至少七天后才能到期清除。
+python3 scripts/backup_retention.py --backup-dir backups
+python3 scripts/backup_retention.py --backup-dir backups --apply
+python3 scripts/backup_retention.py --backup-dir backups --purge-expired --apply
 ```
 
-**备份链路设计**：MySQL 台账是事实来源（会话/工单/Trace/知识库台账/审计日志），向量库只是索引——所以 MySQL 备份是底线；向量库坏了直接用 `python -m app.rag.sync` 从 `docs/knowledge` 幂等重建，无需恢复。备份脚本用 `--single-transaction` 在线备份不锁表，保留 N 份滚动清理，`backups/` 已入 `.gitignore`。
+保护 latest、最近七天、未完成验证的备份，并至少保留一个验证成功的旧回退组。知识 generation、快照和缓存按引用清理，需停止后端，恢复不会撤销删除限制。操作命令、故障恢复和实测边界见 [知识保留与清理](docs/git-retention-evaluation-2026-11-02.md)。`backups/` 和内部发布收据不上传 GitHub。旧的独立备份脚本仍用于其原目录，不能替代当前 Git 知识源的配套恢复。
 
 ## 设计决策
 

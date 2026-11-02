@@ -1,5 +1,5 @@
 """FastAPI 入口：后端服务的门面，所有 HTTP 接口从这里挂载。"""
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, nullcontext
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,6 +20,14 @@ from app.services.agent_ingress import AgentIngressMiddleware
 async def lifespan(app: FastAPI):
     """应用启动时自动建表（容器化部署必需：无手动初始化步骤）。"""
     setup_logging()  # 统一日志：级别可配 + 文件轮转（生产排障可查）
+    from app.rag.maintenance import service_guard
+    with service_guard() if settings.KB_SYNC_MODE == "git" else nullcontext():
+        async with _serve():
+            yield
+
+
+@asynccontextmanager
+async def _serve():
     init_db()
     if settings.KB_SYNC_MODE == "git":
         import threading
@@ -32,7 +40,7 @@ async def lifespan(app: FastAPI):
             yield
         finally:
             stop.set()
-            worker.join(timeout=3)
+            worker.join()  # 生命周期锁必须覆盖仍在写索引的worker；进程退出由部署器限时。
     else:
         yield
 

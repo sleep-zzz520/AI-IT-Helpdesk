@@ -14,7 +14,7 @@ pymysql>=1.1
 cryptography>=42.0
 
 # ===== RAG 知识库 =====
-chromadb>=1.5
+chromadb==1.5.9  # offline segment retention validates this storage schema
 PyYAML>=6.0
 jieba>=0.42          # BM25 中文分词
 rank_bm25>=0.2       # BM25 稀疏检索（混合检索的精确匹配路）

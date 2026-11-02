@@ -1,7 +1,7 @@
 """受控Git来源：持久任务、不可变整代索引、向量复用和条件发布。
 
 ponytail: 首版同机、单共享IT知识来源，最多512篇。每代复制完整索引，
-以存储换读写隔离；禁止自动GC，不承诺多主机或文档级租户授权。
+以存储换读写隔离；仅离线保护式GC，不承诺多主机或文档级租户授权。
 """
 import hashlib
 import inspect
@@ -161,6 +161,13 @@ def state():
 
 
 def enqueue(snapshot=None):
+    # 快照落盘到SQL引用建立之间也不能与离线回收交错。
+    from app.rag.maintenance import service_guard
+    with service_guard():
+        return _enqueue_locked(snapshot)
+
+
+def _enqueue_locked(snapshot=None):
     discovery = {}
     snapshot = snapshot or configured_snapshot(stats=discovery)
     for attempt in range(3):

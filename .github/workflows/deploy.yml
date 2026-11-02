@@ -80,16 +80,18 @@ jobs:
           cd "$1"
           umask 077
           mkdir -p backups
+          exec 9>backups/.retention.lock
+          python3 -c 'import fcntl; fcntl.flock(9, fcntl.LOCK_EX | fcntl.LOCK_NB)'
           stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-          if docker compose ps --status running --services | grep -qx backend; then
-            docker compose stop backend
-            trap 'docker compose start backend >/dev/null || true' EXIT
+          if docker compose ps --status running --services </dev/null | grep -qx backend; then
+            docker compose stop backend </dev/null
+            trap 'docker compose start backend </dev/null >/dev/null || true' EXIT
           fi
-          if docker compose ps --status running --services | grep -qx mysql; then
+          if docker compose ps --status running --services </dev/null | grep -qx mysql; then
             docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysqldump -uroot --single-transaction --routines --triggers "$MYSQL_DATABASE"' </dev/null > "backups/pre-sync-$stamp.sql"
             docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysqldump -uroot --single-transaction --no-tablespaces --set-gtid-purged=OFF --skip-comments "$MYSQL_DATABASE" kb_sources kb_sync_jobs' </dev/null > "backups/pre-sync-$stamp-knowledge.sql"
           fi
-          if docker compose ps --all --services | grep -qx backend; then
+          if docker compose ps --all --services </dev/null | grep -qx backend; then
             docker compose run --rm --no-deps -T backend python -c 'import hashlib,json; from app.rag import generations as g; s=g.state(); chunks=g.resolve_store().get_all_meta(); fields=("active_generation","source_commit","active_collection","doc_count"); b={k:s[k] for k in fields}; b.update(content_metadata_sha256=hashlib.sha256(json.dumps(chunks,ensure_ascii=False,sort_keys=True,separators=(",",":")).encode()).hexdigest(),denied_ids=sorted(g.denied_ids())); print(json.dumps({"baseline":b},ensure_ascii=False))' </dev/null > "backups/pre-sync-$stamp-manifest.json"
             docker compose run --rm --no-deps -T backend python -c 'import sys,tarfile; t=tarfile.open(fileobj=sys.stdout.buffer, mode="w|gz"); t.add("/.rag", arcname="rag"); t.close()' </dev/null > "backups/pre-sync-$stamp-rag.tar.gz"
           fi
@@ -154,9 +156,9 @@ jobs:
               os.fsync(handle.fileno())
           os.replace(temporary, path)
           PY
-          docker compose --profile public config --quiet
-          docker compose --profile public up -d --build --force-recreate
-          docker compose ps
+          docker compose --profile public config --quiet </dev/null
+          docker compose --profile public up -d --build --force-recreate </dev/null
+          docker compose ps </dev/null
           REMOTE
 
       - name: Verify the previous generation survived service restart
@@ -174,6 +176,8 @@ jobs:
             sleep 2
           done
           test "$ready" -eq 1
+          exec 9>backups/.retention.lock
+          python3 -c 'import fcntl; fcntl.flock(9, fcntl.LOCK_EX | fcntl.LOCK_NB)'
           read -r prefix < backups/latest-kb-backup
           [[ "$prefix" =~ ^pre-sync-[0-9]{8}T[0-9]{6}Z$ ]]
           read -r expected digest < <(python3 -c 'import json,sys; b=json.load(open(sys.argv[1]))["baseline"]; print(b["active_generation"],b["content_metadata_sha256"])' "backups/$prefix-manifest.json")
@@ -196,6 +200,40 @@ jobs:
           ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
             "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_PATH' && bash scripts/verify_kb_backup.sh" </dev/null
 
+      - name: Retain protected generations, caches and verified backups
+        run: |
+          ssh -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_PATH" <<'REMOTE'
+          set -euo pipefail
+          cd "$1"
+          umask 077
+          read -r prefix < backups/latest-kb-backup
+          [[ "$prefix" =~ ^pre-sync-[0-9]{8}T[0-9]{6}Z$ ]]
+          # Dry-run and apply each recompute roots. Preserve 7 days online + 7 in quarantine.
+          python3 scripts/backup_retention.py --backup-dir backups > "backups/$prefix-backup-retention-preview.json"
+          python3 scripts/backup_retention.py --backup-dir backups --apply > "backups/$prefix-backup-retention.json"
+          python3 scripts/backup_retention.py --backup-dir backups --purge-expired --apply > "backups/$prefix-backup-retention-purge.json"
+          # Wait for the backend process to exit, including any pinned Agent request/worker.
+          docker compose stop backend </dev/null
+          trap 'docker compose start backend </dev/null >/dev/null || true' EXIT
+          docker compose run --rm --no-deps -T backend python -m app.rag.retention </dev/null > "backups/$prefix-kb-retention-preview.json"
+          docker compose run --rm --no-deps -T backend python -m app.rag.retention --apply </dev/null > "backups/$prefix-kb-retention.json"
+          docker compose run --rm --no-deps -T backend python -m app.rag.retention --purge-expired --apply </dev/null > "backups/$prefix-kb-retention-purge.json"
+          docker compose start backend </dev/null
+          trap - EXIT
+          ready=0
+          for attempt in $(seq 1 30); do
+            if docker compose exec -T backend python -c 'import urllib.request; urllib.request.urlopen("http://localhost:8000/health", timeout=3)' </dev/null >/dev/null 2>&1; then
+              ready=1
+              break
+            fi
+            sleep 2
+          done
+          test "$ready" -eq 1
+          docker compose exec -T backend python -m app.rag.release_check </dev/null > "backups/$prefix-retention-retrieval-check.json"
+          cat "backups/$prefix-retention-retrieval-check.json"
+          REMOTE
+
       - name: Download recovery evidence
         run: |
           mkdir -p recovery-evidence
@@ -203,11 +241,13 @@ jobs:
             "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/backups/*-restore-check.json" recovery-evidence/
           scp -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
             "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/backups/*-restart-check.json" recovery-evidence/
+          scp -i "$HOME/.ssh/id_ed25519" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/backups/*-retention*.json" recovery-evidence/
 
       - uses: actions/upload-artifact@v4
         with:
           name: knowledge-restore-evidence
-          path: recovery-evidence/*-check.json
+          path: recovery-evidence/*.json
           if-no-files-found: error
 
       - name: Check the public service

@@ -3,6 +3,8 @@
 set -euo pipefail
 cd "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
+exec 9>backups/.retention.lock
+python3 -c 'import fcntl; fcntl.flock(9, fcntl.LOCK_EX | fcntl.LOCK_NB)'
 prefix="$(cat backups/latest-kb-backup)"
 if [[ ! "$prefix" =~ ^pre-sync-[0-9]{8}T[0-9]{6}Z$ ]]; then
   echo 'Invalid knowledge backup prefix.' >&2

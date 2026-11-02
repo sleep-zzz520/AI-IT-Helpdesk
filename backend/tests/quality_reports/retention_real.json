@@ -1,0 +1,65 @@
+{
+  "baseline": {
+    "active": "dcc59b577ef9420e99646a30c458430b",
+    "bm25_recall": 10,
+    "documents": 16,
+    "parents_verified": true,
+    "signature": "f1620a18b0766608ccc4a08f35ab43de8fd14895cc3d12e02c90fca1c8bcd34a",
+    "vector_recall": 10
+  },
+  "candidates": 4,
+  "embedding": "deterministic 1024-D; no external requests",
+  "generations_after_quarantine": 2,
+  "generations_before": 6,
+  "mysql_version": "8.0.43",
+  "purge_ticket": "cb1f0fe5bfaf4480bf86b676bbf89702",
+  "restore_content_metadata_config_exact": true,
+  "restored_vector_max_abs_delta": 5.960464477539063e-08,
+  "scope": "isolated real MySQL tables/Chroma; 16 Git Markdown documents and synthetic revisions",
+  "selected_file_bytes": 220407,
+  "selected_files": 16,
+  "sigkill_cleanup_recovered": true,
+  "signatures": {
+    "kb_gen_333a61315d7949c2baaa74ab04fd8019": "ec07256a6d343cafd2326d18796e1dda75c1a7dd806ec8cd4bf5d26c9a5f02b8",
+    "kb_gen_4c8558b34a0345aba33696e215e207ff": "ec5242bb25d1ef7ff587e89c577093e22ec462c3277e07c4062f0360609900da",
+    "kb_gen_5c0db7b604af4f6880eeb959cef31df2": "07c64cfd5c55973e501e7832868aaa138803ed5cc2e98a9e6af30ab70c2a3d20",
+    "kb_gen_820db67080994d76ba3685d1ef5c11ae": "032d35ed9528b26c452109295c197b2dc1885674a4ad22c505f23516597b7e47",
+    "kb_gen_c48a527af063408d8d23c29b183c4e86": "a8576de2068025d07e813c4d55289ef3db6899c6ff0b67ff63b361dea09bca80",
+    "kb_gen_dcc59b577ef9420e99646a30c458430b": "f1620a18b0766608ccc4a08f35ab43de8fd14895cc3d12e02c90fca1c8bcd34a"
+  },
+  "storage_before": {
+    "state": {
+      "bytes": 1130196,
+      "files": 118,
+      "hnsw_bytes": 0,
+      "sqlite_bytes": 0
+    },
+    "vectors": {
+      "bytes": 8365016,
+      "files": 27,
+      "hnsw_bytes": 2544600,
+      "sqlite_bytes": 5820416
+    }
+  },
+  "zero_new_embeddings": true,
+  "expired_purge_passed": true,
+  "active_and_rollback_hybrid_passed": true,
+  "generations_after_purge": 2,
+  "storage_after_purge": {
+    "state": {
+      "files": 104,
+      "bytes": 930109,
+      "hnsw_bytes": 0,
+      "sqlite_bytes": 0
+    },
+    "vectors": {
+      "files": 11,
+      "bytes": 6918472,
+      "hnsw_bytes": 848200,
+      "sqlite_bytes": 6070272
+    }
+  },
+  "remaining_quarantine_payload_bytes": 0,
+  "elapsed_ms": 12680.94,
+  "isolated_tables_and_directory_removed": true
+}
