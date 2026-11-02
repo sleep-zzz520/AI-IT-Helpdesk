@@ -1,0 +1,760 @@
+{
+  "scope": "fault correctness only; no real model/API; separate temporary SQLite/Chroma per case",
+  "cases": [
+    {
+      "case": "stage_corruption",
+      "old_active": "5f71ab684a8a405ab5968d7834731106",
+      "baseline_oracle": {
+        "vectors_verified": 183,
+        "nonheading_source_lines_present": 290,
+        "ordered_source_characters_verified": 57208,
+        "passed": true,
+        "documents": 64,
+        "children": 119,
+        "blocks": 183
+      },
+      "scope": "real SQLite/Chroma and sync lifecycle; deterministic embedding; correctness only",
+      "success_oracle": {
+        "vectors_verified": 183,
+        "nonheading_source_lines_present": 290,
+        "ordered_source_characters_verified": 57208,
+        "passed": true,
+        "documents": 64,
+        "children": 119,
+        "blocks": 183
+      },
+      "injection": "all persistent parse/chunk JSON caches truncated",
+      "predicates": [
+        "source text and metadata restored from authoritative export",
+        "no additional embedding inputs"
+      ],
+      "raw_served_check": {
+        "raw_blocks": 183,
+        "served_blocks": 183,
+        "denied_doc_ids": [],
+        "served_metadata_view_matches_raw_minus_deny": true,
+        "get_by_ids_matches_raw_minus_deny": true,
+        "raw_query_matches_all_remaining_children": true
+      },
+      "job_report": {
+        "added": [],
+        "attempt": 1,
+        "deleted": [],
+        "discovery": {},
+        "elapsed_ms": 2994.96,
+        "embedding_inputs": 0,
+        "reused_vectors": 119,
+        "skipped_count": 64,
+        "stages": {
+          "chunk_misses": 64,
+          "chunked_documents": 64,
+          "parse_hits": 64
+        },
+        "updated": []
+      },
+      "passed": true,
+      "new_active": "c2af4c5ebfc142ada68c6cdd05e99439",
+      "embedding_counters": {
+        "attempts": 0,
+        "embedding_inputs": 0
+      },
+      "job_status": "published",
+      "task_attempts": 1,
+      "physical_served_checks": true
+    },
+    {
+      "case": "vector_corruption",
+      "old_active": "a131ff5223cf4d7e8f36356ae882918d",
+      "baseline_oracle": {
+        "vectors_verified": 183,
+        "nonheading_source_lines_present": 290,
+        "ordered_source_characters_verified": 57208,
+        "passed": true,
+        "documents": 64,
+        "children": 119,
+        "blocks": 183
+      },
+      "scope": "real SQLite/Chroma and sync lifecycle; deterministic embedding; correctness only",
+      "success_oracle": {
+        "vectors_verified": 183,
+        "nonheading_source_lines_present": 290,
+        "ordered_source_characters_verified": 57208,
+        "passed": true,
+        "documents": 64,
+        "children": 119,
+        "blocks": 183
+      },
+      "injection": "all embedding cache JSON truncated plus one metadata-only revision",
+      "predicates": [
+        "invalid vectors recomputed",
+        "raw vectors and metadata match independent oracle"
+      ],
+      "raw_served_check": {
+        "raw_blocks": 183,
+        "served_blocks": 183,
+        "denied_doc_ids": [],
+        "served_metadata_view_matches_raw_minus_deny": true,
+        "get_by_ids_matches_raw_minus_deny": true,
+        "raw_query_matches_all_remaining_children": true
+      },
+      "job_report": {
+        "added": [],
+        "attempt": 1,
+        "deleted": [],
+        "discovery": {},
+        "elapsed_ms": 2877.71,
+        "embedding_inputs": 5,
+        "reused_vectors": 114,
+        "skipped_count": 63,
+        "stages": {
+          "chunk_hits": 63,
+          "chunk_misses": 1,
+          "chunked_documents": 1,
+          "parse_hits": 64
+        },
+        "updated": [
+          "email/config-guide.md"
+        ]
+      },
+      "passed": true,
+      "new_active": "4fbde4569faa487898a264bc50afab43",
+      "embedding_counters": {
+        "attempts": 1,
+        "embedding_inputs": 5
+      },
+      "job_status": "published",
+      "task_attempts": 1,
+      "physical_served_checks": true
+    },
+    {
+      "case": "transient_503",
+      "old_active": "242bb9bc659547ae84a0fb9089ead6b8",
+      "baseline_oracle": {
+        "vectors_verified": 183,
+        "nonheading_source_lines_present": 290,
+        "ordered_source_characters_verified": 57208,
+        "passed": true,
+        "documents": 64,
+        "children": 119,
+        "blocks": 183
+      },
+      "scope": "real SQLite/Chroma and sync lifecycle; deterministic embedding; correctness only",
+      "persisted_retry_before_clock_advance": {
+        "status": "queued",
+        "attempts": 1,
+        "next_attempt_at": "2026-11-02T09:46:17.847163+00:00",
+        "error_kind": "upstream_server",
+        "failures": [
+          {
+            "at": "2026-11-02T09:46:15.433154+00:00",
+            "attempt": 1,
+            "embedding_inputs_attempted": 0,
+            "embedding_inputs_completed": 0,
+            "embedding_requests_attempted": 0,
+            "kind": "upstream_server",
+            "retryable": true,
+            "scheduled_delay_seconds": 2.414022004292898,
+            "stage": "embedding",
+            "stages": {
+              "chunk_misses": 1,
+              "chunked_documents": 1,
+              "parse_hits": 64
+            },
+            "status_code": 503,
+            "summary": "上游返回HTTP 503，等待有限重试"
+          }
+        ]
+      },
+      "success_oracle": {
+        "vectors_verified": 184,
+        "nonheading_source_lines_present": 291,
+        "ordered_source_characters_verified": 57267,
+        "passed": true,
+        "documents": 64,
+        "children": 120,
+        "blocks": 184
+      },
+      "clock_injection": "application clock advanced beyond persisted next_attempt_at; not recovery latency",
+      "injection": "APIStatusError HTTP 503 at embedding boundary",
+      "embedding_attempts": 2,
+      "predicates": [
+        "old raw generation unchanged during failure",
+        "persistent retry policy respected"
+      ],
+      "raw_served_check": {
+        "raw_blocks": 184,
+        "served_blocks": 184,
+        "denied_doc_ids": [],
+        "served_metadata_view_matches_raw_minus_deny": true,
+        "get_by_ids_matches_raw_minus_deny": true,
+        "raw_query_matches_all_remaining_children": true
+      },
+      "job_report": {
+        "added": [],
+        "attempt": 2,
+        "deleted": [],
+        "discovery": {},
+        "elapsed_ms": 2844.39,
+        "embedding_inputs": 1,
+        "reused_vectors": 119,
+        "skipped_count": 63,
+        "stages": {
+          "chunk_hits": 64,
+          "parse_hits": 64
+        },
+        "updated": [
+          "email/config-guide.md"
+        ]
+      },
+      "passed": true,
+      "new_active": "edfbe15abe6740a6a77473cc3b1161a6",
+      "embedding_counters": {
+        "attempts": 1,
+        "embedding_inputs": 1
+      },
+      "job_status": "published",
+      "task_attempts": 2,
+      "physical_served_checks": true
+    },
+    {
+      "case": "permanent_401",
+      "old_active": "a3cb05e24c0840ebba96bb342082f4d9",
+      "baseline_oracle": {
+        "vectors_verified": 183,
+        "nonheading_source_lines_present": 290,
+        "ordered_source_characters_verified": 57208,
+        "passed": true,
+        "documents": 64,
+        "children": 119,
+        "blocks": 183
+      },
+      "scope": "real SQLite/Chroma and sync lifecycle; deterministic embedding; correctness only",
+      "injection": "APIStatusError HTTP 401 at embedding boundary",
+      "embedding_attempts": 1,
+      "predicates": [
+        "old raw generation unchanged during failure",
+        "persistent retry policy respected"
+      ],
+      "raw_served_check": {
+        "raw_blocks": 183,
+        "served_blocks": 183,
+        "denied_doc_ids": [],
+        "served_metadata_view_matches_raw_minus_deny": true,
+        "get_by_ids_matches_raw_minus_deny": true,
+        "raw_query_matches_all_remaining_children": true
+      },
+      "job_report": {
+        "added": [],
+        "attempt": 1,
+        "deleted": [],
+        "discovery": {},
+        "elapsed_ms": 46.27,
+        "embedding_inputs": 0,
+        "reused_vectors": 5,
+        "skipped_count": 0,
+        "stages": {
+          "chunk_misses": 1,
+          "chunked_documents": 1,
+          "parse_hits": 64
+        },
+        "updated": []
+      },
+      "passed": true,
+      "new_active": "a3cb05e24c0840ebba96bb342082f4d9",
+      "embedding_counters": {
+        "attempts": 0,
+        "embedding_inputs": 0
+      },
+      "job_status": "failed",
+      "task_attempts": 1,
+      "physical_served_checks": true
+    },
+    {
+      "case": "partial_upsert",
+      "old_active": "b986dca38a354fdf863f08f7f8912557",
+      "baseline_oracle": {
+        "vectors_verified": 183,
+        "nonheading_source_lines_present": 290,
+        "ordered_source_characters_verified": 57208,
+        "passed": true,
+        "documents": 64,
+        "children": 119,
+        "blocks": 183
+      },
+      "scope": "real SQLite/Chroma and sync lifecycle; deterministic embedding; correctness only",
+      "injection": "persist first candidate block then PermissionError",
+      "candidate_blocks": 1,
+      "predicates": [
+        "physical partial candidate exists",
+        "old raw/served state unchanged",
+        "failed publish refused"
+      ],
+      "raw_served_check": {
+        "raw_blocks": 183,
+        "served_blocks": 183,
+        "denied_doc_ids": [],
+        "served_metadata_view_matches_raw_minus_deny": true,
+        "get_by_ids_matches_raw_minus_deny": true,
+        "raw_query_matches_all_remaining_children": true
+      },
+      "job_report": {
+        "added": [],
+        "attempt": 1,
+        "deleted": [],
+        "discovery": {},
+        "elapsed_ms": 51.37,
+        "embedding_inputs": 1,
+        "reused_vectors": 5,
+        "skipped_count": 0,
+        "stages": {
+          "chunk_misses": 1,
+          "chunked_documents": 1,
+          "parse_hits": 64
+        },
+        "updated": [
+          "email/config-guide.md"
+        ]
+      },
+      "passed": true,
+      "new_active": "b986dca38a354fdf863f08f7f8912557",
+      "embedding_counters": {
+        "attempts": 1,
+        "embedding_inputs": 1
+      },
+      "job_status": "failed",
+      "task_attempts": 1,
+      "physical_served_checks": true
+    },
+    {
+      "case": "incomplete_candidate",
+      "old_active": "7a4ee642f74b48e990d946d3c09ae5e7",
+      "baseline_oracle": {
+        "vectors_verified": 183,
+        "nonheading_source_lines_present": 290,
+        "ordered_source_characters_verified": 57208,
+        "passed": true,
+        "documents": 64,
+        "children": 119,
+        "blocks": 183
+      },
+      "scope": "real SQLite/Chroma and sync lifecycle; deterministic embedding; correctness only",
+      "injection": "delete one raw block after prepared before publish",
+      "predicates": [
+        "manifest-to-raw completeness prevents publication",
+        "old generation unchanged"
+      ],
+      "raw_served_check": {
+        "raw_blocks": 183,
+        "served_blocks": 183,
+        "denied_doc_ids": [],
+        "served_metadata_view_matches_raw_minus_deny": true,
+        "get_by_ids_matches_raw_minus_deny": true,
+        "raw_query_matches_all_remaining_children": true
+      },
+      "job_report": {
+        "added": [],
+        "attempt": 1,
+        "deleted": [],
+        "discovery": {},
+        "elapsed_ms": 2882.42,
+        "embedding_inputs": 1,
+        "reused_vectors": 119,
+        "skipped_count": 63,
+        "stages": {
+          "chunk_hits": 63,
+          "chunk_misses": 1,
+          "chunked_documents": 1,
+          "parse_hits": 64
+        },
+        "updated": [
+          "email/config-guide.md"
+        ]
+      },
+      "passed": true,
+      "new_active": "7a4ee642f74b48e990d946d3c09ae5e7",
+      "embedding_counters": {
+        "attempts": 1,
+        "embedding_inputs": 1
+      },
+      "job_status": "prepared",
+      "task_attempts": 1,
+      "physical_served_checks": true
+    },
+    {
+      "case": "finite_candidate_vector_change",
+      "old_active": "b5a0bcb0b5b94da289130e67ece2dac5",
+      "baseline_oracle": {
+        "vectors_verified": 183,
+        "nonheading_source_lines_present": 290,
+        "ordered_source_characters_verified": 57208,
+        "passed": true,
+        "documents": 64,
+        "children": 119,
+        "blocks": 183
+      },
+      "scope": "real SQLite/Chroma and sync lifecycle; deterministic embedding; correctness only",
+      "independent_oracle_error": "('child vector', '2c13d2a68679:af961553-311d-51a7-8e53-2067b3c35551:044267812554ddb813862e6ab8680a7c63b04cd28edb18f274484f0c4905304b:1:0')",
+      "injection": "replace one prepared child embedding with a finite, valid-1024-D but incorrect vector",
+      "publication_rejected": false,
+      "predicates": [
+        "changed candidate vector must not be published"
+      ],
+      "observed": "incorrect vector published; independent oracle detected mismatch",
+      "raw_served_check": {
+        "raw_blocks": 184,
+        "served_blocks": 184,
+        "denied_doc_ids": [],
+        "served_metadata_view_matches_raw_minus_deny": true,
+        "get_by_ids_matches_raw_minus_deny": true,
+        "raw_query_matches_all_remaining_children": true
+      },
+      "job_report": {
+        "added": [],
+        "attempt": 1,
+        "deleted": [],
+        "discovery": {},
+        "elapsed_ms": 2916.18,
+        "embedding_inputs": 1,
+        "reused_vectors": 119,
+        "skipped_count": 63,
+        "stages": {
+          "chunk_hits": 63,
+          "chunk_misses": 1,
+          "chunked_documents": 1,
+          "parse_hits": 64
+        },
+        "updated": [
+          "email/config-guide.md"
+        ]
+      },
+      "passed": false,
+      "new_active": "5383185b165d4bf3b08c0e8343e37a75",
+      "embedding_counters": {
+        "attempts": 1,
+        "embedding_inputs": 1
+      },
+      "job_status": "published",
+      "task_attempts": 1,
+      "physical_served_checks": true
+    },
+    {
+      "case": "superseded_prepared",
+      "old_active": "9e51d84553bc4b57a7ff920ddb25f975",
+      "baseline_oracle": {
+        "vectors_verified": 183,
+        "nonheading_source_lines_present": 290,
+        "ordered_source_characters_verified": 57208,
+        "passed": true,
+        "documents": 64,
+        "children": 119,
+        "blocks": 183
+      },
+      "scope": "real SQLite/Chroma and sync lifecycle; deterministic embedding; correctness only",
+      "success_oracle": {
+        "vectors_verified": 184,
+        "nonheading_source_lines_present": 292,
+        "ordered_source_characters_verified": 57294,
+        "passed": true,
+        "documents": 64,
+        "children": 120,
+        "blocks": 184
+      },
+      "injection": "enqueue newer source intent after old candidate prepared",
+      "predicates": [
+        "superseded prepared publication refused",
+        "new desired version publishes correctly"
+      ],
+      "raw_served_check": {
+        "raw_blocks": 184,
+        "served_blocks": 184,
+        "denied_doc_ids": [],
+        "served_metadata_view_matches_raw_minus_deny": true,
+        "get_by_ids_matches_raw_minus_deny": true,
+        "raw_query_matches_all_remaining_children": true
+      },
+      "job_report": {
+        "added": [],
+        "attempt": 1,
+        "deleted": [],
+        "discovery": {},
+        "elapsed_ms": 2881.23,
+        "embedding_inputs": 1,
+        "reused_vectors": 119,
+        "skipped_count": 63,
+        "stages": {
+          "chunk_hits": 63,
+          "chunk_misses": 1,
+          "chunked_documents": 1,
+          "parse_hits": 64
+        },
+        "updated": [
+          "email/config-guide.md"
+        ]
+      },
+      "passed": true,
+      "new_active": "ef95cda15ef54fbdabe772ecf256c501",
+      "embedding_counters": {
+        "attempts": 2,
+        "embedding_inputs": 2
+      },
+      "job_status": "prepared",
+      "task_attempts": 1,
+      "physical_served_checks": true
+    },
+    {
+      "case": "delete_failed_build_rollback",
+      "old_active": "509f500b5c6849aea37b89a90413ca1d",
+      "baseline_oracle": {
+        "vectors_verified": 183,
+        "nonheading_source_lines_present": 290,
+        "ordered_source_characters_verified": 57208,
+        "passed": true,
+        "documents": 64,
+        "children": 119,
+        "blocks": 183
+      },
+      "scope": "real SQLite/Chroma and sync lifecycle; deterministic embedding; correctness only",
+      "injection": "delete one source and fail embedding of another before publish, then rollback",
+      "rollback_target": "509f500b5c6849aea37b89a90413ca1d",
+      "rollback_completed": true,
+      "physical_doc_ids": [
+        "0108ddf6-f34c-542b-bb9b-fce268d605cd",
+        "07c69945-f4e7-5548-9d26-7c65cc054d5e",
+        "08096cab-84ba-5fec-9f82-25d00e1ebef4",
+        "0ddd77cb-261a-5bfa-982f-5fe0a4c692e1",
+        "181e7c63-eb94-5b4d-ba59-f9cbb3c734e7",
+        "1902523f-9220-539c-bb78-e9e7b4c727ce",
+        "24207e25-ef64-5432-867b-1678fdda834e",
+        "28500f7c-640a-5587-958b-25003b2010ad",
+        "28da91d6-c131-5c43-9965-fbdb2f647aff",
+        "29ce177b-38bb-5109-a634-c9986c215128",
+        "2a817ba2-b4a2-5dfe-acbb-3964fbb9061d",
+        "36c59b6e-0e48-5278-8874-2c1c00698988",
+        "39833c47-566d-55ff-88ac-798a4afb7f9d",
+        "3c70b0f4-fc90-5fbd-b993-8ac93c3b6167",
+        "3d051f6a-310f-5d18-87b9-5b3981040c08",
+        "40a5a632-4231-559b-b8ea-1ce4dd5fb8c2",
+        "43a26783-bedb-52ec-9f0d-2e906dcabbc3",
+        "44c477be-47aa-52bc-ae42-6e68087f0e28",
+        "4b82c189-8daa-5520-9283-ef7091ff4f12",
+        "4ce334ed-3986-55de-9ed6-581bd2551f03",
+        "4d4ad049-7ee7-5135-9b9f-7662a02da9d5",
+        "54133e75-1c84-5a46-9ffe-7a9a40c17b72",
+        "59540709-9588-5e00-9a10-40870d17a278",
+        "65193386-786b-5c33-a2e2-b44713409994",
+        "67bce186-89c4-51af-835b-782e3f9125b5",
+        "6879e70c-774f-5a18-9f7a-1196c346bc5f",
+        "69a867f1-f75c-5e6d-b078-abbf909e03ca",
+        "75310817-61dd-5304-a62b-96d2713b269c",
+        "75bdf372-ff50-5dd5-8dec-ad673c0e625f",
+        "76e83c5f-ea2c-5a31-8158-856a509194f2",
+        "7b12da35-4a20-5c13-a130-0683694f7557",
+        "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926",
+        "829af3a9-de0c-5290-9465-1f46768d52c3",
+        "85a50e54-9a82-587d-a691-76c70599ed10",
+        "8627d8e9-8515-53cf-89e4-a556ec8295ce",
+        "8900b039-4bc6-5014-a9bc-b353610bdded",
+        "8c26b8be-5869-514b-aeca-767b1bd06a7e",
+        "96889e78-fa50-5ddb-8f10-10ef83521b5c",
+        "97f8fbc9-3559-5600-8988-21d5bb3ca068",
+        "99a7527b-b015-59ca-919e-2580d34578da",
+        "99dbd68e-efe6-5cba-a22a-9095a194be6e",
+        "9affd163-97ad-5e2d-8f51-63ff9c2c2bd9",
+        "9bbc10c0-e643-50af-b19b-fac89096a885",
+        "a9711c46-42d4-5978-84b3-00021771ef2d",
+        "af961553-311d-51a7-8e53-2067b3c35551",
+        "b13e972c-b51d-5297-b8f8-6394b7577675",
+        "ba03736a-5bdb-5f8f-b95d-5a538bb39e12",
+        "bf5af6d9-58e4-5bbd-892f-c09b83bea249",
+        "c2899ed7-4afa-5387-b98c-564965d47184",
+        "c29b5087-23a6-500b-aabf-5cafc0c1399e",
+        "c4388cc8-5b34-5ff6-96a1-3cc86ca1312e",
+        "caca9e7d-badf-5ee7-8ec1-d0f21149b840",
+        "cd441272-c6ad-5850-b882-e13495c0846b",
+        "d1f6efc0-9a9d-5aa1-b8a9-b8a23c50f08d",
+        "d5ed63d8-665c-531e-9e0f-3410ea8cf600",
+        "d7d4baf0-441b-5684-8937-ab5ca711dc8e",
+        "dc0a99d8-5f0b-5c0a-b514-0bf568131ae6",
+        "e784b83c-655b-573e-a885-1c6362f47dcb",
+        "f22dc83e-35d6-5981-853b-2790dab7fa74",
+        "f54a7d21-a05b-5e65-a7b5-caaa69b4641a",
+        "f9ca8e30-10a3-594b-bd03-5eed1e8d27ee",
+        "f9f982cb-f4d0-5cc6-9c91-b1ac242362f8",
+        "fc05e455-bedc-5665-9620-9760bb1fe981",
+        "ff74ac7a-fc29-53eb-9734-95bfb13c7e3b"
+      ],
+      "served_doc_ids": [
+        "0108ddf6-f34c-542b-bb9b-fce268d605cd",
+        "07c69945-f4e7-5548-9d26-7c65cc054d5e",
+        "08096cab-84ba-5fec-9f82-25d00e1ebef4",
+        "0ddd77cb-261a-5bfa-982f-5fe0a4c692e1",
+        "181e7c63-eb94-5b4d-ba59-f9cbb3c734e7",
+        "1902523f-9220-539c-bb78-e9e7b4c727ce",
+        "24207e25-ef64-5432-867b-1678fdda834e",
+        "28500f7c-640a-5587-958b-25003b2010ad",
+        "28da91d6-c131-5c43-9965-fbdb2f647aff",
+        "29ce177b-38bb-5109-a634-c9986c215128",
+        "2a817ba2-b4a2-5dfe-acbb-3964fbb9061d",
+        "36c59b6e-0e48-5278-8874-2c1c00698988",
+        "39833c47-566d-55ff-88ac-798a4afb7f9d",
+        "3c70b0f4-fc90-5fbd-b993-8ac93c3b6167",
+        "3d051f6a-310f-5d18-87b9-5b3981040c08",
+        "40a5a632-4231-559b-b8ea-1ce4dd5fb8c2",
+        "43a26783-bedb-52ec-9f0d-2e906dcabbc3",
+        "44c477be-47aa-52bc-ae42-6e68087f0e28",
+        "4b82c189-8daa-5520-9283-ef7091ff4f12",
+        "4ce334ed-3986-55de-9ed6-581bd2551f03",
+        "4d4ad049-7ee7-5135-9b9f-7662a02da9d5",
+        "54133e75-1c84-5a46-9ffe-7a9a40c17b72",
+        "59540709-9588-5e00-9a10-40870d17a278",
+        "65193386-786b-5c33-a2e2-b44713409994",
+        "67bce186-89c4-51af-835b-782e3f9125b5",
+        "6879e70c-774f-5a18-9f7a-1196c346bc5f",
+        "69a867f1-f75c-5e6d-b078-abbf909e03ca",
+        "75310817-61dd-5304-a62b-96d2713b269c",
+        "75bdf372-ff50-5dd5-8dec-ad673c0e625f",
+        "76e83c5f-ea2c-5a31-8158-856a509194f2",
+        "7b12da35-4a20-5c13-a130-0683694f7557",
+        "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926",
+        "829af3a9-de0c-5290-9465-1f46768d52c3",
+        "85a50e54-9a82-587d-a691-76c70599ed10",
+        "8627d8e9-8515-53cf-89e4-a556ec8295ce",
+        "8900b039-4bc6-5014-a9bc-b353610bdded",
+        "8c26b8be-5869-514b-aeca-767b1bd06a7e",
+        "96889e78-fa50-5ddb-8f10-10ef83521b5c",
+        "97f8fbc9-3559-5600-8988-21d5bb3ca068",
+        "99a7527b-b015-59ca-919e-2580d34578da",
+        "99dbd68e-efe6-5cba-a22a-9095a194be6e",
+        "9affd163-97ad-5e2d-8f51-63ff9c2c2bd9",
+        "9bbc10c0-e643-50af-b19b-fac89096a885",
+        "a9711c46-42d4-5978-84b3-00021771ef2d",
+        "b13e972c-b51d-5297-b8f8-6394b7577675",
+        "ba03736a-5bdb-5f8f-b95d-5a538bb39e12",
+        "bf5af6d9-58e4-5bbd-892f-c09b83bea249",
+        "c2899ed7-4afa-5387-b98c-564965d47184",
+        "c29b5087-23a6-500b-aabf-5cafc0c1399e",
+        "c4388cc8-5b34-5ff6-96a1-3cc86ca1312e",
+        "caca9e7d-badf-5ee7-8ec1-d0f21149b840",
+        "cd441272-c6ad-5850-b882-e13495c0846b",
+        "d1f6efc0-9a9d-5aa1-b8a9-b8a23c50f08d",
+        "d5ed63d8-665c-531e-9e0f-3410ea8cf600",
+        "d7d4baf0-441b-5684-8937-ab5ca711dc8e",
+        "dc0a99d8-5f0b-5c0a-b514-0bf568131ae6",
+        "e784b83c-655b-573e-a885-1c6362f47dcb",
+        "f22dc83e-35d6-5981-853b-2790dab7fa74",
+        "f54a7d21-a05b-5e65-a7b5-caaa69b4641a",
+        "f9ca8e30-10a3-594b-bd03-5eed1e8d27ee",
+        "f9f982cb-f4d0-5cc6-9c91-b1ac242362f8",
+        "fc05e455-bedc-5665-9620-9760bb1fe981",
+        "ff74ac7a-fc29-53eb-9734-95bfb13c7e3b"
+      ],
+      "served_after_rollback": [
+        "0108ddf6-f34c-542b-bb9b-fce268d605cd",
+        "07c69945-f4e7-5548-9d26-7c65cc054d5e",
+        "08096cab-84ba-5fec-9f82-25d00e1ebef4",
+        "0ddd77cb-261a-5bfa-982f-5fe0a4c692e1",
+        "181e7c63-eb94-5b4d-ba59-f9cbb3c734e7",
+        "1902523f-9220-539c-bb78-e9e7b4c727ce",
+        "24207e25-ef64-5432-867b-1678fdda834e",
+        "28500f7c-640a-5587-958b-25003b2010ad",
+        "28da91d6-c131-5c43-9965-fbdb2f647aff",
+        "29ce177b-38bb-5109-a634-c9986c215128",
+        "2a817ba2-b4a2-5dfe-acbb-3964fbb9061d",
+        "36c59b6e-0e48-5278-8874-2c1c00698988",
+        "39833c47-566d-55ff-88ac-798a4afb7f9d",
+        "3c70b0f4-fc90-5fbd-b993-8ac93c3b6167",
+        "3d051f6a-310f-5d18-87b9-5b3981040c08",
+        "40a5a632-4231-559b-b8ea-1ce4dd5fb8c2",
+        "43a26783-bedb-52ec-9f0d-2e906dcabbc3",
+        "44c477be-47aa-52bc-ae42-6e68087f0e28",
+        "4b82c189-8daa-5520-9283-ef7091ff4f12",
+        "4ce334ed-3986-55de-9ed6-581bd2551f03",
+        "4d4ad049-7ee7-5135-9b9f-7662a02da9d5",
+        "54133e75-1c84-5a46-9ffe-7a9a40c17b72",
+        "59540709-9588-5e00-9a10-40870d17a278",
+        "65193386-786b-5c33-a2e2-b44713409994",
+        "67bce186-89c4-51af-835b-782e3f9125b5",
+        "6879e70c-774f-5a18-9f7a-1196c346bc5f",
+        "69a867f1-f75c-5e6d-b078-abbf909e03ca",
+        "75310817-61dd-5304-a62b-96d2713b269c",
+        "75bdf372-ff50-5dd5-8dec-ad673c0e625f",
+        "76e83c5f-ea2c-5a31-8158-856a509194f2",
+        "7b12da35-4a20-5c13-a130-0683694f7557",
+        "7dbf6a63-8d79-5c5c-9b9d-bc2c9bb47926",
+        "829af3a9-de0c-5290-9465-1f46768d52c3",
+        "85a50e54-9a82-587d-a691-76c70599ed10",
+        "8627d8e9-8515-53cf-89e4-a556ec8295ce",
+        "8900b039-4bc6-5014-a9bc-b353610bdded",
+        "8c26b8be-5869-514b-aeca-767b1bd06a7e",
+        "96889e78-fa50-5ddb-8f10-10ef83521b5c",
+        "97f8fbc9-3559-5600-8988-21d5bb3ca068",
+        "99a7527b-b015-59ca-919e-2580d34578da",
+        "99dbd68e-efe6-5cba-a22a-9095a194be6e",
+        "9affd163-97ad-5e2d-8f51-63ff9c2c2bd9",
+        "9bbc10c0-e643-50af-b19b-fac89096a885",
+        "a9711c46-42d4-5978-84b3-00021771ef2d",
+        "b13e972c-b51d-5297-b8f8-6394b7577675",
+        "ba03736a-5bdb-5f8f-b95d-5a538bb39e12",
+        "bf5af6d9-58e4-5bbd-892f-c09b83bea249",
+        "c2899ed7-4afa-5387-b98c-564965d47184",
+        "c29b5087-23a6-500b-aabf-5cafc0c1399e",
+        "c4388cc8-5b34-5ff6-96a1-3cc86ca1312e",
+        "caca9e7d-badf-5ee7-8ec1-d0f21149b840",
+        "cd441272-c6ad-5850-b882-e13495c0846b",
+        "d1f6efc0-9a9d-5aa1-b8a9-b8a23c50f08d",
+        "d5ed63d8-665c-531e-9e0f-3410ea8cf600",
+        "d7d4baf0-441b-5684-8937-ab5ca711dc8e",
+        "dc0a99d8-5f0b-5c0a-b514-0bf568131ae6",
+        "e784b83c-655b-573e-a885-1c6362f47dcb",
+        "f22dc83e-35d6-5981-853b-2790dab7fa74",
+        "f54a7d21-a05b-5e65-a7b5-caaa69b4641a",
+        "f9ca8e30-10a3-594b-bd03-5eed1e8d27ee",
+        "f9f982cb-f4d0-5cc6-9c91-b1ac242362f8",
+        "fc05e455-bedc-5665-9620-9760bb1fe981",
+        "ff74ac7a-fc29-53eb-9734-95bfb13c7e3b"
+      ],
+      "predicates": [
+        "failed build retains prior active generation",
+        "authoritative deny hides physically retained deletion",
+        "rollback does not resurrect deleted document"
+      ],
+      "raw_served_check": {
+        "raw_blocks": 183,
+        "served_blocks": 177,
+        "denied_doc_ids": [
+          "657e68c18ad40cc9",
+          "af961553-311d-51a7-8e53-2067b3c35551"
+        ],
+        "served_metadata_view_matches_raw_minus_deny": true,
+        "get_by_ids_matches_raw_minus_deny": true,
+        "raw_query_matches_all_remaining_children": true
+      },
+      "job_report": {
+        "added": [],
+        "attempt": 1,
+        "deleted": [],
+        "discovery": {},
+        "elapsed_ms": 45.13,
+        "embedding_inputs": 0,
+        "reused_vectors": 4,
+        "skipped_count": 0,
+        "stages": {
+          "chunk_misses": 1,
+          "chunked_documents": 1,
+          "parse_hits": 63
+        },
+        "updated": []
+      },
+      "passed": true,
+      "new_active": "509f500b5c6849aea37b89a90413ca1d",
+      "embedding_counters": {
+        "attempts": 1,
+        "embedding_inputs": 0
+      },
+      "job_status": "failed",
+      "task_attempts": 1,
+      "physical_served_checks": true
+    }
+  ],
+  "ok": false
+}
