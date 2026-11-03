@@ -604,10 +604,13 @@ class GenerationStore(ChromaStore):
         return {key: item for key, item in super().get_all_meta().items()
                 if item["metadata"].get("doc_id") not in denied}
 
-    def get_by_ids(self, ids):
+    def get_chunks(self, ids):
         denied = denied_ids()
-        return {key: item["text"] for key, item in self.get_chunks(ids).items()
+        return {key: item for key, item in super().get_chunks(ids).items()
                 if item["metadata"].get("doc_id") not in denied}
+
+    def get_by_ids(self, ids):
+        return {key: item["text"] for key, item in self.get_chunks(ids).items()}
 
     def count(self):
         return len(self.get_all_meta())

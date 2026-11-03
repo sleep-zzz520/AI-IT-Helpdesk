@@ -88,12 +88,17 @@ def _build_where(scenario: str | None) -> dict:
     return {"$and": conditions}
 
 
+def _shared_access(metadata: dict) -> bool:
+    """The shared retriever only serves employee-visible and legacy unlabelled knowledge."""
+    return "access" not in metadata or metadata["access"] == "employee"
+
+
 def _passes_filter(meta: dict, scenario: str | None) -> bool:
     """BM25 路的过滤（与向量路 where 语义一致）。
 
     BM25 索引是内存结构没有 where，召回后按 metadata 过滤。
     """
-    if meta.get("status") not in (None, "active"):
+    if not _shared_access(meta) or meta.get("status") not in (None, "active"):
         return False
     # 与向量路一致：父块仅用于 _attach_parents，不是可排序的召回证据。
     # 兼容历史上没有 chunk_type 的旧数据；新同步数据均明确标为 child/parent。
@@ -166,11 +171,14 @@ def _rrf_fuse(vector_hits: list[Hit], bm25_hits: list[Hit],
 def _attach_parents(hits: list[Hit], store: VectorStore) -> None:
     """子块命中 → 批量取父块全文（生成上下文完整，父子块策略）。"""
     parent_ids = [h.metadata.get("parent_id") for h in hits if h.metadata.get("parent_id")]
-    parent_texts = store.get_by_ids(list(dict.fromkeys(parent_ids)))
+    if not parent_ids:
+        return
+    parents = store.get_chunks(list(dict.fromkeys(parent_ids)))
     for h in hits:
         pid = h.metadata.get("parent_id")
-        if pid and pid in parent_texts:
-            h.parent_text = parent_texts[pid]
+        parent = parents.get(pid)
+        if parent and _shared_access(parent["metadata"]):
+            h.parent_text = parent["text"]
 
 
 def _recall_vector(store: VectorStore, query_vec: list[float] | None,
@@ -180,7 +188,7 @@ def _recall_vector(store: VectorStore, query_vec: list[float] | None,
         return []
     return [h for h in store.query(query_vec, top_k=settings.RRF_RECALL_N,
                                    where=_build_where(scenario))
-            if h.score >= settings.VECTOR_MIN_SCORE]
+            if _shared_access(h.metadata) and h.score >= settings.VECTOR_MIN_SCORE]
 
 
 def _recall_store(store: VectorStore, bm25: Bm25Index | None, enhanced: str,

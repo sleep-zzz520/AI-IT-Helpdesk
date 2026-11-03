@@ -119,3 +119,32 @@ def test_direct_generation_requires_nonblank_evidence(evidence):
     with patch.object(module, "chat") as chat:
         assert module.generate_answer("问题", evidence, verdict()) == module._EMPTY_ANSWER
     chat.assert_not_called()
+
+
+@pytest.mark.parametrize("fields,should_ask", [
+    (["设备属于租赁还是自有"], True),
+    (["设备管理员密码"], False),
+])
+def test_clarification_is_gated_and_never_generates(fields, should_ask):
+    judge = verdict(enough=False, answerable=False, clarify=True, missing_info=fields)
+    with (patch.object(module, "retrieve", return_value=[hit()]),
+          patch.object(module, "judge_evidence", return_value=judge),
+          patch.object(module, "generate_answer") as generate):
+        result = module.answer_question("笔记本送去哪里")
+    generate.assert_not_called()
+    assert result["answer"].startswith("请确认") is should_ask
+
+
+def test_rag_judge_requests_low_reasoning_only_for_default_glm(monkeypatch):
+    from app import llm
+
+    response = SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="{}"))])
+    with patch.object(llm, "_create", return_value=(response, "model")) as create:
+        monkeypatch.setattr(llm.settings, "GLM_JSON_MODELS", ["glm-5.3-flash"])
+        llm.chat_json([], max_tokens=2048, low_glm_reasoning=True)
+        assert create.call_args.kwargs["reasoning_effort"] == "low"
+        assert create.call_args.kwargs["max_tokens"] == 2048
+
+        llm.chat_json([], model_chain=["custom"])
+        assert "reasoning_effort" not in create.call_args.kwargs
+        assert create.call_args.kwargs["max_tokens"] == 1024

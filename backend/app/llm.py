@@ -164,7 +164,8 @@ def chat(messages: list[dict], temperature: float = 0.3,
 
 def chat_json(messages: list[dict], temperature: float = 0.1,
               model_chain: list[str] | None = None,
-              llm_profile: LLMProfile | None = None) -> dict:
+              llm_profile: LLMProfile | None = None, *, max_tokens: int = 1024,
+              low_glm_reasoning: bool = False) -> dict:
     """让模型输出 JSON 并解析（带容错 + 空内容重试）。
 
     用 response_format 强制 JSON 模式，再兜底清洗：
@@ -187,8 +188,10 @@ def chat_json(messages: list[dict], temperature: float = 0.1,
         kwargs = {
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": 1024,
+            "max_tokens": max_tokens,
         }
+        if low_glm_reasoning and llm_profile is None and chain == ["glm-5.3-flash"]:
+            kwargs["reasoning_effort"] = "low"
         # 有些 OpenAI 兼容服务不实现 response_format。用户可在配置页关闭，
         # 此时仍保留下方的代码块剥离/JSON 解析兜底。
         if llm_profile is None or llm_profile.json_mode:
