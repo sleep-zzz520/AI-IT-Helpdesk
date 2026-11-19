@@ -11,7 +11,7 @@ const EMPTY_FORM = {
   json_mode: true,
 }
 
-export default function ModelConfigPanel({ configs, selectedId, onSelect, onChanged }) {
+export default function ModelConfigPanel({ configs, defaultModel, selectedId, onSelect, onChanged }) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [notice, setNotice] = useState(null)
   const [error, setError] = useState(null)
@@ -90,7 +90,7 @@ export default function ModelConfigPanel({ configs, selectedId, onSelect, onChan
               >
                 <span className="model-choice-copy">
                   <span className="model-choice-title">项目默认模型</span>
-                  <span className="model-choice-detail mono">GLM · 4.5-Air</span>
+                  {defaultModel && <span className="model-choice-detail mono">{defaultModel}</span>}
                 </span>
                 {selectedId == null && <CheckCircle size={18} weight="fill" className="model-choice-check" />}
               </button>

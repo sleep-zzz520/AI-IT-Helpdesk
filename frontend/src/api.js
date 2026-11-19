@@ -57,6 +57,8 @@ export const login = (username, password) =>
 
 export const fetchMe = () => request('/api/auth/me');
 
+export const fetchServiceHealth = () => request('/health', { cache: 'no-store' }, false);
+
 export const createConversation = () =>
   request('/api/conversations', { method: 'POST', body: JSON.stringify({}) });
 
