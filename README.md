@@ -43,7 +43,7 @@ L1 工程师全程无感，仅在后台审计日志看到一条成功记录。
 - 🛠️ **MCP 风格工具链**：查询/执行工具按名字注册（`QUERY_REGISTRY` / `TOOL_REGISTRY`），可插拔；执行类工具是信任边界保护对象（只有过风险分级才允许）
 - 📊 **全链路 Trace + 实时推送**：每节点语义化摘要（AI/规则/工具分类 + 状态色）+ 全链路耗时 + **SSE 边跑边推**（前端实时点亮，不"干等"）
 - 🖼️ **视觉 OCR**：GLM-4V 从报错截图识别错误码（前端支持粘贴/上传）
-- 📈 **Eval 自动化评估**：真实检索 60 题、问答行为 29 题，以及隔离格式/同步回归、84 条门禁对照与本地 HTTP 负载；新报告在 `backend/tests/quality_reports/`，保留失败与未测指标
+- 📈 **Eval 自动化评估**：真实检索 60 题回归 + 240 题/512 篇规模评测 + 8 题独立问答；另有 29 题真实问答、84 条门禁对照、隔离格式/同步回归与本地 HTTP 负载；新报告在 `backend/tests/quality_reports/`，保留失败与未测指标
 - 🧩 **场景注册表（数据驱动）**：加新场景 = 填一张表，图代码零改动；启动校验防遗漏
 - 🔎 **RAG 混合检索**：BM25（jieba 分词）+ 向量双路召回 → RRF 融合；保留 Rerank 实验链路，当前固定评测退化，默认关闭
 - 🧠 **Agentic 多跳检索**：retrieve → judge → 证据不足自动规划下一跳（MAX_HOPS=2，每跳记 Trace）
@@ -235,7 +235,7 @@ flowchart TB
 | 当前实测 80 个 chunk | ChromaDB（当前） | 本轮真实检索评测范围；更大语料的延迟与内存需另测 |
 | 百万级 chunk | Milvus | 只需改 `create_store()` 工厂函数（VectorStore 抽象层已隔离，检索/同步/切分代码零改动） |
 
-多模态演进：当前用 GLM-4V/GLM-ASR **转译降维**（运维截图语义 95% 在文字，成本极低）；chunk 保留 `media_ref`（原始文件 + 页码），升级 bge-visualized-m3 / ColPali 联合嵌入时可直接路由原图。
+多模态演进：当前用 GLM-4V/GLM-ASR **转译降维**（运维截图语义主要集中在文字，成本极低）；chunk 保留 `media_ref`（原始文件 + 页码），升级 bge-visualized-m3 / ColPali 联合嵌入时可直接路由原图。
 
 ## 快速启动
 
@@ -314,6 +314,31 @@ docker compose exec backend python -m app.rag.release_check
 
 ## Eval 跑分
 
+### Agent 评估总入口
+
+评估覆盖当前服务台支持的入口。VPN 自动执行用真实 FastAPI 登录、SSE、LangGraph 和本地 HTTP 模拟监控验证。密码、邮箱、软件和无支持场景通过同一入口验证只读问答、澄清、拒答和多问题分流。工程回归覆盖准入、鉴权、断连恢复、幂等、MCP 只读协议和知识恢复。
+
+| 模式 | 内容 | 依赖 |
+| --- | --- | --- |
+| `offline` | 39 条对话任务，含多轮、截图 OCR 夹具、VPN 执行及安全回归。另跑定向工程回归 | 临时 SQLite、本地 HTTP、确定性模型夹具 |
+| `model` | 离线门禁加 32 条适用任务，每条用真实文本模型跑三次 | 智谱模型凭据 |
+| `release` | 同一 Agent API 任务改用隔离知识快照做真实混合检索，另跑冻结 RAG 集和 15 张合成截图视觉评估（真实模型调用） | 智谱模型凭据、Embedding 及视觉调用 |
+
+```bash
+cd backend
+python -m scripts.eval_suite --profile offline --output-dir /tmp/helpdesk-eval-offline
+# 在进程环境中配置 ZHIPU_API_KEY 后，可选 model 或 release
+python -m scripts.eval_suite --profile model --output-dir /tmp/helpdesk-eval-model
+```
+
+每次运行使用新的产物目录。总报告 `report.json` 记录每个门禁的结果和原始证据位置。对话报告按场景、题组和轮次列出工单状态、关键动作、写入、引用判定、首次通过数、P95 延迟与 token 用量。model 档使用固定证据隔离路由变量。release 档从消息入口经过真实向量与 BM25 检索、证据判断和回答生成，并记录单条消息的完整耗时。冻结 RAG 子评估另行定位召回、证据判断或回答质量问题。各门禁使用自己的分母，失败、超时和缺失报告会让总命令返回非零。
+
+主 CI 自动跑离线门禁。真实模式可手动触发 [Agent evaluation](.github/workflows/agent-eval.yml)。同协议基线可以通过 `--baseline PATH/report.json` 对比。用 `--model MODEL_ID` 可在同一题库上比较文本模型，RAG 和视觉组件保留各自的配置。复盘时从报告找出失败任务的 ID，将脱敏后的最小复现和独立预期加入版本化题库，再用下列入口复跑。对话题库或知识证据变化后生成新基线。
+
+```bash
+python -m scripts.eval_agent --case cross_tenant_request --output /tmp/helpdesk-replay.json
+```
+
 ### RAG 评估
 
 题集按问题家族拆分开发集和冻结集。夹具锁定合成知识快照，逐题标注预期行为、必要事实、支持来源和禁止项。评测用隔离 Chroma 跑三段，分别看 Top-K 找回了什么、给定正确证据时能否答对，以及真实检索与证据裁判接入后最终如何回答、澄清或拒答。事实规则逐项核对实际注入的证据和局部引用，额外论断再单独复核。
@@ -326,7 +351,7 @@ docker compose exec backend python -m app.rag.release_check
 | 256 | 73.8% → 82.1% | 0.697 → 0.775 |
 | 512 | 67.3% → 79.9% | 0.659 → 0.767 |
 
-512 篇时，混合检索在 40 道双证据题的三组检索中仅有 51.7% 找齐两段。本机暖态检索 P95 从 37.23 ms 增至 53.30 ms，计入检索、过滤和父块回填，查询向量计算另计。[检索规模专项与汇总数据](docs/retrieval-scale-evaluation-2026-11-02.md)
+512 篇时，混合检索在 40 道双证据题的三组检索中仅有 51.7% 找齐两段；BM25-only 的 Recall@5 为 77.9%、MRR 0.758，混合相对 BM25-only 仅高 1.94 个百分点，口语核查子集反而低于 BM25-only。混合的收益主要来自跨题型鲁棒性，完整分题型与失败归因见检索专项。本机暖态检索 P95 从 37.23 ms 增至 53.30 ms，计入检索、过滤和父块回填，查询向量计算另计。[检索规模专项与汇总数据](docs/retrieval-scale-evaluation-2026-11-02.md)
 
 **问答质量（2026-11-03）**。独立合成集 `rag-independent-v1` 用 Embedding-3 和 GLM-5.3-Flash 跑完 8 道冻结题，模型调用覆盖证据裁判与回答生成，Rerank 关闭。分项结果如下。
 
@@ -343,6 +368,8 @@ docker compose exec backend python -m app.rag.release_check
 忠实度、正确性和引用由 Codex 逐条对照回答原文、实际上下文和参考口径，尚无独立人工复核。确定性用例检查在独立集上通过检索 8/8、固定证据生成 4/5、端到端 4/8，保留了标注规则不满足、冲突条件处理错误及引用问题。另一套原回归集 `rag-v1.3` 在对应快照上通过检索 8/8、固定证据生成 3/3、端到端 8/8。两套样本均为合成数据，延迟与用量只描述当次运行。
 
 主 CI 自动跑离线回归。需要真实模型复测时，可在本地切换两套公开夹具，或手动运行 **RAG release evaluation** 复测原冻结回归集。门禁逐题检查，漏题、缺分、调用失败或用例未达标都会返回非零。现有自动部署由主 CI 成功触发，手动评测单独运行。逐题原始报告留在本地，运行命令和读分方法见 [RAG 发布评测](docs/rag-release-evaluation.md)。
+
+**多模态转译（合成）**。15 张合成运维截图（含模糊、低对比度、噪声、缩小等扰动）调用真实视觉模型，错误码抽取 14/15（93.3%），场景分类 15/15；唯一失败为 `blur:2` 截图未识别错误码。原始报告在本地 `backend/tests/transcribe_report.json`。合成截图评估不代表真实 OCR/ASR 质量；Office/PDF/视频验证使用程序生成文件，视觉转译被替代。
 
 ### 早期评测（2026-11-01）
 
