@@ -10,8 +10,9 @@ const apiTarget = process.env.VITE_API_TARGET || 'http://127.0.0.1:8000'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    // 本地开发代理：前端用相对路径 /api，这里转发到后端（与生产 nginx 行为一致）
+    // 本地开发代理与生产 nginx 一致：转发 /api 及 /health。
     proxy: {
+      '/health': apiTarget,
       '/api': {
         target: apiTarget,
         changeOrigin: true,

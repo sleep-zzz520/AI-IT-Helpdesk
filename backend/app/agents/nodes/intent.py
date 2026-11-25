@@ -159,7 +159,7 @@ def intent_node(state: HelpdeskState) -> dict:
     reply = chat_json([
         {"role": "system", "content": INTENT_PROMPT},
         {"role": "user", "content": user_msg},
-    ], model_chain=state.get("model_chain"), llm_profile=state.get("llm_profile"))
+    ], model_chain=state.get("model_chain"), llm_profile=state.get("llm_profile"), low_glm_reasoning=True)
 
     intent = reply.get("intent", "other")
     if intent not in [*list(SCENARIOS), "other"]:

@@ -9,12 +9,19 @@
 - ThreadPoolExecutor 线程池并发两个节点函数（openai SDK 线程安全）
 - trace 各自只返回新增记录，合并后由 state 的 reducer（Annotated[list, add]）累积
 """
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from app.agents.nodes.extract import extract_node
 from app.agents.nodes.intent import intent_node
 from app.agents.state import HelpdeskState
+
+_EXPLICIT_READ_ONLY = re.compile(
+    r"(?:只(?:想|是|要)?(?:咨询|询问|了解|知道|查询)|仅(?:咨询|询问|了解|查询)|只读)"
+    r"|(?:不要|不用|无需|不需要|先别|暂不|禁止|请勿|别)"
+    r"\s*(?:自动\s*)?(?:续期|续签|执行|操作|处理)"
+)
 
 
 def parallel_round_node(state: HelpdeskState) -> dict:
@@ -24,6 +31,14 @@ def parallel_round_node(state: HelpdeskState) -> dict:
     所以用 as_completed 记录每个 future 各自完成的时刻，分别写入 trace。
     （外层 API 层会给顶层节点补计时，这里用 setdefault 语义保留更精确的子任务耗时）
     """
+    latest = state["messages"][-1]
+    if latest["role"] == "user" and _EXPLICIT_READ_ONLY.search(latest["content"]):
+        return {
+            "request_type": "consult",
+            "multi_scenarios": None,
+            "trace": [{"node": "read_only", "result": {"reason": "explicit_user_restriction"}}],
+        }
+
     started = time.perf_counter()
     updates, finished_at = {}, {}
     with ThreadPoolExecutor(max_workers=2) as ex:

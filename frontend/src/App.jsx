@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Cpu, Database, ShieldCheck, SignOut } from '@phosphor-icons/react'
-import { createConversation, sendMessageStream, clearToken, fetchLlmConfigs, fetchMe, getToken } from './api'
+import { createConversation, sendMessageStream, clearToken, fetchLlmConfigs, fetchMe, fetchServiceHealth, getToken } from './api'
 import ChatPanel from './components/ChatPanel'
 import KbManager from './components/KbManager'
 import SidePanel from './components/SidePanel'
@@ -20,6 +20,7 @@ export default function App() {
   const [view, setView] = useState('chat')    // 视图：chat 工作台 / kb 知识库管理 / audit 审计
   const [llmConfigs, setLlmConfigs] = useState([])
   const [selectedLlmConfigId, setSelectedLlmConfigId] = useState(null)
+  const [defaultModel, setDefaultModel] = useState(null)
   // 会话代际：开新会话 +1，旧会话进行中的 SSE 请求完成后检测到代际过期就丢弃结果，
   // 避免旧回复污染新会话（异步竞态：用户回复期间开新会话）
   const genRef = useRef(0)
@@ -32,6 +33,13 @@ export default function App() {
     if (!getToken()) return
     fetchMe().then(setUser).catch(() => clearToken())
   }, [])
+
+  useEffect(() => {
+    if (!user) return
+    fetchServiceHealth()
+      .then(({ model }) => setDefaultModel(model))
+      .catch(() => setDefaultModel(null))
+  }, [user])
 
   useEffect(() => { if (user) handleNew() }, [user])  // 登录成功后自动开新会话
 
@@ -194,21 +202,12 @@ export default function App() {
         </nav>
 
         <div className="app-topbar-actions">
-          {selectedLlmConfig ? (
-            <span
-              className="model-context mono max-w-36 truncate"
-              title={`${selectedLlmConfig.model} · ${selectedLlmConfig.base_url}`}
-            >
-              {selectedLlmConfig.name}
-            </span>
-          ) : (
-            <span
-              className="model-context mono max-w-36 truncate"
-              title="项目默认回答模型：glm-5.3-flash"
-            >
-              GLM-5.3-Flash
-            </span>
-          )}
+          <span
+            className="model-context mono max-w-36 truncate"
+            title={selectedLlmConfig ? `${selectedLlmConfig.model} · ${selectedLlmConfig.base_url}` : defaultModel ?? '项目默认模型'}
+          >
+            {selectedLlmConfig?.name ?? defaultModel ?? '项目默认模型'}
+          </span>
 
           <span className={`user-context mono ${isAdmin ? 'is-admin' : ''}`} title={`租户 ${user.tenant_id}`}>
             {user.display_name || user.username}
@@ -233,6 +232,7 @@ export default function App() {
       {view === 'models' ? (
         <ModelConfigPanel
           configs={llmConfigs}
+          defaultModel={defaultModel}
           selectedId={selectedLlmConfigId}
           onSelect={setSelectedLlmConfigId}
           onChanged={refreshLlmConfigs}
