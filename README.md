@@ -502,7 +502,7 @@ python3 scripts/backup_retention.py --backup-dir backups --purge-expired --apply
 
 | 层 | 选型 |
 |---|---|
-| Agent 编排 | LangGraph（状态机，非 AutoGen——见设计决策）|
+| Agent 编排 | LangGraph（状态机，非 AutoGen）|
 | 模型 | GLM-5.3-Flash（项目默认文本模型）/ GLM-4V-Flash（OCR）/ Embedding-3（0.5 元/百万 tokens）|
 | 向量库 | ChromaDB（VectorStore 抽象，预留 Milvus）|
 | API | FastAPI |
